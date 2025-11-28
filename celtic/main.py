@@ -7,8 +7,8 @@ def load_clean_data(path=r"C:\Users\SMafl\python\celtic\Final_Task_Data.csv", mi
     df = df[df["Minutes"] >= min_mins]
     return df
 
-import streamlit as st
 
+# --- PASSWORD PROTECTION ---
 PASSWORD = "celtic"
 
 st.title("Celtic F.C Recruitment Task")
@@ -20,10 +20,21 @@ if password != PASSWORD:
 
 st.success("Access granted!")
 
-# rest of your app...
 
+# --- DUMMY CONTENT (only appears when password is correct) ---
+st.header("Dummy App Content")
 
+# Load data
+df = load_clean_data()
 
+st.write("### Data Preview")
+st.dataframe(df.head())
+
+# Dropdown of unique positions
+positions = sorted(df["Position_1"].dropna().unique())
+selected_position = st.selectbox("Select Position", positions)
+
+st.write(f"You selected: **{selected_position}**")
 
 
 
