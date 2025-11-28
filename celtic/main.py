@@ -9,7 +9,7 @@ def load_clean_data(path=r"C:\Users\SMafl\python\celtic\Final_Task_Data.csv", mi
 
 import streamlit as st
 
-PASSWORD = "Hoops2025"
+PASSWORD = "celtic"
 
 st.title("Celtic F.C Recruitment Task")
 
