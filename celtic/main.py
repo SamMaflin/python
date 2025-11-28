@@ -1,14 +1,19 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 
-# --- Your existing function ---
-def load_clean_data(path=r"Final_Task_Data.csv", min_mins=900):
+# ------------------------------------------
+# Load + Clean Data
+# ------------------------------------------
+def load_clean_data(path="Final_Task_Data.csv", min_mins=900):
     df = pd.read_csv(path)
     df = df[df["Minutes"] >= min_mins]
     return df
 
 
-# --- PASSWORD PROTECTION ---
+# ------------------------------------------
+# Password Protection
+# ------------------------------------------
 PASSWORD = "celtic"
 
 st.title("Celtic F.C Recruitment Task")
@@ -21,25 +26,20 @@ if password != PASSWORD:
 st.success("Access granted!")
 
 
-# --- DUMMY CONTENT (only appears when password is correct) ---
+# ------------------------------------------
+# Dummy visible content
+# ------------------------------------------
 st.header("Dummy App Content")
 
-# Load data
 df = load_clean_data()
 
 st.write("### Data Preview")
 st.dataframe(df.head())
 
-# Dropdown of unique positions
 positions = sorted(df["Position_1"].dropna().unique())
 selected_position = st.selectbox("Select Position", positions)
 
 st.write(f"You selected: **{selected_position}**")
-
-
-
-
-
 
 
 
