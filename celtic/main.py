@@ -7,19 +7,20 @@ def load_clean_data(path=r"C:\Users\SMafl\python\celtic\Final_Task_Data.csv", mi
     df = df[df["Minutes"] >= min_mins]
     return df
 
-# --- Streamlit App ---
+import streamlit as st
+
+PASSWORD = "Hoops2025"
+
 st.title("Celtic F.C Recruitment Task")
 
-# load data
-df = load_clean_data()
+password = st.text_input("Enter password:", type="password")
 
-# get unique Position_1 values
-positions = sorted(df["Position_1"].dropna().unique())
+if password != PASSWORD:
+    st.stop()
 
-# dropdown selector
-selected_position = st.selectbox("Select Position", positions)
+st.success("Access granted!")
 
-st.write(f"You selected: **{selected_position}**")
+# rest of your app...
 
 
 
