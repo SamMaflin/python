@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # --- Your existing function ---
-def load_clean_data(path=r"C:\Users\SMafl\python\celtic\Final_Task_Data.csv", min_mins=900):
+def load_clean_data(path=r"Final_Task_Data.csv", min_mins=900):
     df = pd.read_csv(path)
     df = df[df["Minutes"] >= min_mins]
     return df
