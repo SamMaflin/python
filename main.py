@@ -2,90 +2,164 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+# ==========================================================
+# THEME CONSTANTS
+# ==========================================================
+
+FONT_FAMILY = "'Belleza', sans-serif"
+COLOR_BG_MAIN = "#1A5638"
+COLOR_BG_SIDEBAR = "#15472F"
+COLOR_TEXT = "white"
+LOGO_PATH = "/celtic_logo.png"
+LOGO_SIZE = "350px"
+
+TITLE_SIZE_H1 = "80px"
+TITLE_SIZE_H3 = "60px"
+BODY_FONT_SIZE = "22px"
+
 
 # ==========================================================
-# CELTIC THEME + STATIC BACKGROUND LOGO
+# STYLESHEET (CSS)
 # ==========================================================
-st.markdown(
+
+CELTIC_CSS = f"""
+<style>
+    /* Import font */
+    @import url('https://fonts.googleapis.com/css2?family=Belleza&display=swap');
+
+    /* Global font + text color */
+    * {{
+        font-family: {FONT_FAMILY} !important;
+        color: {COLOR_TEXT} !important;
+    }}
+
+    /* Headings */
+    h1 {{
+        font-size: {TITLE_SIZE_H1} !important;
+        font-weight: 600 !important;
+        letter-spacing: -1px !important;
+        line-height: 1 !important;
+        padding-bottom: 10% !important;
+    }}
+
+    h3 {{
+        font-size: {TITLE_SIZE_H3} !important;
+        font-weight: 600 !important;
+        letter-spacing: -1px !important;
+        line-height: 1 !important;
+    }}
+
+    p {{
+        font-size: {BODY_FONT_SIZE} !important;
+    }}
+
+    /* Application background */
+    .stApp {{
+        background-color: {COLOR_BG_MAIN} !important;
+        background-image: url("{LOGO_PATH}") !important;
+        background-repeat: no-repeat;
+        background-attachment: fixed !important;
+        background-position: center center !important;
+        background-size: {LOGO_SIZE} !important;
+    }}
+
+    /* Header bar */
+    header[data-testid="stHeader"] {{
+        background-color: {COLOR_BG_MAIN} !important;
+    }}
+
+    /* Sidebar */
+    section[data-testid="stSidebar"] {{
+        background-color: {COLOR_BG_SIDEBAR} !important;
+    }}
+
+    section[data-testid="stSidebar"] * {{
+        color: {COLOR_TEXT} !important;
+    }}
+
+    /* Selectbox label fix */
+    .stSelectbox label {{
+        color: {COLOR_TEXT} !important;
+    }}
+</style>
+"""
+
+
+# ==========================================================
+# INJECT CSS
+# ==========================================================
+
+st.markdown(CELTIC_CSS, unsafe_allow_html=True)
+
+
+# ==========================================================
+# DATA LOADING + CLEANING
+# ==========================================================
+
+DEFAULT_DATA_PATH = "Final_Task_Data.csv"
+DEFAULT_MIN_MINUTES = 900
+
+def load_clean_data(path: str = DEFAULT_DATA_PATH, min_minutes: int = DEFAULT_MIN_MINUTES) -> pd.DataFrame:
     """
-    <style>
-        /* MAIN BACKGROUND WITH FIXED CELTIC LOGO */
-        .stApp {
-            background-color: #1A5638 !important;
-            background-image: url("/celtic_logo.png") !important;
-            background-repeat: no-repeat;
-            background-attachment: fixed !important;
-            background-position: center center !important;  /* FORCE CENTER */
-            background-size: 350px !important;
-        }
+    Load the player dataset and filter out players below the minimum playing time threshold.
 
-        /* HEADER BAR */
-        header[data-testid="stHeader"] {
-            background-color: #1A5638 !important;
-        }
+    Parameters
+    ----------
+    path : str
+        File path to the CSV dataset.
+    min_minutes : int
+        Minimum number of minutes required to include a player.
 
-        /* SIDEBAR */
-        section[data-testid="stSidebar"] {
-            background-color: #15472F !important;
-        }
-
-        /* TEXT COLORS */
-        body, div, label, span, 
-        h1, h2, h3, h4, h5, h6, p {
-            color: white !important;
-        }
-
-        /* SIDEBAR TEXT */
-        section[data-testid="stSidebar"] * {
-            color: white !important;
-        }
-
-        /* SELECTBOX LABEL FIX */
-        .stSelectbox label {
-            color: white !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ==========================================================
-# LOAD + CLEAN DATA
-# ==========================================================
-def load_clean_data(path="Final_Task_Data.csv", min_mins=900):
+    Returns
+    -------
+    pd.DataFrame
+        Cleaned player data.
+    """
     df = pd.read_csv(path)
-    df = df[df["Minutes"] >= min_mins]
-    return df
+    return df[df["Minutes"] >= min_minutes]
+
 
 df = load_clean_data()
 
 
 # ==========================================================
-# POSITION SELECTOR
+# PAGE HEADER + INTRO
 # ==========================================================
-positions = sorted(df["Position_1"].dropna().unique())
-selected_position = st.selectbox("Select Position", positions)
 
-st.write(f"### You selected: **{selected_position}**")
+st.title("Celtic F.C. Player Evaluation Task")
 
+INTRO_TEXT = """
+Welcome. This application assists in identifying potential player recruitment targets by analysing key 
+performance indicators that highlight the profile and attributes of each player in the dataset.
+<br><br>
+For the purposes of this assignment, <b>four</b> players have been automatically identified as suitable 
+candidates for Celtic F.C. You can also use the optional sliders to refine the criteria and explore 
+alternative player fits.
+"""
 
-# ==========================================================
-# POSITION FILTERED TABLE
-# ==========================================================
-filtered_df = df[df["Position_1"] == selected_position]
+st.markdown(INTRO_TEXT, unsafe_allow_html=True)
 
-st.write("### Players in this position:")
-st.dataframe(filtered_df.head(50))
-
-
-
-
+st.subheader("Let's get started...")
 
 
 
 
-# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # def calculate_shot_stopping_rating(df):
 #     """
 #     Computes a goalkeeper shot-stopping value from 1–99.
