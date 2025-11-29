@@ -53,7 +53,7 @@ st.markdown(
 # ==========================================================
 # LOAD + CLEAN DATA
 # ==========================================================
-def load_clean_data(path="celtic/Final_Task_Data.csv", min_mins=900):
+def load_clean_data(path="Final_Task_Data.csv", min_mins=900):
     df = pd.read_csv(path)
     df = df[df["Minutes"] >= min_mins]
     return df
