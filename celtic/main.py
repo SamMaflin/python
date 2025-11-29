@@ -2,44 +2,105 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# ------------------------------------------
-# Load + Clean Data
-# ------------------------------------------
-def load_clean_data(path="celtic/Final_Task_Data.csv", min_mins=900):
-    df = pd.read_csv(path)
-    df = df[df["Minutes"] >= min_mins]
-    return df
+
+# ==========================================================
+# CELTIC THEME + STATIC BACKGROUND LOGO
+# ==========================================================
+st.markdown(
+    """
+    <style>
+        /* MAIN BACKGROUND WITH FIXED CELTIC LOGO */
+        .stApp {
+            background-color: #1A5638 !important;
+            background-image: url("/static/celtic_logo.png");
+            background-repeat: no-repeat;
+            background-attachment: fixed !important;
+            background-position: center center !important;  /* FORCE CENTER */
+            background-size: 350px !important;
+        }
+
+        /* HEADER BAR */
+        header[data-testid="stHeader"] {
+            background-color: #1A5638 !important;
+        }
+
+        /* SIDEBAR */
+        section[data-testid="stSidebar"] {
+            background-color: #15472F !important;
+        }
+
+        /* TEXT COLORS */
+        body, div, label, span, 
+        h1, h2, h3, h4, h5, h6, p {
+            color: white !important;
+        }
+
+        /* SIDEBAR TEXT */
+        section[data-testid="stSidebar"] * {
+            color: white !important;
+        }
+
+        /* SELECTBOX LABEL FIX */
+        .stSelectbox label {
+            color: white !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
-# ------------------------------------------
-# Password Protection
-# ------------------------------------------
+
+# ==========================================================
+# PASSWORD PROTECTION
+# ==========================================================
 PASSWORD = "celtic"
 
-st.title("Celtic F.C Recruitment Task")
+st.title("Celtic F.C Recruitment Dashboard")
 
 password = st.text_input("Enter password:", type="password")
 
 if password != PASSWORD:
     st.stop()
 
-st.success("Access granted!")
+st.success("Authenticated!")
 
 
-# ------------------------------------------
-# Dummy visible content
-# ------------------------------------------
-st.header("Dummy App Content")
+# ==========================================================
+# LOAD + CLEAN DATA
+# ==========================================================
+def load_clean_data(path="celtic/Final_Task_Data.csv", min_mins=900):
+    df = pd.read_csv(path)
+    df = df[df["Minutes"] >= min_mins]
+    return df
+
+
+st.header("Let's Go!")
 
 df = load_clean_data()
 
-st.write("### Data Preview")
-st.dataframe(df.head())
 
+# ==========================================================
+# POSITION SELECTOR
+# ==========================================================
 positions = sorted(df["Position_1"].dropna().unique())
 selected_position = st.selectbox("Select Position", positions)
 
-st.write(f"You selected: **{selected_position}**")
+st.write(f"### You selected: **{selected_position}**")
+
+
+# ==========================================================
+# POSITION FILTERED TABLE
+# ==========================================================
+filtered_df = df[df["Position_1"] == selected_position]
+
+st.write("### Players in this position:")
+st.dataframe(filtered_df.head(50))
+
+
+# ==========================================================
+# OPTIONAL: ADD RATING MODELS LATER
+# ==========================================================
 
 
 
