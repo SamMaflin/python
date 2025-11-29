@@ -50,22 +50,6 @@ st.markdown(
 )
 
 
-
-# ==========================================================
-# PASSWORD PROTECTION
-# ==========================================================
-PASSWORD = "celtic"
-
-st.title("Celtic F.C Recruitment Dashboard")
-
-password = st.text_input("Enter password:", type="password")
-
-if password != PASSWORD:
-    st.stop()
-
-st.success("Authenticated!")
-
-
 # ==========================================================
 # LOAD + CLEAN DATA
 # ==========================================================
@@ -73,9 +57,6 @@ def load_clean_data(path="celtic/Final_Task_Data.csv", min_mins=900):
     df = pd.read_csv(path)
     df = df[df["Minutes"] >= min_mins]
     return df
-
-
-st.header("Let's Go!")
 
 df = load_clean_data()
 
@@ -96,12 +77,6 @@ filtered_df = df[df["Position_1"] == selected_position]
 
 st.write("### Players in this position:")
 st.dataframe(filtered_df.head(50))
-
-
-# ==========================================================
-# OPTIONAL: ADD RATING MODELS LATER
-# ==========================================================
-
 
 
 
