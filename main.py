@@ -1,297 +1,244 @@
+# =====================================================================
+#  STREAMLIT APP — CELTIC FC PLAYER VALUATION (FULL REWRITE)
+#  With global Roboto font + unified pizza chart font
+# =====================================================================
+
 import streamlit as st
-import pandas as pd
+from analysis import (
+    run_gk_model,
+    GK_GROUPS,
+    GK_INVERT,
+    GK_SLIDERS,
+    GK_COLS,
+    GK_TEXT,
+    generate_gk_summary,
+)
 
-# python -m streamlit run main.py
+# =============== IMPORT PIZZA COMPONENTS (included below) ===============
+from pizza_chart import (
+    pizza_plot_combined,
+    render_id_key,
+    render_category_header,
+)
 
+# =====================================================================
+# PAGE CONFIG
+# =====================================================================
+st.set_page_config(
+    page_title="Celtic F.C Player Valuation Task",
+    layout="centered",
+)
 
-# ================================================================
-#                   CONFIGURATION + STYLING
-# ================================================================
+# =====================================================================
+# GLOBAL CSS + ROBOTO FONT
+# =====================================================================
+st.markdown(
+    """
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
-FONT_FAMILY_URL = "https://fonts.googleapis.com/css2?family=Belleza&display=swap"
-FONT_NAME = "'Belleza', sans-serif"
-
-SIZE_H1 = "100px"
-SIZE_H3 = "60px"
-SIZE_H4 = "50px"
-SIZE_H5 = "24px"
-SIZE_P = "20px"
-
-DEFAULT_WEIGHT = 500
-LINE_HEIGHT = "1.6"
-
-COLOR_TEXT = "white"
-COLOR_BG_MAIN = "#1B593A"
-COLOR_BG_SIDEBAR = "#113825"
-ORANGE = "#EC7C2C"
-
-LOGO_PATH = "/celticlogo.png"
-LOGO_SIZE = "350px"
-
-MARGIN_BOTTOM = "0.5em"
-MARGIN_BOTTOM_LARGE = "3em"
-MARGIN_BOTTOM_TOP = "3em"
-
-# ================================================================
-#                           GLOBAL CSS
-# ================================================================
-
-GLOBAL_CSS = f"""
 <style>
-    @import url('{FONT_FAMILY_URL}');
+    * {
+        font-family: 'Roboto', sans-serif !important;
+    }
 
-    html, body, * {{
-        font-family: {FONT_NAME};
-        color: {COLOR_TEXT};
-    }}
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewBlockContainer"] {
+        background-color: #1B593A !important;
+    }
 
-    .text-h1 {{
-        font-size: {SIZE_H1};
-        line-height: 1;
-        margin-bottom: {MARGIN_BOTTOM};
-        font-weight: 600;
-    }}
+    .block-container {
+        max-width: 850px !important;
+        margin-left: auto;
+        margin-right: auto;
+        padding-top: 1rem;
+    }
 
-    .text-h3 {{
-        font-size: {SIZE_H3};
-        line-height: {LINE_HEIGHT};
-        margin-bottom: {MARGIN_BOTTOM};
-        font-weight: 600;
-    }}
+    section[data-testid="stSidebar"] { display: none; }
+    header, footer { visibility: hidden; }
 
-    .text-h4 {{
-        font-size: {SIZE_H4};
-        line-height: {LINE_HEIGHT};
-        margin-bottom: {MARGIN_BOTTOM};
-        font-weight: 600;
-    }}
+    .title {
+        font-size: 60px;
+        font-weight: 700;
+        color: white;
+        letter-spacing: -2px;
+        margin-bottom: 0.3em;
+        text-align: left;
+    }
 
-    .text-h5 {{
-        font-size: {SIZE_H5};
-        margin-bottom: {MARGIN_BOTTOM};
-        font-weight: 600;
-    }}
+    .subtitle {
+        font-size: 50px;
+        font-weight: 700;
+        color: white;
+        letter-spacing: -2px;
+        margin-top: 0.5em;
+        margin-bottom: 0.8em;
+        text-align: left;
+    }
 
-    .text-p {{
-        font-size: {SIZE_P};
-        line-height: {LINE_HEIGHT};
-        margin-bottom: {MARGIN_BOTTOM_LARGE};
-        margin-top: {MARGIN_BOTTOM_TOP};
-    }}
+    .intro {
+        font-size: 18px;
+        color: white;
+        opacity: 0.92;
+        line-height: 1.6;
+        margin-bottom: 2em;
+    }
 
-    .stApp {{
-        background-color: {COLOR_BG_MAIN};
-        background-image: url("{LOGO_PATH}");
-        background-position: center;
-        background-size: {LOGO_SIZE};
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
+    .section-label {
+        font-size: 48px;
+        font-weight: 900;
+        color: #EB5F1F;
+        border: 4px solid #EB5F1F;
+        padding: 10px 24px;
+        border-radius: 10px;
+        display: inline-block;
+        margin-top: 1.5em;
+        margin-bottom: 1em;
+    }
 
-    section[data-testid="stSidebar"] {{
-        background-color: {COLOR_BG_SIDEBAR};
-    }}
+    .simple-text {
+        font-size: 18px;
+        color: white;
+        opacity: 0.95;
+        margin-bottom: 1.8em;
+        line-height: 1.6;
+    }
 
-    #MainMenu {{visibility: hidden;}}
-    header {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
+    .slider-block {
+        margin-top: 1.6em;
+        margin-bottom: 1.4em;
+    }
 
-    div[data-baseweb="slider"] span {{
-        display: none !important;
-    }}
+    .slider-label {
+        font-size: 26px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.15em;
+    }
+
+    .slider-sublabel {
+        font-size: 14px;
+        color: white;
+        opacity: 0.85;
+        margin-bottom: 0.5em;
+    }
+
+    div.stButton > button {
+        padding: 18px 32px !important;
+        font-size: 24px !important;
+        font-weight: 700 !important;
+        border-radius: 10px !important;
+    }
 </style>
-"""
+""",
+    unsafe_allow_html=True,
+)
 
-st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
+# =====================================================================
+# PRIORITY SCALE + MULTIPLIERS
+# =====================================================================
+scale = [
+    "Very Low", "Low", "Slightly Low", "Balanced",
+    "Slightly High", "High", "Very High"
+]
 
-# ================================================================
-#                     STATIC TEXT STYLER
-# ================================================================
-
-STYLE_MAP = {
-    "h1": ("text-h1", SIZE_H1),
-    "h3": ("text-h3", SIZE_H3),
-    "h4": ("text-h4", SIZE_H4),
-    "h5": ("text-h5", SIZE_H5),
-    "p":  ("text-p", SIZE_P),
+MULT = {
+    "Very Low": 0.6,
+    "Low": 0.75,
+    "Slightly Low": 0.9,
+    "Balanced": 1.0,
+    "Slightly High": 1.1,
+    "High": 1.25,
+    "Very High": 1.4,
 }
 
-def styled(text, type="p", color=None, weight=None, border=False):
-    css_class, _ = STYLE_MAP[type]
-    extra_color = f"color:{color};" if color else ""
-    weight_css = f"font-weight:{weight if weight else DEFAULT_WEIGHT};"
 
-    border_css = ""
-    if border:
-        border_css = (
-            f"border: 3px solid {ORANGE};"
-            "padding: 15px 25px;"
-            "border-radius: 10px;"
-            "display: inline-block;"
+# =====================================================================
+# POSITION SECTION FUNCTION
+# =====================================================================
+def position_section(name, text, model_fn, groups, invert, sliders, args, columns):
+
+    st.markdown(f"<div class='section-label'>{name}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='simple-text'>{text}</div>", unsafe_allow_html=True)
+
+    slider_vals = {}
+    for label, key in sliders:
+
+        st.markdown(
+            f"""
+            <div class="slider-block">
+                <div class="slider-label">{label}</div>
+                <div class="slider-sublabel">(Priority Level)</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    st.markdown(
-        f'''
-        <div class="{css_class}"
-             style="{extra_color}{weight_css}{border_css}">
-            {text}
-        </div>
-        ''',
-        unsafe_allow_html=True
-    )
+        slider_vals[key] = st.select_slider(
+            "",
+            options=scale,
+            value="Balanced",
+            key=f"{name}_{key}"
+        )
 
-# ================================================================
-#                   GK WEIGHTING SYSTEM
-# ================================================================
+    if st.button(f"Find {name}"):
 
-SS_BASE = 0.55
-D_BASE  = 0.30
-SW_BASE = 0.15
+        mults = {k: MULT[v] for k, v in slider_vals.items()}
 
-MULTIPLIER_MAP = {
-    "Very Low": 0.70,
-    "Low": 0.85,
-    "Slightly Low": 0.95,
-    "Balanced": 1.00,
-    "Slightly High": 1.10,
-    "High": 1.20,
-    "Very High": 1.30
-}
+        df = model_fn(**args, **mults)
+        top = df.sort_values("BuyScore", ascending=False).iloc[0]
 
-def calculate_gk_weights(shot_label, dist_label, sweep_label):
+        st.success(f"{name} found: **{top['ID']} – {top['Team']}**")
+        st.markdown(generate_gk_summary(top), unsafe_allow_html=True)
 
-    ss = SS_BASE * MULTIPLIER_MAP[shot_label]
-    d  = D_BASE  * MULTIPLIER_MAP[dist_label]
-    sw = SW_BASE * MULTIPLIER_MAP[sweep_label]
+        st.markdown("<div class='subtitle'>Profile Breakdown:</div>", unsafe_allow_html=True)
 
-    total = ss + d + sw
+        st.markdown(
+            '<div class="slider-sublabel"><i>*Metrics shown below are per-90 adjusted percentile rank.</i></div>',
+            unsafe_allow_html=True
+        )
 
-    ss /= total
-    d  /= total
-    sw /= total
+        render_category_header(groups)
+        render_id_key(groups)
 
-    # Print to terminal (what you asked for)
-    print("=== GK Weight Output ===")
-    print("Shot-Stopping:", ss)
-    print("Distribution:", d)
-    print("Sweeper:", sw)
-    print("========================")
-
-    return ss, d, sw
-
-# ================================================================
-#                             CONTENT
-# ================================================================
-
-def intro_section():
-
-    # --- Center Celtic Logo Above Title ---
-    st.markdown(
-        f"""
-        <div style="display:flex; justify-content:center; margin-top:20px; margin-bottom:10px;">
-            <img src="{LOGO_PATH}" style="width:200px;">
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # Title
-    styled("Celtic F.C. Player Evaluation Task", "h1")
-
-    # Description
-    styled(
-        """
-        Welcome. This application is designed to support player value identification by 
-        assessing on-field performance metrics alongside key contextual factors 
-        to profile players by position.
-        """,
-        "p"
-    )
-
-    styled("Let's Get Started…", "h3")
+        fig = pizza_plot_combined(top, df, groups, invert)
+        st.plotly_chart(fig, use_container_width=True)
 
 
+# =====================================================================
+# INTRO SECTION
+# =====================================================================
+st.image("celticlogo.png", width=260)
 
-def render_gks():
+st.markdown("<div class='title'>Celtic F.C. Player Evaluation Task</div>", unsafe_allow_html=True)
 
-    # Section title
-    styled("GOALKEEPERS", "h3", color=ORANGE, border=True)
+st.markdown(
+    """
+<div class="intro">
+This application identifies undervalued players for Celtic F.C., using performance data,
+contextual factors and tactical fit.  
+You can compare and customise models for Goalkeeper, Defender, Midfielder and Striker.
+</div>
+""",
+    unsafe_allow_html=True,
+)
 
-    # Description
-    styled(
-        """
-        We begin with the goalkeepers. Using your selected priorities for shot-stopping, 
-        distribution, and sweeping actions, the model highlights the one goalkeeper who 
-        most closely matches your desired profile.
-        """,
-        "p"
-    )
-
-    # Playstyle Preferences
-    styled("Select Playstyle Preferences...", "h4")
-
-    scale = [
-        "Very Low", "Low", "Slightly Low", "Balanced",
-        "Slightly High", "High", "Very High"
-    ]
-
-    styled("The Shot Stopper", "h5")
-    st.select_slider("Shot Priority", options=scale, value="Balanced", key="shot")
-
-    styled("The Distributor", "h5")
-    st.select_slider("Distribution Priority", options=scale, value="Balanced", key="dist")
-
-    styled("The Sweeper", "h5")
-    st.select_slider("Sweeper Priority", options=scale, value="Balanced", key="sweep")
-
-    # ====================================================
-    # PROPER BUTTON: Visual HTML button + Hidden trigger
-    # ====================================================
-
-    # Beautiful centered HTML button (visual only)
-    st.markdown(
-        """
-        <div style="display:flex; justify-content:center; margin-top:45px;">
-            <button id="find-player-btn" style="
-                background-color:#113825;
-                color:white;
-                border:2px solid white;
-                padding:22px 60px;
-                font-size:24px;
-                font-family:'Belleza', sans-serif;
-                border-radius:12px;
-                cursor:pointer;
-            ">
-                Find Player
-            </button>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # Hidden Streamlit button (real Python trigger)
-    clicked = st.button(" ", key="find_gk_hidden")
-
-    # ====================================================
-    # When clicked → Calculate weights (Print to terminal ONLY)
-    # ====================================================
-
-    if clicked:
-        shot_label  = st.session_state["shot"]
-        dist_label  = st.session_state["dist"]
-        sweep_label = st.session_state["sweep"]
-
-        # Calculate & print to terminal only
-        ss_w, d_w, sw_w = calculate_gk_weights(shot_label, dist_label, sweep_label)
-
-        # Do NOT show anything in the app
-        # Only printed in terminal via calculate_gk_weights()
-        pass
+st.markdown("<div class='subtitle'>Let's Get Started…</div>", unsafe_allow_html=True)
 
 
-# ================================================================
-#                             RUN PAGE
-# ================================================================
+# =====================================================================
+# GK SECTION
+# =====================================================================
+position_section(
+    "Goalkeeper",
+    GK_TEXT,
+    run_gk_model,
+    GK_GROUPS,
+    GK_INVERT,
+    GK_SLIDERS,
+    args=dict(path="Final_Task_Data.csv", min_minutes=900),
+    columns=GK_COLS,
+)
 
-intro_section()
-render_gks()
+# ⬆ END MAIN APP
+# =====================================================================
+
+
