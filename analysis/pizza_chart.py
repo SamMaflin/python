@@ -115,7 +115,8 @@ def render_id_key(groups, id_color="#111111"):
 
     rows_html += "</div>"
 
-    components.html(rows_html, scrolling=False)
+    components.html(rows_html, height=200, scrolling=False)
+
 
 
 

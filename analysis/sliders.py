@@ -10,13 +10,15 @@ SCALE = [
 ]
 
 MULT = {
-    "Very Low": 0.6,
-    "Low": 0.75,
-    "Slightly Low": 0.9,
+    "Minimum": 0.01,
+    "Very Low": 0.25,
+    "Low": 0.5,
+    "Slightly Low": 0.75,
     "Balanced": 1.0,
-    "Slightly High": 1.1,
-    "High": 1.25,
-    "Very High": 1.4,
+    "Slightly High": 1.25,
+    "High": 1.5,
+    "Very High": 1.75,
+    "Maximum": 2
 }
 
 
