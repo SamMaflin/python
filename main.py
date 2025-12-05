@@ -270,7 +270,7 @@ and <span style="color:#FFA500;"><b>Central Midfielder</b></span>, after adjusti
 
 The model is fully configurable, allowing you to prioritise different attributes via sliders.
 Once selected, the model will generate a ranked shortlist of candidates according to a
-<span style="color:#FFA500;"><b>BuyScore</b></span> index.<br></br>
+<span style="color:#FFA500;"><b>BuyScore</b></span> index. A maximum transfer fee of £10 Million is set based on historical spend by the club.<br></br>
 </div>
 """,
     unsafe_allow_html=True,
