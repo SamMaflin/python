@@ -1,4 +1,4 @@
- # MODEL CONFIGURATION – ALL ROLES STORED IN ONE STRUCTURED DICTIONARY 
+# MODEL CONFIGURATION – ALL ROLES STORED IN ONE STRUCTURED DICTIONARY
 
 from .utils import safe_div
 
@@ -11,42 +11,44 @@ ROLE_CONFIG = {
         "DEFAULT_MINUTES": 900,
     },
 
-    
+    # ================================================================
     # GOALKEEPER
+    # ================================================================
     "goalkeeper": {
         "positions": {"Goalkeeper"},
 
         "baseline": {
-            "Save Efficiency Above Expected (%)": lambda df: (
+            "Save Efficiency": lambda df: (
                 df["Save_percentage"] - df["Xsave_percentage"]
             ),
 
-            "Goals Saved Above Expected per Shot": lambda df: safe_div(
+            "Goals Prevented per Shot": lambda df: safe_div(
                 df["Goals_saved_above_avg"], df["Shots_on_target_faced"]
             ),
 
-            "Goals Saved Above Expected": lambda df: df["Goals_saved_above_avg"],
+            "Goals Prevented": lambda df: df["Goals_saved_above_avg"],
 
-            "Pressured Pass Efficiency": lambda df: (
+            "Passing Under Pressure": lambda df: (
                 df["Passing_percentage_under_pressure"]
                 * (df["Percentage_passes_under_pressure"] / 100)
             ),
 
-            "Long Pass Efficiency": lambda df: (
+            "Long Pass Accuracy": lambda df: (
                 df["Long_ball_percentage"] * df["Successful_pass_length"]
             ),
 
-            "Pass Progression Efficiency": lambda df: (
+            "Progressive Passing": lambda df: (
                 df["Forward_pass_proportion"] * df["Successful_pass_length"]
             ),
 
-            "Pass Completion": lambda df: df["Passing_percentage"],
+            "Pass Accuracy": lambda df: df["Passing_percentage"],
 
-            "Sweeper Action Distance": lambda df: df["Gk_defesive_action_distance"],
+            "Sweeper Range": lambda df: df["Gk_defesive_action_distance"],
 
             "Sweeper Actions": lambda df: df["Defensive_actions"],
 
-            "Error Rate": lambda df: safe_div(
+            # renamed to match indices / invert / groups
+            "Errors per 90": lambda df: safe_div(
                 df.get("Errors", 0) + df.get("Turnovers", 0),
                 df["Minutes"] / 90,
             ),
@@ -54,39 +56,39 @@ ROLE_CONFIG = {
 
         "indices": {
             "ShotStop_Index": {
-                "Save Efficiency Above Expected (%)": 0.25,
-                "Goals Saved Above Expected per Shot": 0.30,
-                "Goals Saved Above Expected": 0.45,
+                "Save Efficiency": 0.25,
+                "Goals Prevented per Shot": 0.30,
+                "Goals Prevented": 0.45,
             },
             "Distribution_Index": {
-                "Pressured Pass Efficiency": 0.20,
-                "Long Pass Efficiency": 0.25,
-                "Pass Progression Efficiency": 0.25,
-                "Pass Completion": 0.30,
+                "Passing Under Pressure": 0.20,
+                "Long Pass Accuracy": 0.25,
+                "Progressive Passing": 0.25,
+                "Pass Accuracy": 0.30,
             },
             "Sweeper_Index": {
                 "Sweeper Actions": 0.60,
-                "Sweeper Action Distance": 0.30,
-                "Error Rate": -0.10,
+                "Sweeper Range": 0.30,
+                "Errors per 90": -0.10,
             },
         },
 
         "groups": {
             "Shot Stopping": [
-                "Goals Saved Above Expected per Shot",
-                "Save Efficiency Above Expected (%)",
-                "Goals Saved Above Expected",
+                "Goals Prevented per Shot",
+                "Save Efficiency",
+                "Goals Prevented",
             ],
             "Distribution": [
-                "Pressured Pass Efficiency",
-                "Long Pass Efficiency",
-                "Pass Progression Efficiency",
-                "Pass Completion",
+                "Passing Under Pressure",
+                "Long Pass Accuracy",
+                "Progressive Passing",
+                "Pass Accuracy",
             ],
             "Sweeping": [
                 "Sweeper Actions",
-                "Sweeper Action Distance",
-                "Error Rate",
+                "Sweeper Range",
+                "Errors per 90",
             ],
         },
 
@@ -96,7 +98,7 @@ ROLE_CONFIG = {
             "Sweeping": 0.10,
         },
 
-        "invert": {"Error Rate"},
+        "invert": {"Errors per 90"},
 
         "sliders": [
             ("Shot Stopper", "Shot Stopping"),
@@ -121,9 +123,9 @@ ROLE_CONFIG = {
         """,
     },
 
-    
+    # ================================================================
     # WINGER
-    
+    # ================================================================
     "winger": {
         "positions": {
             "Right Midfielder", "Right Winger", "Right Wing Back",
@@ -131,98 +133,108 @@ ROLE_CONFIG = {
         },
 
         "baseline": {
-            # CARRIERS
-            "Dribble Efficiency": lambda df: safe_div(
-                df["Dribbles_successful_ctx"], df["Dribbles_attempts_ctx"]
+            # BALL CARRIER
+            # upgraded: net dribble performance (success – failures)
+            "Dribble Success": lambda df: (
+                df["Dribbles_successful_ctx"] - df["Failed_dribbles_ctx"]
             ),
-            "Carry Efficiency": lambda df: df["Successful_carries_percentage"],
-            "Carrier Risk": lambda df: safe_div(
+            # combined carry volume * success * distance
+            "Progressive Carries": lambda df: (
+                df["Carries_ctx"]
+                * (df["Successful_carries_percentage"] / 100)
+                * df["Carry_length_ctx"]
+            ),
+            "Turnovers from Dribbles": lambda df: safe_div(
                 df["Failed_dribbles_ctx"] + df["Dispossessed_ctx"],
                 df["Minutes"] / 90
             ),
-            "Dangerous Carries": lambda df: (
-                df["Carries_ctx"] * df["Carry_length_ctx"]
-            ),
 
-            # CREATORS
-            "Open Play Creativity": lambda df: (
+            # WIDE CREATOR
+            "Open-Play Creativity": lambda df: (
                 df["Op_xa_ctx"] + df["Op_key_passes_ctx"] * 0.1
             ),
-            "Box Entry Passing": lambda df: (
+            "Box Entry Passes": lambda df: (
                 df["Op_passes_into_box_ctx"] + df["Passes_inside_box_ctx"]
             ),
-            "Through Ball Value": lambda df: df["Through_balls_ctx"],
-            "Crossing Value": lambda df: (
+            "Through Balls": lambda df: df["Through_balls_ctx"],
+            "Crossing Impact": lambda df: (
                 df["Crosses_completed_ctx"] * df["Crossing_percentage"]
+            ),
+            # new: xA – Assists → how much creativity isn't turning into assists
+            "Expected Assist Differential": lambda df: (
+                df["Op_xa_ctx"] - df["Assists_ctx"]
             ),
 
             # GOAL THREAT
-            "Shot Quality": lambda df: df["Np_xg_per_shot"],
-            "Shot Volume": lambda df: df["Np_shots_ctx"],
-            "Finishing Efficiency": lambda df: df["Goal_conversion"],
-            "Box Presence": lambda df: df["Touches_in_box_ctx"],
-            "Actual vs Expected Goals": lambda df: (
+            "Chance Quality": lambda df: df["Np_xg_per_shot"],
+            "Shots": lambda df: df["Np_shots_ctx"],
+            "Finishing Rate": lambda df: df["Goal_conversion"],
+            "Touches in Box": lambda df: df["Touches_in_box_ctx"],
+            "Finishing Efficiency": lambda df: (
                 df["Np_goals_ctx"] - df["Np_xg_ctx"]
             ),
 
-            # PRESSING
-            "Pressing Volume": lambda df: df["Padj_pressures_ctx"],
-            "Pressing Efficiency": lambda df: safe_div(
+            # DEFENSIVE / PRESSING
+            "Pressures": lambda df: df["Padj_pressures_ctx"],
+            "Press Success": lambda df: safe_div(
                 df["Successful_pressures_ctx"], df["Padj_pressures_ctx"]
             ),
-            "Counterpress Intensity": lambda df: df["Opp_half_counterpressures_ctx"],
+            "Counterpresses": lambda df: df["Opp_half_counterpressures_ctx"],
             "Counterpress Success": lambda df: df["Successful_counterpressures_ctx"],
-            "High Press Zone Actions": lambda df: df["Opp_half_pressures_ctx"],
-            "Dribble Stop Rate": lambda df: df["Dribbles_faced_stopped_percentage"],
+            "High Press Actions": lambda df: df["Opp_half_pressures_ctx"],
+            "Dribbles Prevented": lambda df: df["Dribbles_faced_stopped_percentage"],
         },
 
         "indices": {
             "BallCarrier_Index": {
-                "Dribble Efficiency": 0.35,
-                "Dangerous Carries": 0.30,
-                "Carry Efficiency": 0.20,
-                "Carrier Risk": -0.15,
+                # updated to use the upgraded dribble + carry metrics
+                "Dribble Success": 0.40,
+                "Progressive Carries": 0.40,
+                "Turnovers from Dribbles": -0.20,
             },
             "WideCreator_Index": {
-                "Open Play Creativity": 0.40,
-                "Box Entry Passing": 0.25,
-                "Through Ball Value": 0.20,
-                "Crossing Value": 0.15,
+                "Open-Play Creativity": 0.30,
+                "Box Entry Passes": 0.20,
+                "Through Balls": 0.20,
+                "Crossing Impact": 0.15,
+                "Expected Assist Differential": 0.15,
             },
             "GoalThreat_Index": {
-                "Shot Quality": 0.25,
-                "Shot Volume": 0.25,
-                "Finishing Efficiency": 0.25,
-                "Box Presence": 0.15,
-                "Actual vs Expected Goals": 0.10,
+                "Chance Quality": 0.25,
+                "Shots": 0.25,
+                "Finishing Rate": 0.25,
+                "Touches in Box": 0.15,
+                "Finishing Efficiency": 0.10,
             },
             "DefensiveWinger_Index": {
-                "Pressing Volume": 0.25,
-                "Pressing Efficiency": 0.20,
-                "Counterpress Intensity": 0.20,
+                "Pressures": 0.25,
+                "Press Success": 0.20,
+                "Counterpresses": 0.20,
                 "Counterpress Success": 0.15,
-                "High Press Zone Actions": 0.10,
-                "Dribble Stop Rate": 0.10,
+                "High Press Actions": 0.10,
+                "Dribbles Prevented": 0.10,
             },
         },
 
         "groups": {
             "Ball Carrier": [
-                "Dribble Efficiency", "Carry Efficiency",
-                "Dangerous Carries", "Carrier Risk",
+                "Dribble Success",
+                "Progressive Carries",
+                "Turnovers from Dribbles",
             ],
             "Wide Creator": [
-                "Open Play Creativity", "Box Entry Passing",
-                "Through Ball Value", "Crossing Value",
+                "Open-Play Creativity", "Box Entry Passes",
+                "Through Balls", "Crossing Impact",
+                "Expected Assist Differential",
             ],
             "Goal Threat": [
-                "Shot Quality", "Shot Volume", "Finishing Efficiency",
-                "Box Presence", "Actual vs Expected Goals",
+                "Chance Quality", "Shots", "Finishing Rate",
+                "Touches in Box", "Finishing Efficiency",
             ],
             "Defensive Winger": [
-                "Pressing Volume", "Pressing Efficiency",
-                "Counterpress Intensity", "Counterpress Success",
-                "High Press Zone Actions", "Dribble Stop Rate",
+                "Pressures", "Press Success",
+                "Counterpresses", "Counterpress Success",
+                "High Press Actions", "Dribbles Prevented",
             ],
         },
 
@@ -233,7 +245,7 @@ ROLE_CONFIG = {
             "Defensive Winger": 0.15,
         },
 
-        "invert": {"Carrier Risk"},
+        "invert": {"Turnovers from Dribbles"},
 
         "sliders": [
             ("Ball Carrier", "Ball Carrier"),
@@ -259,9 +271,9 @@ ROLE_CONFIG = {
         """,
     },
 
-    
+    # ================================================================
     # CENTRAL MIDFIELDER
-    
+    # ================================================================
     "midfielder": {
         "positions": {
             "Central Midfielder", "Centre Midfielder",
@@ -274,104 +286,109 @@ ROLE_CONFIG = {
 
         "baseline": {
             # BALL WINNER
-            "Tackle Win Rate": lambda df: safe_div(
+            "Tackle Success": lambda df: safe_div(
                 df["Tackles_ctx"], df["Minutes"] / 90
             ),
-            "Interception Volume": lambda df: safe_div(
+            "Interceptions": lambda df: safe_div(
                 df["Interceptions_ctx"], df["Minutes"] / 90
             ),
-            "Padj Tackle Impact": lambda df: df["Padj_tackles_ctx"],
-            "Padj Interception Impact": lambda df: df["Padj_interceptions_ctx"],
-            "Dribble Stop Rate": lambda df: df["Dribbles_faced_stopped_percentage"],
-            "Ball Recoveries": lambda df: df["Ball_recoveries_ctx"],
+            "Adj Tackles": lambda df: df["Padj_tackles_ctx"],
+            "Adj Interceptions": lambda df: df["Padj_interceptions_ctx"],
+            "Dribbles Prevented": lambda df: df["Dribbles_faced_stopped_percentage"],
+            "Recoveries": lambda df: df["Ball_recoveries_ctx"],
 
-            # PLAYMAKER
-            "Forward Pass Value": lambda df: (
+            # DEEP-LYING PLAYMAKER
+            "Forward Passing": lambda df: (
                 df["Forward_pass_proportion"] * df["Passing_percentage"]
             ),
-            "Long Pass Quality": lambda df: (
+            "Long Passing": lambda df: (
                 df["Long_ball_percentage"] * df["Successful_pass_length"]
             ),
-            "Build-Up Contribution": lambda df: df["Op_xgbuildup_ctx"],
-            "XGChain Influence": lambda df: df["Op_xgchain_ctx"],
-            "Progressive Third Passes": lambda df: df["Op_last_3rd_passes_ctx"],
+            "Build-Up Involvement": lambda df: df["Op_xgbuildup_ctx"],
+            "xGChain Involvement": lambda df: df["Op_xgchain_ctx"],
+            "Final Third Passes": lambda df: df["Op_last_3rd_passes_ctx"],
 
             # BOX TO BOX
-            "Carries Into Final Third": lambda df: df["Pass_and_carry_last_3rd_ctx"],
-            "Counterpressing": lambda df: df["Counterpressures_ctx"],
-            "Ball Carry Value": lambda df: (
+            "Final Third Carries": lambda df: df["Pass_and_carry_last_3rd_ctx"],
+            "Counterpresses": lambda df: df["Counterpressures_ctx"],
+            "Carry Impact": lambda df: (
                 df["Carries_ctx"] * df["Carry_length_ctx"]
             ),
-            "Transition Defensive Work": lambda df: df["Successful_counterpressures_ctx"],
-            "Distance Pressing": lambda df: df["Pressing_distance"],
+            "Transition Defence": lambda df: df["Successful_counterpressures_ctx"],
+            "Pressing Distance": lambda df: df["Pressing_distance"],
 
-            # ATTACKING MID
+            # ATTACKING PLAYMAKER
             "Final Third Creativity": lambda df: (
                 df["Op_key_passes_ctx"] + df["Op_xa_ctx"]
             ),
-            "Through Ball Quality": lambda df: df["Through_balls_ctx"],
-            "Box Entry Deliveries": lambda df: (
+            "Through Balls": lambda df: df["Through_balls_ctx"],
+            "Box Entry Passes": lambda df: (
                 df["Op_passes_into_box_ctx"] + df["Passes_inside_box_ctx"]
             ),
-            "Shot Assist Impact": lambda df: df["Key_passes_ctx"],
-            "Chance Conversion Influence": lambda df: df["Assists_ctx"],
+            "Shot Assists": lambda df: df["Key_passes_ctx"],
+            "Assists": lambda df: df["Assists_ctx"],
+            # new: xA – Assists to capture under/over-assisting
+            "Expected Assist Differential": lambda df: (
+                df["Op_xa_ctx"] - df["Assists_ctx"]
+            ),
         },
 
         "indices": {
             "BallWinner_Index": {
-                "Tackle Win Rate": 0.25,
-                "Interception Volume": 0.20,
-                "Padj Tackle Impact": 0.20,
-                "Padj Interception Impact": 0.15,
-                "Ball Recoveries": 0.10,
-                "Dribble Stop Rate": 0.10,
+                "Tackle Success": 0.25,
+                "Interceptions": 0.20,
+                "Adj Tackles": 0.20,
+                "Adj Interceptions": 0.15,
+                "Recoveries": 0.10,
+                "Dribbles Prevented": 0.10,
             },
 
             "DeepLyingPlaymaker_Index": {
-                "Forward Pass Value": 0.25,
-                "Long Pass Quality": 0.20,
-                "Build-Up Contribution": 0.25,
-                "XGChain Influence": 0.20,
-                "Progressive Third Passes": 0.10,
+                "Forward Passing": 0.25,
+                "Long Passing": 0.20,
+                "Build-Up Involvement": 0.25,
+                "xGChain Involvement": 0.20,
+                "Final Third Passes": 0.10,
             },
 
             "BoxToBox_Index": {
-                "Carries Into Final Third": 0.25,
-                "Counterpressing": 0.20,
-                "Ball Carry Value": 0.20,
-                "Transition Defensive Work": 0.20,
-                "Distance Pressing": 0.15,
+                "Final Third Carries": 0.25,
+                "Counterpresses": 0.20,
+                "Carry Impact": 0.20,
+                "Transition Defence": 0.20,
+                "Pressing Distance": 0.15,
             },
 
             "AttackingPlaymaker_Index": {
-                "Final Third Creativity": 0.35,
-                "Through Ball Quality": 0.20,
-                "Box Entry Deliveries": 0.20,
-                "Shot Assist Impact": 0.15,
-                "Chance Conversion Influence": 0.10,
+                "Final Third Creativity": 0.30,
+                "Through Balls": 0.20,
+                "Box Entry Passes": 0.20,
+                "Shot Assists": 0.10,
+                "Assists": 0.10,
+                "Expected Assist Differential": 0.10,
             },
         },
 
         "groups": {
             "Ball Winner": [
-                "Tackle Win Rate", "Interception Volume",
-                "Padj Tackle Impact", "Padj Interception Impact",
-                "Ball Recoveries", "Dribble Stop Rate",
+                "Tackle Success", "Interceptions",
+                "Adj Tackles", "Adj Interceptions",
+                "Recoveries", "Dribbles Prevented",
             ],
             "Deep-Lying Playmaker": [
-                "Forward Pass Value", "Long Pass Quality",
-                "Build-Up Contribution", "XGChain Influence",
-                "Progressive Third Passes",
+                "Forward Passing", "Long Passing",
+                "Build-Up Involvement", "xGChain Involvement",
+                "Final Third Passes",
             ],
             "Box-to-Box": [
-                "Carries Into Final Third", "Counterpressing",
-                "Ball Carry Value", "Transition Defensive Work",
-                "Distance Pressing",
+                "Final Third Carries", "Counterpresses",
+                "Carry Impact", "Transition Defence",
+                "Pressing Distance",
             ],
             "Attacking Playmaker": [
-                "Final Third Creativity", "Through Ball Quality",
-                "Box Entry Deliveries", "Shot Assist Impact",
-                "Chance Conversion Influence",
+                "Final Third Creativity", "Through Balls",
+                "Box Entry Passes", "Shot Assists",
+                "Assists", "Expected Assist Differential",
             ],
         },
 
@@ -410,8 +427,9 @@ ROLE_CONFIG = {
         """,
     },
 
-    
-    # STRIKER 
+    # ================================================================
+    # STRIKER
+    # ================================================================
     "striker": {
         "positions": {
             "Centre Forward",
@@ -421,94 +439,99 @@ ROLE_CONFIG = {
 
         "baseline": {
             # FINISHER
-            "Shot Quality": lambda df: df["Np_xg_per_shot"],
-            "Shot Volume": lambda df: df["Np_shots_ctx"],
-            "Finishing Efficiency": lambda df: df["Goal_conversion"],
-            "Actual vs Expected Goals": lambda df: (
+            "Chance Quality": lambda df: df["Np_xg_per_shot"],
+            "Shots": lambda df: df["Np_shots_ctx"],
+            "Finishing Rate": lambda df: df["Goal_conversion"],
+            "Finishing Efficiency": lambda df: (
                 df["Np_goals_ctx"] - df["Np_xg_ctx"]
             ),
-            "Shot on Target %": lambda df: df["Shot_target_percentage"],
+            "Shot Accuracy": lambda df: df["Shot_target_percentage"],
 
             # TARGET MAN
-            "Aerial Win Rate": lambda df: df["Aerial_percentage"],
-            "Aerial Duels Won": lambda df: df["Aerial_won"],
+            "Aerial Success": lambda df: df["Aerial_percentage"],
+            "Aerial Wins": lambda df: df["Aerial_won"],
             "Hold-Up Passing": lambda df: (
                 df["Passing_percentage"] * df["Backward_pass_proportion"]
             ),
-            "Box Presence": lambda df: df["Touches_in_box_ctx"],
-            "Layoff Value": lambda df: df["Op_xgbuildup_per_possession_ctx"],
+            "Touches in Box": lambda df: df["Touches_in_box_ctx"],
+            "Layoffs": lambda df: df["Op_xgbuildup_per_possession_ctx"],
 
-            # False 9
-            "Link-Up Pass Value": lambda df: (
+            # FALSE 9
+            "Link-Up Play": lambda df: (
                 df["Op_xa_ctx"] + df["Op_key_passes_ctx"] * 0.15
             ),
-            "Through Ball Creation": lambda df: df["Through_balls_ctx"],
-            "Chance Creation Volume": lambda df: df["Key_passes_ctx"],
-            "Box Entry Passing": lambda df: df["Op_passes_into_box_ctx"],
-            "Set Play Chance Creation": lambda df: df["Sp_key_passes"],
+            "Through Balls": lambda df: df["Through_balls_ctx"],
+            "Key Passes": lambda df: df["Key_passes_ctx"],
+            "Box Entry Passes": lambda df: df["Op_passes_into_box_ctx"],
+            "Set-Piece Key Passes": lambda df: df["Sp_key_passes"],
+            # new: xA – Assists to capture creative under/overperformance
+            "Expected Assist Differential": lambda df: (
+                df["Op_xa_ctx"] - df["Assists_ctx"]
+            ),
 
-            # PRESSER
-            "Pressures Applied": lambda df: df["Padj_pressures_ctx"],
-            "Pressing Efficiency": lambda df: safe_div(
+            # DEFENSIVE FORWARD
+            "Pressures": lambda df: df["Padj_pressures_ctx"],
+            "Press Success": lambda df: safe_div(
                 df["Successful_pressures_ctx"], df["Padj_pressures_ctx"]
             ),
-            "Counterpressing": lambda df: df["Counterpressures_ctx"],
-            "High Press Work Rate": lambda df: df["Opp_half_pressures_ctx"],
-            "Turnovers Forced": lambda df: df["Turnovers_ctx"],
+            "Counterpresses": lambda df: df["Counterpressures_ctx"],
+            "High Press Actions": lambda df: df["Opp_half_pressures_ctx"],
+            "Turnovers Won": lambda df: df["Turnovers_ctx"],
         },
 
         "indices": {
             "Finisher_Index": {
-                "Shot Quality": 0.30,
-                "Shot Volume": 0.25,
-                "Finishing Efficiency": 0.20,
-                "Actual vs Expected Goals": 0.15,
-                "Shot on Target %": 0.10,
+                "Chance Quality": 0.30,
+                "Shots": 0.25,
+                "Finishing Rate": 0.20,
+                "Finishing Efficiency": 0.15,
+                "Shot Accuracy": 0.10,
             },
 
             "TargetMan_Index": {
-                "Aerial Win Rate": 0.30,
-                "Aerial Duels Won": 0.25,
+                "Aerial Success": 0.30,
+                "Aerial Wins": 0.25,
                 "Hold-Up Passing": 0.20,
-                "Box Presence": 0.15,
-                "Layoff Value": 0.10,
+                "Touches in Box": 0.15,
+                "Layoffs": 0.10,
             },
 
             "False9_Index": {
-                "Link-Up Pass Value": 0.40,
-                "Through Ball Creation": 0.20,
-                "Chance Creation Volume": 0.20,
-                "Box Entry Passing": 0.15,
-                "Set Play Chance Creation": 0.05,
+                "Link-Up Play": 0.35,
+                "Through Balls": 0.20,
+                "Key Passes": 0.15,
+                "Box Entry Passes": 0.15,
+                "Set-Piece Key Passes": 0.05,
+                "Expected Assist Differential": 0.10,
             },
 
             "DefensiveForward_Index": {
-                "Pressures Applied": 0.35,
-                "Pressing Efficiency": 0.25,
-                "Counterpressing": 0.20,
-                "High Press Work Rate": 0.15,
-                "Turnovers Forced": 0.05,
+                "Pressures": 0.35,
+                "Press Success": 0.25,
+                "Counterpresses": 0.20,
+                "High Press Actions": 0.15,
+                "Turnovers Won": 0.05,
             },
         },
 
         "groups": {
             "Finisher": [
-                "Shot Quality", "Shot Volume", "Finishing Efficiency",
-                "Actual vs Expected Goals", "Shot on Target %",
+                "Chance Quality", "Shots", "Finishing Rate",
+                "Finishing Efficiency", "Shot Accuracy",
             ],
             "Target Man": [
-                "Aerial Win Rate", "Aerial Duels Won",
-                "Hold-Up Passing", "Box Presence", "Layoff Value",
+                "Aerial Success", "Aerial Wins",
+                "Hold-Up Passing", "Touches in Box", "Layoffs",
             ],
             "False 9": [
-                "Link-Up Pass Value", "Through Ball Creation",
-                "Chance Creation Volume", "Box Entry Passing",
-                "Set Play Chance Creation",
+                "Link-Up Play", "Through Balls",
+                "Key Passes", "Box Entry Passes",
+                "Set-Piece Key Passes", "Expected Assist Differential",
             ],
             "Defensive Forward": [
-                "Pressures Applied", "Pressing Efficiency",
-                "Counterpressing", "High Press Work Rate",
-                "Turnovers Forced",
+                "Pressures", "Press Success",
+                "Counterpresses", "High Press Actions",
+                "Turnovers Won",
             ],
         },
 
