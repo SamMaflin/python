@@ -3,6 +3,8 @@
 # =====================================================================
 
 import streamlit as st
+import plotly.graph_objects as go
+
 
 from analysis.model_engine import run_model
 from analysis.model_config import ROLE_CONFIG
