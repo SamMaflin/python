@@ -1,7 +1,5 @@
-
 # MODEL ENGINE – LEVEL 3/4 HYBRID
 # League-aware, team-style-normalised, config-driven
-
 
 import pandas as pd
 import numpy as np
@@ -11,7 +9,6 @@ from .utils import (
     age_value_multiplier,  # kept for compatibility even if unused
     LEAGUE_MULTIPLIERS,
 )
-
 from .model_config import ROLE_CONFIG
 
 
@@ -31,7 +28,7 @@ DEFAULT_MINUTES = GLOBAL["DEFAULT_MINUTES"]
 
 def load_data(path: str, min_minutes: int) -> pd.DataFrame:
     """
-    Load raw data and apply a minutes threshold.
+    Load raw player-season data and apply a minutes threshold.
     """
     df = pd.read_csv(path)
     df = df[df["Minutes"] >= min_minutes].copy()
@@ -44,17 +41,20 @@ def load_data(path: str, min_minutes: int) -> pd.DataFrame:
 
 def add_team_context_metrics(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Compute team-level context metrics (possession, pressing, tempo, xG strength)
-    using minute-weighted averages. These are per-team, per-league aggregates.
+    Compute team-level context metrics (possession proxy, pressing,
+    tempo proxy, and xG strength) as minute-weighted averages.
 
-    Output columns merged back onto df:
-      - Team_Minutes
-      - Team_Possession
-      - Team_PressIntensity
-      - Team_Tempo
-      - Team_Att_xg_per90
-      - Team_Def_xg_per90
-      - Team_xGD_proxy
+    These are per-team, per-league aggregates and are merged back
+    onto the player-level dataframe.
+
+    Created columns:
+      - Team_Minutes          : total minutes recorded for the team
+      - Team_PossessionProxy  : minute-weighted average of Op_passes
+      - Team_PressIntensity   : minute-weighted average of Pressures
+      - Team_TempoProxy       : minute-weighted average of Turnovers
+      - Team_Att_xg_per90     : minute-weighted average of Np_xg
+      - Team_Def_xg_per90     : minute-weighted average of Np_xg_faced (if present)
+      - Team_xGD_proxy        : Team_Att_xg_per90 - Team_Def_xg_per90
     """
     required = ["League", "Team", "Minutes"]
     for col in required:
@@ -63,130 +63,30 @@ def add_team_context_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
     grp = df.groupby(["League", "Team"])
 
-    def wavg(g: pd.DataFrame, col: str):
+    def wavg(g: pd.DataFrame, col: str) -> float:
         if col not in g.columns or g[col].isna().all():
             return np.nan
         return np.average(g[col], weights=g["Minutes"])
 
     team_stats = grp.apply(
-        lambda g: pd.Series({
-            "Team_Minutes": g["Minutes"].sum(),
-            "Team_Possession": wavg(g, "Op_passes"),
-            "Team_PressIntensity": wavg(g, "Pressures"),
-            "Team_Tempo": wavg(g, "Turnovers"),
-            "Team_Att_xg_per90": wavg(g, "Np_xg"),
-            "Team_Def_xg_per90": wavg(g, "Np_xg_faced") if "Np_xg_faced" in g.columns else np.nan,
-        })
-    )
-
-    team_stats["Team_xGD_proxy"] = (
-        team_stats["Team_Att_xg_per90"] - team_stats["Team_Def_xg_per90"]
-    )
-
-    df = df.merge(
-        team_stats,
-        left_on=["League", "Team"],
-        right_index=True,
-        how="left",
-        validate="many_to_one",
-    )
-
-    return df
-
-
-
-# CONTEXT-NORMALISED METRICS (HYBRID NORMALISATION – OPTION C)
-
-
-
-# MODEL ENGINE – CORE CONTEXT LAYER (REWRITTEN WITH FIELD TILT + USAGE RATE)
-
-
-import pandas as pd
-import numpy as np
-
-from .utils import (
-    convert_value_to_millions,
-    safe_div, 
-    LEAGUE_MULTIPLIERS,
-)
-
-from .model_config import ROLE_CONFIG
-
-
-
-# GLOBAL DEFAULTS
-
-
-GLOBAL = ROLE_CONFIG["__settings__"]
-DEFAULT_PATH = GLOBAL["DEFAULT_PATH"]
-DEFAULT_BUDGET = GLOBAL["DEFAULT_BUDGET"]
-DEFAULT_MINUTES = GLOBAL["DEFAULT_MINUTES"]
-
-
-
-# DATA LOADING
-
-
-def load_data(path: str, min_minutes: int) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    df = df[df["Minutes"] >= min_minutes].copy()
-    return df
-
-
-
-# TEAM CONTEXT METRICS — REWRITTEN (ADDED FIELD TILT + USAGE RATE)
-
-
-def add_team_context_metrics(df: pd.DataFrame) -> pd.DataFrame:
-    required = ["League", "Team", "Minutes"]
-    for col in required:
-        if col not in df.columns:
-            raise ValueError(f"Missing required column for team context: {col}")
-
-    grp = df.groupby(["League", "Team"])
-
-    def wavg(g, col):
-        if col not in g or g[col].isna().all():
-            return np.nan
-        return np.average(g[col], weights=g["Minutes"])
-
-    # Core team metrics
-    team_stats = grp.apply(
-        lambda g: pd.Series({
-            "Team_Minutes": g["Minutes"].sum(),
-            "Team_Possession": wavg(g, "Op_passes"),
-            "Team_PressIntensity": wavg(g, "Pressures"),
-            "Team_Tempo": wavg(g, "Turnovers"),
-            "Team_Att_xg_per90": wavg(g, "Np_xg"),
-            "Team_Def_xg_per90": wavg(g, "Np_xg_faced") if "Np_xg_faced" in g else np.nan,
-        })
-    )
-
-    team_stats["Team_xGD_proxy"] = (
-        team_stats["Team_Att_xg_per90"] - team_stats["Team_Def_xg_per90"]
-    )
- 
-    # FIELD TILT (super lightweight) 
-
-    if "Opp_half_passes" in df.columns and "Own_half_passes" in df.columns:
-        tilt = grp.apply(
-            lambda g: safe_div(
-                g["Opp_half_passes"].sum(),
-                g["Opp_half_passes"].sum() + g["Own_half_passes"].sum()
-            )
+        lambda g: pd.Series(
+            {
+                "Team_Minutes": g["Minutes"].sum(),
+                # These three are proxies, not strict possession/tempo:
+                "Team_PossessionProxy": wavg(g, "Op_passes"),
+                "Team_PressIntensity": wavg(g, "Pressures"),
+                "Team_TempoProxy": wavg(g, "Turnovers"),
+                "Team_Att_xg_per90": wavg(g, "Np_xg"),
+                "Team_Def_xg_per90": wavg(g, "Np_xg_faced")
+                if "Np_xg_faced" in g.columns
+                else np.nan,
+            }
         )
-        team_stats["Team_FieldTilt"] = tilt.clip(0, 1)
-    else:
-        team_stats["Team_FieldTilt"] = np.nan
- 
-    #USAGE RATE CONTEXT
- 
-    if "Touches" in df.columns:
-        df["Team_Touches"] = grp["Touches"].transform("sum")
-        df["Team_UsageRate"] = safe_div(df["Touches"], df["Team_Touches"])
-    else:
-        df["Team_UsageRate"] = np.nan
+    )
+
+    team_stats["Team_xGD_proxy"] = (
+        team_stats["Team_Att_xg_per90"] - team_stats["Team_Def_xg_per90"]
+    )
 
     df = df.merge(
         team_stats,
@@ -204,11 +104,28 @@ def add_team_context_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _hybrid_norm(
-    df, col, team_col, league_mean_col, suffix="_ctx", min_std=1e-6
-):
-    if col not in df or team_col not in df or league_mean_col not in df:
+    df: pd.DataFrame,
+    col: str,
+    team_col: str,
+    league_mean_col: str,
+    suffix: str = "_ctx",
+    min_std: float = 1e-6,
+) -> pd.DataFrame:
+    """
+    Context-normalise a metric by scaling it according to how its
+    team environment compares to the league average.
+
+    Example:
+        metric_ctx = metric * clip( league_mean(team_col) / team_col , 0.5, 1.5 )
+
+    - If the team_col has very little variance across the league (std < min_std),
+      the function is a no-op.
+    - If any required column is missing, it is a no-op.
+    """
+    if col not in df.columns or team_col not in df.columns or league_mean_col not in df.columns:
         return df
 
+    # If there's no meaningful spread, don't normalise
     if df[team_col].std(skipna=True) < min_std:
         return df
 
@@ -220,99 +137,109 @@ def _hybrid_norm(
 
 
 
-# CONTEXT-NORMALISED METRICS — REWRITTEN
+# CONTEXT-NORMALISED METRICS
 
 
 def add_context_normalised_metrics(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Build context-normalised metrics ( *_ctx ) using team-level proxies
+    for possession, press intensity, tempo, and attacking xG.
+
+    All normalisations are per league.
+    """
+    if "League" not in df.columns:
+        raise ValueError("League column is required for context normalisation.")
+
     lg = df.groupby("League")
 
-    # League means for context
-    df["Lg_Team_Possession"]  = lg["Team_Possession"].transform("mean")
+    # League means for context drivers
+    df["Lg_Team_PossessionProxy"] = lg["Team_PossessionProxy"].transform("mean")
     df["Lg_Team_PressIntensity"] = lg["Team_PressIntensity"].transform("mean")
-    df["Lg_Team_Tempo"] = lg["Team_Tempo"].transform("mean")
+    df["Lg_Team_TempoProxy"] = lg["Team_TempoProxy"].transform("mean")
     df["Lg_Team_Att_xg"] = lg["Team_Att_xg_per90"].transform("mean")
     df["Lg_Team_xGD"] = lg["Team_xGD_proxy"].transform("mean")
-    df["Lg_Team_FieldTilt"] = lg["Team_FieldTilt"].transform("mean")
-    df["Lg_Team_UsageRate"] = lg["Team_UsageRate"].transform("mean")
 
-    
-    # POSSESSION-CONTROLLED
-    
+
+    # POSSESSION-CONTROLLED CREATION / PASSING METRICS
+
     poss_metrics = [
-        "Op_passes", "Op_key_passes", "Op_passes_into_box",
-        "Passes_inside_box", "Through_balls", "Op_xa", "Key_passes",
-        "Assists", "Op_last_3rd_passes", "Xgchain", "Op_xgchain",
-        "Xgbuildup", "Op_xgbuildup", "Xgchain_per_possession",
-        "Op_xgchain_per_possession", "Xgbuildup_per_possession",
-        "Op_xgbuildup_per_possession", "Pass_and_carry_last_3rd",
-        "Crosses_completed", "Sp_pass_into_box", "Touches_in_box",
+        "Op_passes",
+        "Op_key_passes",
+        "Op_passes_into_box",
+        "Passes_inside_box",
+        "Through_balls",
+        "Op_xa",
+        "Key_passes",
+        "Assists",
+        "Op_last_3rd_passes",
+        "Xgchain",
+        "Op_xgchain",
+        "Xgbuildup",
+        "Op_xgbuildup",
+        "Xgchain_per_possession",
+        "Op_xgchain_per_possession",
+        "Xgbuildup_per_possession",
+        "Op_xgbuildup_per_possession",
+        "Pass_and_carry_last_3rd",
+        "Crosses_completed",
+        "Sp_pass_into_box",
+        "Touches_in_box",
     ]
 
     for col in poss_metrics:
-        _hybrid_norm(df, col, "Team_Possession", "Lg_Team_Possession")
+        _hybrid_norm(df, col, "Team_PossessionProxy", "Lg_Team_PossessionProxy")
 
-    
-    # **NEW:** FIELD TILT CONTEXT — ONLY A FEW METRICS
-    
-    tilt_metrics = [
-        "Op_passes_into_box",
-        "Passes_inside_box",
-        "Touches_in_box",
-        "Op_last_3rd_passes",
-    ]
 
-    for col in tilt_metrics:
-        _hybrid_norm(df, col, "Team_FieldTilt", "Lg_Team_FieldTilt")
-
-    
     # PRESSURE ENVIRONMENT
-    
+
     press_metrics = [
-        "Pressures", "Padj_pressures", "Counterpressures",
-        "Opp_half_pressures", "Opp_half_counterpressures",
-        "Successful_pressures", "Successful_counterpressures",
-        "Defensive_actions", "Tackles", "Interceptions",
-        "Padj_tackles", "Padj_interceptions", "Ball_recoveries",
+        "Pressures",
+        "Padj_pressures",
+        "Counterpressures",
+        "Opp_half_pressures",
+        "Opp_half_counterpressures",
+        "Successful_pressures",
+        "Successful_counterpressures",
+        "Defensive_actions",
+        "Tackles",
+        "Interceptions",
+        "Padj_tackles",
+        "Padj_interceptions",
+        "Ball_recoveries",
     ]
 
     for col in press_metrics:
         _hybrid_norm(df, col, "Team_PressIntensity", "Lg_Team_PressIntensity")
 
-    
-    # TEMPO / TRANSITION
-    
+
+    # TEMPO / TRANSITION ENVIRONMENT
+
     tempo_metrics = [
-        "Carries", "Dribbles_attempts", "Dribbles_successful",
-        "Turnovers", "Carry_length", "Failed_dribbles", "Dispossessed"
+        "Carries",
+        "Dribbles_attempts",
+        "Dribbles_successful",
+        "Turnovers",
+        "Carry_length",
+        "Failed_dribbles",
+        "Dispossessed",
     ]
 
     for col in tempo_metrics:
-        _hybrid_norm(df, col, "Team_Tempo", "Lg_Team_Tempo")
+        _hybrid_norm(df, col, "Team_TempoProxy", "Lg_Team_TempoProxy")
 
-    
-    # **NEW:** USAGE RATE CONTEXT — ONLY FOR VOLUME METRICS
-    
-    usage_metrics = [
-        "Carries", "Dribbles_attempts", "Key_passes",
-        "Through_balls", "Np_shots"
-    ]
 
-    for col in usage_metrics:
-        _hybrid_norm(df, col, "Team_UsageRate", "Lg_Team_UsageRate")
+    # XG STRENGTH (ATTACKING)
 
-    
-    # XG STRENGTH
-    
     xg_metrics = ["Np_xg", "Np_goals", "Np_shots"]
 
     for col in xg_metrics:
         _hybrid_norm(df, col, "Team_Att_xg_per90", "Lg_Team_Att_xg")
 
+    # Convenience: context-adjusted finishing difference if available
     if "Np_xg_ctx" in df.columns and "Np_goals_ctx" in df.columns:
         df["Actual_vs_xG_ctx"] = df["Np_goals_ctx"] - df["Np_xg_ctx"]
 
     return df
-
 
 
 
@@ -327,6 +254,9 @@ def zscore_once(df: pd.DataFrame, metrics, prefix: str = "z_") -> pd.DataFrame:
     - Missing metrics get a z-score of 0.0.
     - Values are clipped to [-3, 3] to avoid extreme outliers.
     """
+    if "League" not in df.columns:
+        raise ValueError("League column is required for z-scoring.")
+
     for m in metrics:
         zcol = f"{prefix}{m}"
         if zcol in df.columns:
@@ -353,8 +283,8 @@ def zscore_once(df: pd.DataFrame, metrics, prefix: str = "z_") -> pd.DataFrame:
 
 def compute_baseline(df: pd.DataFrame, baseline: dict) -> pd.DataFrame:
     """
-    Compute all custom baseline metrics defined in ROLE_CONFIG["role"]["baseline"].
-    Many of these use *_ctx metrics now.
+    Compute all custom baseline metrics defined in ROLE_CONFIG[role]["baseline"].
+    Many of these now use *_ctx metrics as inputs.
     """
     for name, fn in baseline.items():
         df[name] = fn(df)
@@ -374,9 +304,7 @@ def compute_indices(df: pd.DataFrame, indices: dict) -> pd.DataFrame:
         metrics = list(metric_weights.keys())
         df = zscore_once(df, metrics)
 
-        df[idx_name] = sum(
-            df[f"z_{m}"] * w for m, w in metric_weights.items()
-        )
+        df[idx_name] = sum(df[f"z_{m}"] * w for m, w in metric_weights.items())
 
     return df
 
@@ -412,14 +340,14 @@ def compute_overall(
     """
     Compute overall rating as a weighted combination of group-level z-scores.
 
-    groups:  { "GroupName": [metric1, metric2, ...], ... }
+    groups : { "GroupName": [metric1, metric2, ...], ... }
     weights: { "GroupName": weight, ... }
-    sliders: UI-controlled multipliers per group.
+    sliders: UI-controlled multipliers per group (default 1.0 if missing).
 
-    League strength is applied at the final Overall stage, so it is not
-    cancelled out by z-scoring.
+    League strength is applied at the final Overall stage so that
+    league z-scoring (relative performance) is preserved, and then
+    adjusted by a global league multiplier.
     """
-
     # 1) Z-score all raw metrics that feed into groups (idempotent)
     all_metrics = {m for metric_list in groups.values() for m in metric_list}
     df = zscore_once(df, list(all_metrics))
@@ -452,38 +380,40 @@ def compute_overall(
 
 
 
-# BUY SCORE
+# BUY SCORE (Celtic-optimised)
 
 
 def compute_buy_score(df: pd.DataFrame, budget_million: float) -> pd.DataFrame:
     """
-    Celtic-optimised Level 4 BuyScore:
-    Value Efficiency + Age Premium + Reliability + Sustainability + Performance Fit.
+    Level 4 BuyScore for Celtic:
+
+    Combines:
+      - Value Efficiency
+      - Age Profile
+      - Reliability (availability)
+      - Sustainability (regression risk on G/xG + A/xA)
+      - Performance (Overall_adj)
+
+    Then filters to players within the transfer budget.
     """
 
-    
-    # 1. VALUE EFFICIENCY
-    
+    # 1. VALUE EFFICIENCY  
     df["Value_million"] = df["Value"].apply(convert_value_to_millions).fillna(99)
 
     # ability-per-cost (log dampens inflation)
     df["ValueEff"] = df["Overall_adj"] / np.log(df["Value_million"] + 1.75)
 
-    
-    # 2. AGE PREMIUM (Celtic-specific optimal window: 20–24)
-    
+    # 2. AGE PREMIUM (Celtic-specific optimal window: ~20–24) 
     df["AgePremium"] = 1 / (1 + np.exp((df["Age"] - 23) / 3))
 
-    
-    # 3. RELIABILITY (Minutes availability – league normalised)
-    
+    # 3. RELIABILITY (Minutes availability – league normalised)  
     league_mean_minutes = df.groupby("League")["Minutes"].transform("mean")
-    df["Reliability"] = (df["Minutes"] / league_mean_minutes).replace([np.inf, -np.inf], np.nan)
+    df["Reliability"] = (df["Minutes"] / league_mean_minutes).replace(
+        [np.inf, -np.inf], np.nan
+    )
     df["Reliability"] = df["Reliability"].fillna(0.0).clip(0, 1.5)
 
-    
-    # 4. SUSTAINABILITY (penalise volatile overperformance, asymmetrically)
-    
+    # 4. SUSTAINABILITY (penalise volatile overperformance)  
     if "Np_goals_ctx" in df.columns and "Np_xg_ctx" in df.columns:
         df["FinishingDiff"] = df["Np_goals_ctx"] - df["Np_xg_ctx"]
     else:
@@ -495,37 +425,28 @@ def compute_buy_score(df: pd.DataFrame, budget_million: float) -> pd.DataFrame:
         df["AssistDiff"] = 0.0
 
     total_diff = df["FinishingDiff"] + df["AssistDiff"]
-
     over = total_diff.clip(lower=0)          # overperformance
     under = (-total_diff).clip(lower=0)      # underperformance
 
     # Overperformance regresses more heavily than underperformance
     df["Sustainability"] = np.exp(-(2 * over + 1 * under) / 2)
 
-    
-    # 5. PERFORMANCE FIT
-    
-    df["Perf"] = df["Overall_adj"]  # <-- NEEDED so z_Perf exists
+    # 5. PERFORMANCE FIT 
+    df["Perf"] = df["Overall_adj"]
 
-    
-    # NORMALISE COMPONENTS (league aware, single pass per metric)
-    
+    # NORMALISE BUY COMPONENTS (per league) 
     df = zscore_once(df, ["ValueEff", "AgePremium", "Reliability", "Sustainability", "Perf"])
 
-    
-    # CELTIC-OPTIMISED WEIGHTING
-    
+    # CELTIC-OPTIMISED WEIGHTING 
     df["BuyScore"] = (
-        0.10 * df["z_ValueEff"] +
-        0.20 * df["z_AgePremium"] +
-        0.10 * df["z_Reliability"] +
-        0.05 * df["z_Sustainability"] +
-        0.60 * df["z_Perf"]          # massive steering via sliders
+        0.10 * df["z_ValueEff"]
+        + 0.20 * df["z_AgePremium"]
+        + 0.10 * df["z_Reliability"]
+        + 0.05 * df["z_Sustainability"]
+        + 0.60 * df["z_Perf"]  # sliders heavily steer Perf via Overall_adj
     )
 
-    
-    # APPLY BUDGET FILTER
-    
+    # APPLY BUDGET FILTER 
     df = df[df["Value_million"] <= budget_million].copy()
     return df
 
@@ -534,13 +455,15 @@ def compute_buy_score(df: pd.DataFrame, budget_million: float) -> pd.DataFrame:
 # MAIN PIPELINE (ASSUMES CONTEXT IS ALREADY ADDED)
 
 
-def run_pipeline(df: pd.DataFrame, cfg: dict, sliders: dict, budget_million: float) -> pd.DataFrame:
+def run_pipeline(
+    df: pd.DataFrame,
+    cfg: dict,
+    sliders: dict,
+    budget_million: float,
+) -> pd.DataFrame:
     """
-    Full modelling pipeline for a given role — includes a GLOBAL
-    ability percentile (Overall_pct_global) computed BEFORE the budget filter.
-    (Behaviour intentionally kept as in the original design.)
+    Full modelling pipeline for a given role.
     """
-
     baseline = cfg["baseline"]
     indices = cfg["indices"]
     groups = cfg["groups"]
@@ -556,7 +479,7 @@ def run_pipeline(df: pd.DataFrame, cfg: dict, sliders: dict, budget_million: flo
     # 3) Compute OVERALL (performance ability score, with league strength)
     df = compute_overall(df, groups, weights, sliders)
 
-    # 4) GLOBAL OVERALL PERCENTILE (BEFORE BUDGET FILTER)
+    # 4) GLOBAL OVERALL PERCENTILE (before budget filter)
     df["Overall_pct_global"] = df["Overall_adj"].rank(pct=True) * 100
 
     # 5) BUY SCORE (handles age, value, and budget, and filters by budget)
@@ -581,9 +504,8 @@ def run_model(
     Generic runner for any configured role.
 
     Example:
-        run_model("winger", BallCarrier=1.2, Presser=0.8)
+        run_model("winger", Ball Carrier=1.2, Goal Threat=0.8)
     """
-
     if role not in ROLE_CONFIG:
         raise ValueError(f"Unknown role: {role}")
 
@@ -600,8 +522,8 @@ def run_model(
 
     # 3) Now filter to role positions (AFTER context is built)
     mask = (
-        df["Position_1"].isin(cfg["positions"]) |
-        df["Position_2"].isin(cfg["positions"])
+        df["Position_1"].isin(cfg["positions"])
+        | df["Position_2"].isin(cfg["positions"])
     )
     df = df[mask].copy()
 
@@ -611,10 +533,8 @@ def run_model(
     # 4) Run role-specific pipeline
     return run_pipeline(df, cfg, sliders, budget_million)
 
-
-
-# ROLE WRAPPERS
-
+ 
+# ROLE WRAPPERS 
 
 def run_gk_model(**kwargs) -> pd.DataFrame:
     return run_model("goalkeeper", **kwargs)
