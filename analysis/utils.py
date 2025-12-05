@@ -95,4 +95,4 @@ def percentile_phrase(p):
     if p >= 70: return "strong, clearly above average"
     if p >= 50: return "around average"
     if p >= 30: return "below average"
-    return "poor relative to the dataset"
+    return "relatively poor"

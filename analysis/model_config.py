@@ -1,6 +1,4 @@
-# =====================================================================
-# MODEL CONFIGURATION – ALL ROLES STORED IN ONE STRUCTURED DICTIONARY
-# =====================================================================
+ # MODEL CONFIGURATION – ALL ROLES STORED IN ONE STRUCTURED DICTIONARY 
 
 from .utils import safe_div
 
@@ -13,9 +11,8 @@ ROLE_CONFIG = {
         "DEFAULT_MINUTES": 900,
     },
 
-    # ================================================================
+    
     # GOALKEEPER
-    # ================================================================
     "goalkeeper": {
         "positions": {"Goalkeeper"},
 
@@ -124,9 +121,9 @@ ROLE_CONFIG = {
         """,
     },
 
-    # ================================================================
+    
     # WINGER
-    # ================================================================
+    
     "winger": {
         "positions": {
             "Right Midfielder", "Right Winger", "Right Wing Back",
@@ -180,13 +177,13 @@ ROLE_CONFIG = {
         },
 
         "indices": {
-            "Carrier_Index": {
+            "BallCarrier_Index": {
                 "Dribble Efficiency": 0.35,
                 "Dangerous Carries": 0.30,
                 "Carry Efficiency": 0.20,
                 "Carrier Risk": -0.15,
             },
-            "Creator_Index": {
+            "WideCreator_Index": {
                 "Open Play Creativity": 0.40,
                 "Box Entry Passing": 0.25,
                 "Through Ball Value": 0.20,
@@ -199,7 +196,7 @@ ROLE_CONFIG = {
                 "Box Presence": 0.15,
                 "Actual vs Expected Goals": 0.10,
             },
-            "Presser_Index": {
+            "DefensiveWinger_Index": {
                 "Pressing Volume": 0.25,
                 "Pressing Efficiency": 0.20,
                 "Counterpress Intensity": 0.20,
@@ -210,11 +207,11 @@ ROLE_CONFIG = {
         },
 
         "groups": {
-            "Carrier": [
+            "Ball Carrier": [
                 "Dribble Efficiency", "Carry Efficiency",
                 "Dangerous Carries", "Carrier Risk",
             ],
-            "Creator": [
+            "Wide Creator": [
                 "Open Play Creativity", "Box Entry Passing",
                 "Through Ball Value", "Crossing Value",
             ],
@@ -222,7 +219,7 @@ ROLE_CONFIG = {
                 "Shot Quality", "Shot Volume", "Finishing Efficiency",
                 "Box Presence", "Actual vs Expected Goals",
             ],
-            "Presser": [
+            "Defensive Winger": [
                 "Pressing Volume", "Pressing Efficiency",
                 "Counterpress Intensity", "Counterpress Success",
                 "High Press Zone Actions", "Dribble Stop Rate",
@@ -230,41 +227,41 @@ ROLE_CONFIG = {
         },
 
         "weights": {
-            "Carrier": 0.35,
-            "Creator": 0.25,
+            "Ball Carrier": 0.35,
+            "Wide Creator": 0.25,
             "Goal Threat": 0.25,
-            "Presser": 0.15,
+            "Defensive Winger": 0.15,
         },
 
         "invert": {"Carrier Risk"},
 
         "sliders": [
-            ("Carrier", "Carrier"),
-            ("Creator", "Creator"),
+            ("Ball Carrier", "Ball Carrier"),
+            ("Wide Creator", "Wide Creator"),
             ("Goal Threat", "Goal Threat"),
-            ("Presser", "Presser"),
+            ("Defensive Winger", "Defensive Winger"),
         ],
 
         "columns": [
             "ID", "Team", "League",
-            "Carrier_Index", "Creator_Index", "GoalThreat_Index", "Presser_Index",
-            "Carrier_pct", "Creator_pct", "GoalThreat_pct", "Presser_pct",
+            "BallCarrier_Index", "WideCreator_Index", "GoalThreat_Index", "DefensiveWinger_Index",
+            "BallCarrier_pct", "WideCreator_pct", "GoalThreat_pct", "DefensiveWinger_pct",
             "Overall_pct", "BuyScore",
             "Age", "Value",
         ],
 
         "text": """
         Next we turn to the wide players who inject pace, creativity, and decisive output — the <b>Wingers</b>.<br></br>
-        ● The <b>Carrier</b> — drives progression through ball-carrying and dribbling.<br>
-        ● The <b>Creator</b> — supplies incisive passing and final-third delivery.<br>
+        ● The <b>Ball Carrier</b> — drives progression through ball-carrying and dribbling.<br>
+        ● The <b>Wide Creator</b> — supplies incisive passing and final-third delivery.<br>
         ● The <b>Goal Threat</b> — provides high-quality shooting and penalty-box actions.<br>
-        ● The <b>Presser</b> — leads high pressing and counterpressing intensity.<br></br>
+        ● The <b>Defensive Winger</b> — leads high pressing and counterpressing intensity.<br></br>
         """,
     },
 
-    # ================================================================
+    
     # CENTRAL MIDFIELDER
-    # ================================================================
+    
     "midfielder": {
         "positions": {
             "Central Midfielder", "Centre Midfielder",
@@ -301,7 +298,7 @@ ROLE_CONFIG = {
 
             # BOX TO BOX
             "Carries Into Final Third": lambda df: df["Pass_and_carry_last_3rd_ctx"],
-            "Counterpressing Output": lambda df: df["Counterpressures_ctx"],
+            "Counterpressing": lambda df: df["Counterpressures_ctx"],
             "Ball Carry Value": lambda df: (
                 df["Carries_ctx"] * df["Carry_length_ctx"]
             ),
@@ -330,7 +327,7 @@ ROLE_CONFIG = {
                 "Dribble Stop Rate": 0.10,
             },
 
-            "Playmaker_Index": {
+            "DeepLyingPlaymaker_Index": {
                 "Forward Pass Value": 0.25,
                 "Long Pass Quality": 0.20,
                 "Build-Up Contribution": 0.25,
@@ -340,13 +337,13 @@ ROLE_CONFIG = {
 
             "BoxToBox_Index": {
                 "Carries Into Final Third": 0.25,
-                "Counterpressing Output": 0.20,
+                "Counterpressing": 0.20,
                 "Ball Carry Value": 0.20,
                 "Transition Defensive Work": 0.20,
                 "Distance Pressing": 0.15,
             },
 
-            "AttackingMid_Index": {
+            "AttackingPlaymaker_Index": {
                 "Final Third Creativity": 0.35,
                 "Through Ball Quality": 0.20,
                 "Box Entry Deliveries": 0.20,
@@ -361,17 +358,17 @@ ROLE_CONFIG = {
                 "Padj Tackle Impact", "Padj Interception Impact",
                 "Ball Recoveries", "Dribble Stop Rate",
             ],
-            "Playmaker": [
+            "Deep-Lying Playmaker": [
                 "Forward Pass Value", "Long Pass Quality",
                 "Build-Up Contribution", "XGChain Influence",
                 "Progressive Third Passes",
             ],
             "Box-to-Box": [
-                "Carries Into Final Third", "Counterpressing Output",
+                "Carries Into Final Third", "Counterpressing",
                 "Ball Carry Value", "Transition Defensive Work",
                 "Distance Pressing",
             ],
-            "Attacking Midfielder": [
+            "Attacking Playmaker": [
                 "Final Third Creativity", "Through Ball Quality",
                 "Box Entry Deliveries", "Shot Assist Impact",
                 "Chance Conversion Influence",
@@ -380,26 +377,26 @@ ROLE_CONFIG = {
 
         "weights": {
             "Ball Winner": 0.25,
-            "Playmaker": 0.25,
+            "Deep-Lying Playmaker": 0.25,
             "Box-to-Box": 0.25,
-            "Attacking Midfielder": 0.25,
+            "Attacking Playmaker": 0.25,
         },
 
         "invert": set(),
 
         "sliders": [
             ("Ball Winner", "Ball Winner"),
-            ("Playmaker", "Playmaker"),
+            ("Deep-Lying Playmaker", "Deep-Lying Playmaker"),
             ("Box-to-Box", "Box-to-Box"),
-            ("Attacking Midfielder", "Attacking Midfielder"),
+            ("Attacking Playmaker", "Attacking Playmaker"),
         ],
 
         "columns": [
             "ID", "Team", "League",
-            "BallWinner_Index", "Playmaker_Index",
-            "BoxToBox_Index", "AttackingMid_Index",
-            "BallWinner_pct", "Playmaker_pct",
-            "BoxToBox_pct", "AttackingMid_pct",
+            "BallWinner_Index", "DeepLyingPlaymaker_Index",
+            "BoxToBox_Index", "AttackingPlaymaker_Index",
+            "BallWinner_pct", "DeepLyingPlaymaker_pct",
+            "BoxToBox_pct", "AttackingPlaymaker_pct",
             "Overall_pct", "BuyScore",
             "Age", "Value",
         ],
@@ -407,15 +404,14 @@ ROLE_CONFIG = {
         "text": """
         We now arrive in the engine room — the <b>Central Midfielder</b>.<br></br>
         ● The <b>Ball-Winner</b> — disrupts opponents and dominates duels.<br>
-        ● The <b>Playmaker</b> — dictates tempo and drives buildup.<br>
+        ● The <b>Deep-Lying Playmaker</b> — dictates tempo and drives buildup.<br>
         ● The <b>Box-to-Box</b> — covers ground and impacts transitions.<br>
-        ● The <b>Attacking Midfielder</b> — unlocks defences with creativity and incisive passing.<br></br>
+        ● The <b>Attacking Playmaker</b> — unlocks defences with creativity and incisive passing.<br></br>
         """,
     },
 
-    # ================================================================
-    # STRIKER
-    # ================================================================
+    
+    # STRIKER 
     "striker": {
         "positions": {
             "Centre Forward",
@@ -442,7 +438,7 @@ ROLE_CONFIG = {
             "Box Presence": lambda df: df["Touches_in_box_ctx"],
             "Layoff Value": lambda df: df["Op_xgbuildup_per_possession_ctx"],
 
-            # CREATOR STRIKER
+            # False 9
             "Link-Up Pass Value": lambda df: (
                 df["Op_xa_ctx"] + df["Op_key_passes_ctx"] * 0.15
             ),
@@ -456,7 +452,7 @@ ROLE_CONFIG = {
             "Pressing Efficiency": lambda df: safe_div(
                 df["Successful_pressures_ctx"], df["Padj_pressures_ctx"]
             ),
-            "Counterpressing Output": lambda df: df["Counterpressures_ctx"],
+            "Counterpressing": lambda df: df["Counterpressures_ctx"],
             "High Press Work Rate": lambda df: df["Opp_half_pressures_ctx"],
             "Turnovers Forced": lambda df: df["Turnovers_ctx"],
         },
@@ -478,7 +474,7 @@ ROLE_CONFIG = {
                 "Layoff Value": 0.10,
             },
 
-            "CreatorStriker_Index": {
+            "False9_Index": {
                 "Link-Up Pass Value": 0.40,
                 "Through Ball Creation": 0.20,
                 "Chance Creation Volume": 0.20,
@@ -486,10 +482,10 @@ ROLE_CONFIG = {
                 "Set Play Chance Creation": 0.05,
             },
 
-            "PresserStriker_Index": {
+            "DefensiveForward_Index": {
                 "Pressures Applied": 0.35,
                 "Pressing Efficiency": 0.25,
-                "Counterpressing Output": 0.20,
+                "Counterpressing": 0.20,
                 "High Press Work Rate": 0.15,
                 "Turnovers Forced": 0.05,
             },
@@ -504,14 +500,14 @@ ROLE_CONFIG = {
                 "Aerial Win Rate", "Aerial Duels Won",
                 "Hold-Up Passing", "Box Presence", "Layoff Value",
             ],
-            "Creator Striker": [
+            "False 9": [
                 "Link-Up Pass Value", "Through Ball Creation",
                 "Chance Creation Volume", "Box Entry Passing",
                 "Set Play Chance Creation",
             ],
-            "Presser": [
+            "Defensive Forward": [
                 "Pressures Applied", "Pressing Efficiency",
-                "Counterpressing Output", "High Press Work Rate",
+                "Counterpressing", "High Press Work Rate",
                 "Turnovers Forced",
             ],
         },
@@ -519,8 +515,8 @@ ROLE_CONFIG = {
         "weights": {
             "Finisher": 0.25,
             "Target Man": 0.25,
-            "Creator Striker": 0.25,
-            "Presser": 0.25,
+            "False 9": 0.25,
+            "Defensive Forward": 0.25,
         },
 
         "invert": set(),
@@ -528,16 +524,16 @@ ROLE_CONFIG = {
         "sliders": [
             ("Finisher", "Finisher"),
             ("Target Man", "Target Man"),
-            ("Creator Striker", "Creator Striker"),
-            ("Presser", "Presser"),
+            ("False 9", "False 9"),
+            ("Defensive Forward", "Defensive Forward"),
         ],
 
         "columns": [
             "ID", "Team", "League",
             "Finisher_Index", "TargetMan_Index",
-            "CreatorStriker_Index", "PresserStriker_Index",
+            "False9_Index", "DefensiveForward_Index",
             "Finisher_pct", "TargetMan_pct",
-            "CreatorStriker_pct", "PresserStriker_pct",
+            "False9_pct", "DefensiveForward_pct",
             "Overall_pct", "BuyScore",
             "Age", "Value",
         ],
@@ -546,8 +542,8 @@ ROLE_CONFIG = {
         Finally, the spearhead of the attack — the <b>Striker</b>.<br></br>
         ● The <b>Finisher</b> — clinical, efficient, and deadly inside the box.<br>
         ● The <b>Target Man</b> — aerially dominant and strong in hold-up play.<br>
-        ● The <b>Creator Striker</b> — links play, assists, and combines intelligently.<br>
-        ● The <b>Presser</b> — sets the tone defensively and disrupts buildup.<br></br>
+        ● The <b>False 9</b> — links play, assists, and combines intelligently.<br>
+        ● The <b>Defensive Forward</b> — sets the tone defensively and disrupts buildup.<br></br>
         """,
     },
 }
