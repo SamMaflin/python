@@ -108,7 +108,7 @@ def team_style_description(row, league_df=None):
         f"<b>{poss_t}</b> possession, "
         f"<b>{press_t}</b> pressing intensity, "
         f"<b>{tempo_t}</b> tempo, "
-        f"<b>{att_t}</b> attacking prowess in the attacking third." 
+        f"<b>{att_t}</b> attacking prowess in the attacking third" 
     )
 
     # -------------------------------------------

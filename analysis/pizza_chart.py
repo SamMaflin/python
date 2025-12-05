@@ -53,7 +53,7 @@ def render_category_header(groups):
 
     html += "</div>"
 
-    components.html(html, height=60, scrolling=False)
+    components.html(html, height=80, scrolling=False)
 
 
 
