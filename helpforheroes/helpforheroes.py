@@ -16,27 +16,18 @@ def load_helpforheroes_data(file_path):
 # Open Streamlit App add title and app description about customer segmentation
 import streamlit as st
 
-# include logo
-st.image("helpforheroes/hfh_logo.png", width=200)
-
-# --- Custom CSS to control font sizes ---
 st.markdown("""
-    <style>
-        .big-title {
-            font-size: 8rem;       /* Increase H1 size */
-            font-weight: 700;
-        }
-        .sub-title {
-            font-size: 5rem;     /* Increase H2 size */
-            font-weight: 400;
-        }
-    </style>
+<style>
+.stMarkdown h1 {
+    font-size: 80px !important;
+    font-weight: 700 !important;
+}
+.stMarkdown h2 {
+    font-size: 50px !important;
+    font-weight: 400 !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
-# --- Use the CSS classes ---
-st.markdown('<h1 class="big-title">Help for Heroes Interview Task</h1>', unsafe_allow_html=True)
-
-st.markdown(
-    '<h2 class="sub-title">What makes a customer <b>high-value</b> — and how can we acquire more customers like them?</h2>',
-    unsafe_allow_html=True
-)
+st.markdown("# Help for Heroes Interview Task")
+st.markdown("## What makes a customer **high-value** — and how can we acquire more customers like them?")
