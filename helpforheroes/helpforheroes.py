@@ -38,6 +38,11 @@ st.markdown("""
     font-weight: 700 !important;
     margin: 20px 0 20px 0;
 }
+.stMarkdown h4 {
+    font-size: 30px !important;
+    font-weight: 700 !important;
+    margin: 20px 0 20px 0;
+}
 .stMarkdown p {
     font-size: 22px !important;
     margin: 20px 0 20px 0;
@@ -79,12 +84,10 @@ st.markdown(
 # customer value areas 
 # economics
 st.markdown(
-    "<h3><span style=\"color:orange; font-weight:bold;\">● Economics Value</span></h3><span>How customers contribute financially.</span>",
+    '<h4>'
+    '<span style="color:orange; font-weight:bold;">● Economic Value — </span>'
+    '<span style="font-weight:300;">How customers contribute financially.</span>'
+    '</h4>',
     unsafe_allow_html=True
 )
-# behavioural
-#st.markdown("<h3>Behavioural Value</h3>",unsafe_allow_html=True)
-#st.markdown("<p>How customers engage over time.</p>",unsafe_allow_html=True)
-# strategic
-#st.markdown("<h3>Strategic Value</h3>",unsafe_allow_html=True)
-#st.markdown("<p>How customers support business priorities.</p>",unsafe_allow_html=True)
+
