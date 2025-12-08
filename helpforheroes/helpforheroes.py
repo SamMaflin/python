@@ -18,7 +18,7 @@ import streamlit as st
 
 # include logo
 st.image("helpforheroes/hfh_logo.png", width=200)
-st.title("Help for Heroes Customer Segmentation")
+st.title("Help for Heroes Interview Task")
 st.write("""
 This application analyzes customer data from Help for Heroes to segment customers based on their donation and engagement patterns.
 """)
