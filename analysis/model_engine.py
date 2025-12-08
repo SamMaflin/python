@@ -1,12 +1,8 @@
-# MODEL ENGINE – LEVEL 3/4 HYBRID
-# League-aware, team-style-normalised, config-driven
-
 import pandas as pd
 import numpy as np
 
 from .utils import (
-    convert_value_to_millions,
-    age_value_multiplier,  # kept for compatibility even if unused
+    convert_value_to_millions, 
     LEAGUE_MULTIPLIERS,
 )
 from .model_config import ROLE_CONFIG
