@@ -77,3 +77,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# intro
+st.markdown(
+    '<h3>'
+    "First, Let's define 'Value'...</h3>",
+    unsafe_allow_html=True
+)
