@@ -26,7 +26,7 @@ st.markdown(
 ) 
 
 st.markdown(
-    "<h3>What makes a customer <b>high-value</b> — and how can we acquire more customers like them?</h3>",
+    "<h2>What makes a customer <b>high-value</b> — and how can we acquire more customers like them?</h2>",
     unsafe_allow_html=True
 )
 
