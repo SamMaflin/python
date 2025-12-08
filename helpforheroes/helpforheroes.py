@@ -23,12 +23,12 @@ st.image("helpforheroes/hfh_logo.png", width=200)
 st.markdown("""
     <style>
         .big-title {
-            font-size: 3rem;       /* Increase H1 size */
+            font-size: 8rem;       /* Increase H1 size */
             font-weight: 700;
         }
         .sub-title {
-            font-size: 1.8rem;     /* Increase H2 size */
-            font-weight: 500;
+            font-size: 5rem;     /* Increase H2 size */
+            font-weight: 400;
         }
     </style>
 """, unsafe_allow_html=True)
