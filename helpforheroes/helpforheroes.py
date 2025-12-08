@@ -59,7 +59,7 @@ st.markdown(
 # research question
 st.markdown(
     '<p>'
-    'All customers create value — just not in the same way. ' \
+    'All customers create value for any organisation — just not in the same way. ' \
     'Some drive value through big, high-cost bookings, while others do it through consistency, ' \
     'returning again and again as loyal repeat trippers. Some help grow priority destinations, ' \
     'others favour products that strengthen our portfolio. This analysis isn’t about ranking customers, ' \
