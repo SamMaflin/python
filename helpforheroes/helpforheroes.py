@@ -75,13 +75,13 @@ st.markdown(
 
 # intro
 st.markdown(
-    "<h2>But how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h2>",
+    "<h3>But how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h2>",
     unsafe_allow_html=True
 )
 
 
-# customer value areas 
-# economics
+# --- customer value areas --- # 
+# economic value
 st.markdown(
     '<h4>'
     '<span style="color:orange; font-weight:bold;">● Economic Value — </span>'
@@ -89,4 +89,19 @@ st.markdown(
     '</h4>',
     unsafe_allow_html=True
 )
-
+# behavioral value
+st.markdown(
+    '<h4>'
+    '<span style="color:orange; font-weight:bold;">● Behavioral Value — </span>'
+    '<span style="font-weight:300;">How customers interact and engage.</span>'
+    '</h4>',
+    unsafe_allow_html=True
+)
+# strategic value
+st.markdown(
+    '<h4>'
+    '<span style="color:orange; font-weight:bold;">● Strategic Value — </span>'
+    '<span style="font-weight:300;">How customers align with business goals.</span>'
+    '</h4>',
+    unsafe_allow_html=True
+)
