@@ -29,17 +29,17 @@ st.markdown("""
     margin: 20px 0 20px 0;
 }
 .stMarkdown h2 {
-    font-size: 45px !important;
+    font-size: 50px !important;
     font-weight: 400 !important;
     margin: 10px 0 10px 0;
 }
 .stMarkdown h3 {
-    font-size: 35px !important;
+    font-size: 40px !important;
     font-weight: 700 !important;
     margin: 10px 0 10px 0;
 }
 .stMarkdown p {
-    font-size: 20px !important;
+    font-size: 25px !important;
     margin: 20px 0 20px 0;
 }
 </style>
