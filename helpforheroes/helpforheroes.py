@@ -24,7 +24,7 @@ st.image("helpforheroes/hfh_logo.png", width=200)
 st.markdown("""
 <style>
 .stMarkdown h1 {
-    font-size: 75px !important;
+    font-size: 60px !important;
     font-weight: 700 !important;
     margin: 20px 0 20px 0;
 }
