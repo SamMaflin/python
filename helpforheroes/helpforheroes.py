@@ -19,7 +19,5 @@ import streamlit as st
 # include logo
 st.image("helpforheroes/hfh_logo.png", width=200)
 st.title("Help for Heroes Interview Task")
-st.subheader("Which customer attributes and early behaviours predict high-value holiday bookings, and how can we use these insights to acquire more high-value customers?")
-st.write("""
-This application analyzes customer data from Help for Heroes to segment customers based on their donation and engagement patterns.
-""")
+st.subheader("What makes a customer <b>high-value</b> — and how can we acquire more customers like them?")
+ 
