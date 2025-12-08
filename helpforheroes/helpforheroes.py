@@ -46,15 +46,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # title
-st.markdown("# Help for Heroes Interview Task")
+st.markdown("# Help for Heroes Interview Task - Customer Holiday Bookings Insights", unsafe_allow_html=True)
 
-# customer holiday insights
-st.markdown(
-    '<h2>'
-    'Customer Holiday Bookings Insights'
-    '</h2>',
-    unsafe_allow_html=True
-)
 
 # intro
 st.markdown(
