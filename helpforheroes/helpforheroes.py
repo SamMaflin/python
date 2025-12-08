@@ -56,23 +56,23 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# research question
+# intro
 st.markdown(
     '<h3>'
     'Introduction</h3>',
     unsafe_allow_html=True
 )
 
-
-# research question
+# intro paragraph
 st.markdown(
     '<p>'
-    'All customers create value  — just not in the same way. ' \
-    'Some drive value through big, high-cost bookings, while others do it through consistency, ' \
-    'returning again and again as loyal repeat trippers. Some help grow priority destinations, ' \
-    'others favour products that strengthen our portfolio. This following insight attempts to uncover' \
-    ' the different ways value shows up across our customer base. By examining who our customers are and how they travel,' \
-    ' we reveal the patterns behind these value types — and identify how we can better support, engage, and grow each of them.'
+    '<span style="color:orange; font-weight:bold;">All customers create value</span>'
+    ' — just not in the same way. '
+    'Some drive value through big, high-cost bookings, while others do it through consistency, '
+    'returning again and again as loyal repeat trippers. Some help grow priority destinations, '
+    'others favour products that strengthen our portfolio. This following insight attempts to uncover '
+    'the different ways value shows up across our customer base. By examining who our customers are and how they travel, '
+    'we reveal the patterns behind these value types — and identify how we can better support, engage, and grow each of them.'
     '</p>',
     unsafe_allow_html=True
 )
