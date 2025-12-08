@@ -25,7 +25,7 @@ st.markdown("""
 .stMarkdown h1 {
     font-size: 70px !important;
     font-weight: 700 !important;
-    margin: 5px 0 5px 0;
+    margin: 15px 0 15px 0;
 }
 .stMarkdown h2 {
     font-size: 40px !important;
