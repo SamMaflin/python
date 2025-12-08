@@ -46,7 +46,7 @@ st.markdown("# Help for Heroes Interview Task")
 
 # customer holiday insights
 st.markdown(
-    '<h2 style="font-size: 50px; font-weight: 400;">'
+    '<h2>'
     'Customer Holiday Bookings Insights'
     '</h2>',
     unsafe_allow_html=True
@@ -54,9 +54,15 @@ st.markdown(
 
 # research question
 st.markdown(
-    '<h3 style="font-size: 50px; font-weight: 400;">'
-    '<b>Question:</b> How can we understand the different ways our customers create value?'
-    '</h3>',
+    '<p>'
+    'All customers create value — just not in the same way. ' \
+    'Some drive value through big, high-cost bookings, while others do it through consistency, ' \
+    'returning again and again as loyal repeat trippers. Some help grow priority destinations, ' \
+    'others favour products that strengthen our portfolio. This analysis isn’t about ranking customers, ' \
+    'but about uncovering the different ways value shows up across our customer base. ' \
+    'By examining who our customers are and how they travel, we reveal the patterns behind these value types — '
+    'and identify how we can better support, engage, and grow each of them.'
+    '</p>',
     unsafe_allow_html=True
 )
 
