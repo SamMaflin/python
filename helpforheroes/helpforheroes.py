@@ -39,7 +39,8 @@ st.markdown("""
     margin: 15px 0 15px 0;
 }
 .stMarkdown p {
-    font-size: 18px !important;
+    font-size: 20px !important;
+    margin: 15px 0 15px 0;
 }
 </style>
 """, unsafe_allow_html=True)
