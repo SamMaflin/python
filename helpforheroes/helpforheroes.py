@@ -29,9 +29,9 @@ st.markdown("""
     margin: 20px 0 20px 0;
 }
 .stMarkdown h2 {
-    font-size: 50px !important;
+    font-size: 45px !important;
     font-weight: 600 !important;
-    margin: 20px 0 20px 0;
+    margin: 15px 0 15px 0;
 }
 .stMarkdown h3 {
     font-size: 40px !important;
