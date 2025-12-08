@@ -78,11 +78,13 @@ st.markdown(
 
 # customer value areas 
 # economics
-st.markdown("<h3>Economics Value</h3>",unsafe_allow_html=True)
-st.markdown("<p>How customers contribute financially.</p>",unsafe_allow_html=True)
+st.markdown(
+    "<h3><span style=\"color:orange; font-weight:bold;\">Economics Value</span></h3><p>How customers contribute financially.</p>",
+    unsafe_allow_html=True
+)
 # behavioural
-st.markdown("<h3>Behavioural Value</h3>",unsafe_allow_html=True)
-st.markdown("<p>How customers engage over time.</p>",unsafe_allow_html=True)
+#st.markdown("<h3>Behavioural Value</h3>",unsafe_allow_html=True)
+#st.markdown("<p>How customers engage over time.</p>",unsafe_allow_html=True)
 # strategic
-st.markdown("<h3>Strategic Value</h3>",unsafe_allow_html=True)
-st.markdown("<p>How customers support business priorities.</p>",unsafe_allow_html=True)
+#st.markdown("<h3>Strategic Value</h3>",unsafe_allow_html=True)
+#st.markdown("<p>How customers support business priorities.</p>",unsafe_allow_html=True)
