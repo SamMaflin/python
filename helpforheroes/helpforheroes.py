@@ -35,7 +35,7 @@ st.markdown("""
 }
 .stMarkdown h3 {
     font-size: 35px !important;
-    font-weight: 500 !important;
+    font-weight: 700 !important;
     margin: 10px 0 10px 0;
 }
 .stMarkdown p {
@@ -79,7 +79,6 @@ st.markdown(
 
 # intro
 st.markdown(
-    '<h3>'
-    "First, Let's define 'Value'...</h3>",
+    "<h3>So what does 'value' actually mean for our customers?</h3>",
     unsafe_allow_html=True
 )
