@@ -34,8 +34,7 @@ st.markdown("""
     margin: 20px 0 20px 0;
 }
 .stMarkdown h3 {
-    font-size: 35px !important;
-    font-weight: 700 !important;
+    font-size: 35px !important; 
     margin: 20px 0 20px 0;
 }
 .stMarkdown h4 {
