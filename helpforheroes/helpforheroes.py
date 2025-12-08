@@ -45,16 +45,16 @@ st.markdown("# Help for Heroes Interview Task")
 
 # customer holiday insights
 st.markdown(
-    '<h3 style="font-size: 50px; font-weight: 400;">'
+    '<h2 style="font-size: 50px; font-weight: 400;">'
     'Customer Holiday Insights'
-    '</h3>',
+    '</h2>',
     unsafe_allow_html=True
 )
 
 # research question
 st.markdown(
     '<h3 style="font-size: 50px; font-weight: 400;">'
-    'Question: What makes a customer <span style="color: orange;"><b>high-value</b></span> — '
+    '<b>Question:</b> What makes a customer <span style="color: orange;"><b>high-value</b></span> — '
     'and how can we acquire more customers like them?'
     '</h3>',
     unsafe_allow_html=True
