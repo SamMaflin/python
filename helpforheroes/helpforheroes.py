@@ -29,13 +29,13 @@ st.markdown("""
     margin: 20px 0 20px 0;
 }
 .stMarkdown h2 {
-    font-size: 55px !important;
-    font-weight: 500 !important;
+    font-size: 50px !important;
+    font-weight: 600 !important;
     margin: 20px 0 20px 0;
 }
 .stMarkdown h3 {
     font-size: 40px !important;
-    font-weight: 400 !important;
+    font-weight: 500 !important;
     margin: 20px 0 20px 0;
 }
 .stMarkdown p {
@@ -59,7 +59,7 @@ st.markdown(
 # research question
 st.markdown(
     '<h3>'
-    'Introduction. </h3>',
+    'Introduction</h3>',
     unsafe_allow_html=True
 )
 
