@@ -16,6 +16,10 @@ def load_helpforheroes_data(file_path):
 # Open Streamlit App add title and app description about customer segmentation
 import streamlit as st
 
+# include logo
+st.image("helpforheroes/hfh_logo.png", width=200)
+
+# styling
 st.markdown("""
 <style>
 .stMarkdown h1 {
@@ -29,5 +33,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# title
 st.markdown("# Help for Heroes Interview Task")
-st.markdown("## What makes a customer **high-value** — and how can we acquire more customers like them?")
+
+# research question
+st.markdown(
+    '<h2 style="font-size: 50px; font-weight: 400;">'
+    'What makes a customer <span style="color: orange;"><b>high-value</b></span> — '
+    'and how can we acquire more customers like them?'
+    '</h2>',
+    unsafe_allow_html=True
+)
+
