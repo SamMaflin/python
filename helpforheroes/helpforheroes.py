@@ -23,11 +23,12 @@ st.image("helpforheroes/hfh_logo.png", width=200)
 st.markdown("""
 <style>
 .stMarkdown h1 {
-    font-size: 80px !important;
+    font-size: 70px !important;
     font-weight: 700 !important;
+            padding: 5px 0 5px 0;
 }
 .stMarkdown h2 {
-    font-size: 50px !important;
+    font-size: 40px !important;
     font-weight: 400 !important;
 }
 </style>
