@@ -79,7 +79,7 @@ st.markdown(
 # customer value areas 
 # economics
 st.markdown(
-    "<h3><span style=\"color:orange; font-weight:bold;\">Economics Value</span></h3><p>How customers contribute financially.</p>",
+    "<h3>● <span style=\"color:orange; font-weight:bold;\">Economics Value</span></h3><p>How customers contribute financially.</p>",
     unsafe_allow_html=True
 )
 # behavioural
