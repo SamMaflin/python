@@ -16,6 +16,8 @@ def load_helpforheroes_data(file_path):
 # Open Streamlit App add title and app description about customer segmentation
 import streamlit as st
 
+# include logo
+st.image("helpforheroes/hfh_logo.png", width=200)
 st.title("Help for Heroes Customer Segmentation")
 st.write("""
 This application analyzes customer data from Help for Heroes to segment customers based on their donation and engagement patterns.
