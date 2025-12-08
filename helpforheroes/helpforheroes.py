@@ -71,7 +71,7 @@ st.markdown(
 
 # intro
 st.markdown(
-    "<h3>So how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h3>",
+    "<h3>But how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h3>",
     unsafe_allow_html=True
 )
 
@@ -79,7 +79,7 @@ st.markdown(
 # customer value areas 
 # economics
 st.markdown(
-    "<h3>● <span style=\"color:orange; font-weight:bold;\">Economics Value</span></h3><p>How customers contribute financially.</p>",
+    "<h3><span style=\"color:orange; font-weight:bold;\">● Economics Value</span></h3><span>How customers contribute financially.</span>",
     unsafe_allow_html=True
 )
 # behavioural
