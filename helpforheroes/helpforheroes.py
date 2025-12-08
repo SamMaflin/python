@@ -70,8 +70,7 @@ st.markdown(
     ' — just not in the same way. '
     'Some drive value through big, high-cost bookings, while others do it through consistency, '
     'returning again and again as loyal repeat trippers. Some help grow priority destinations, '
-    'others favour products that strengthen our portfolio. This following insight attempts to uncover '
-    'the different ways value shows up across our customer base. By examining who our customers are and how they travel, '
+    'others favour products that strengthen our portfolio. By examining who our customers are and how they travel, '
     'we reveal the patterns behind these value types — and identify how we can better support, engage, and grow each of them.'
     '</p>',
     unsafe_allow_html=True
@@ -79,6 +78,6 @@ st.markdown(
 
 # intro
 st.markdown(
-    "<h3>So what does 'value' actually mean for our customers?</h3>",
+    "<h3>So how can we measure <span style=\"color:orange; font-weight:bold;\">value</span>?</h3>",
     unsafe_allow_html=True
 )
