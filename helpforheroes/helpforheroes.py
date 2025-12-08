@@ -36,7 +36,7 @@ st.markdown("""
 .stMarkdown h3 {
     font-size: 35px !important;
     font-weight: 500 !important;
-    margin: 20px 0 20px 0;
+    margin: 10px 0 10px 0;
 }
 .stMarkdown p {
     font-size: 20px !important;
