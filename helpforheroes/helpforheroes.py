@@ -76,7 +76,7 @@ st.markdown(
 
 # intro
 st.markdown(
-    "<h3>But how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h3>",
+    "<h2>But how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h2>",
     unsafe_allow_html=True
 )
 
