@@ -19,14 +19,24 @@ import streamlit as st
 # include logo
 st.image("helpforheroes/hfh_logo.png", width=200)
 
+# --- Custom CSS to control font sizes ---
+st.markdown("""
+    <style>
+        .big-title {
+            font-size: 3rem;       /* Increase H1 size */
+            font-weight: 700;
+        }
+        .sub-title {
+            font-size: 1.8rem;     /* Increase H2 size */
+            font-weight: 500;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- Use the CSS classes ---
+st.markdown('<h1 class="big-title">Help for Heroes Interview Task</h1>', unsafe_allow_html=True)
 
 st.markdown(
-    "<h1>Help for Heroes Interview Task</h1>",
-    unsafe_allow_html=True
-) 
-
-st.markdown(
-    "<h2>What makes a customer <b>high-value</b> — and how can we acquire more customers like them?</h2>",
+    '<h2 class="sub-title">What makes a customer <b>high-value</b> — and how can we acquire more customers like them?</h2>',
     unsafe_allow_html=True
 )
-
