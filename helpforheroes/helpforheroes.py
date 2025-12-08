@@ -47,7 +47,7 @@ st.markdown("# Help for Heroes Interview Task")
 # customer holiday insights
 st.markdown(
     '<h2 style="font-size: 50px; font-weight: 400;">'
-    'Customer Holiday Insights'
+    'Customer Holiday Bookings Deep Dive'
     '</h2>',
     unsafe_allow_html=True
 )
