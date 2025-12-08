@@ -55,8 +55,7 @@ st.markdown(
 # research question
 st.markdown(
     '<h3 style="font-size: 50px; font-weight: 400;">'
-    '<b>Question:</b> What makes a customer <span style="color: orange;"><b>high-value</b></span> — '
-    'and how can we acquire more customers like them?'
+    '<b>Question:</b> How can we understand the different ways our customers create value?'
     '</h3>',
     unsafe_allow_html=True
 )
