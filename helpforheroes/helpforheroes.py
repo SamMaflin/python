@@ -1,4 +1,6 @@
 import pandas as pd
+import streamlit as st
+
 
 def load_helpforheroes_data(file_path):
     # Load the Excel file
@@ -13,27 +15,26 @@ def load_helpforheroes_data(file_path):
 
     return data
 
-# Open Streamlit App add title and app description about customer segmentation
-import streamlit as st
+# Open Streamlit App
 
-# include logo
+# add logo
 st.image("helpforheroes/hfh_logo.png", width=200)
 
 # styling
 st.markdown("""
 <style>
 .stMarkdown h1 {
-    font-size: 70px !important;
+    font-size: 75px !important;
     font-weight: 700 !important;
     margin: 20px 0 20px 0;
 }
 .stMarkdown h2 {
-    font-size: 40px !important;
+    font-size: 45px !important;
     font-weight: 500 !important;
     margin: 20px 0 20px 0;
 }
 .stMarkdown h3 {
-    font-size: 30px !important;
+    font-size: 25px !important;
     font-weight: 400 !important;
     margin: 20px 0 20px 0;
 }
