@@ -1,7 +1,7 @@
 import pandas as pd, matplotlib.pyplot as plt
 import streamlit as st, numpy as np
 
-file_path = 'helpforheroes/helpforheroes_data.xls'
+file_path = 'helpforheroes/helpforheroes.xls'
 
 def load_helpforheroes_data(file_path):
     # Load the Excel file
