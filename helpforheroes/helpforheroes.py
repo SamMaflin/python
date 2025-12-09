@@ -332,7 +332,7 @@ st.markdown(
 # ============================================================
 st.markdown(
     f"""
-    <h3><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h3>
+    <h4><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h4>
     <ul>
         <li>Spend was heavily right-skewed, with a small number of customers contributing a large share of revenue.</li>
         <li>This long-tail pattern meant raw spend values could not be compared directly across customers.</li>
