@@ -283,13 +283,13 @@ st.markdown(
     f"""
     <h3 class='small-h3'><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend Score</span></h3>
     <ul>
-        <li>Spend is heavily right-skewed — a small share of customers generate the majority of revenue.</li>
-        <li>This long-tail pattern makes raw spend unsuitable for direct comparison.</li>
+        <li>Each Spend metric is heavily right-skewed — a small share of customers generate the majority of revenue.</li>
+        <li>This long-tail pattern makes raw spend metrics unsuitable for direct comparison.</li>
     </ul>
 
     <h4>Fixes:</h4>
     <ul>
-        <li>Spend was transformed into a percentile-based SpendScore (0–100).</li>
+        <li>Spend metrics are transformed into a percentile-based SpendScore (0–100).</li>
         <li>This method handles skew naturally and ranks customers fairly across the population.</li>
     </ul>
     """,
@@ -306,16 +306,16 @@ st.markdown(
 
     <ul>
         <li>Most customers book only once or twice.</li>
-        <li>Recency is highly skewed — very few recent travellers.</li>
-        <li>Destination diversity shows polarised behaviour: 
+        <li>Recency metric is highly skewed — very few recent travellers.</li>
+        <li>Destination diversity metric shows polarised behaviour: 
             some customers revisit the same place, while a minority explore widely.</li>
     </ul>
 
     <h4>Fixes:</h4>
     <ul>
-        <li>Frequency scaled to a 0–100 FrequencyScore.</li>
-        <li>Recency bucketed into realistic holiday cycles (1 year, 2 years, etc.).</li>
-        <li>Diversity grouped into behavioural buckets (0, 50, 100) to distinguish repeaters from explorers.</li>
+        <li>Frequency metric scaled to a 0–100 FrequencyScore.</li>
+        <li>Recency metric bucketed into realistic holiday cycles (1 year, 2 years, ..., 5+ years ).</li>
+        <li>Diversity metric grouped into behavioural buckets (0, 50, 100) to distinguish repeaters from explorers.</li>
     </ul>
     """,
     unsafe_allow_html=True
