@@ -334,7 +334,7 @@ st.markdown(
         <li>Spend was heavily right-skewed, with a small number of customers contributing the majority of total revenue.</li>
         <li>Raw spend couldn’t be compared directly because a few very high-value customers distorted the scale.</li> 
     </ul>
-    <h5>Fix</h5>
+    <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
     <ul>
     <li>A percentile-based SpendScore (0–100) was applied.</li>
     <li>Percentiles handle long-tail spend patterns naturally and place each customer relative to the overall population, enabling fair comparison across value segments.</li>
