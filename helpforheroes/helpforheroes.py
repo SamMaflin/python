@@ -33,8 +33,8 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 
     economic_metrics = merged_df.groupby('Person URN').agg(
         TotalBookingAmount=('BookingAmount', 'sum'),
-        AverageBookingAmount=('BookingAmount', 'mean'),
-        MaximumBookingAmount=('BookingAmount', 'max')
+        AverageBookingAmount=('AvgBookingAmount', 'mean'),
+        MaximumBookingAmount=('MaxBookingAmount', 'max')
     )
 
     # ============================================================
