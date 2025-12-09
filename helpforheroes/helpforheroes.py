@@ -205,25 +205,48 @@ st.markdown(
 
 
 # ----------------------
-# EARLY SIGNALS SECTION
+# EARLY INSIGHTS
 # ----------------------
 st.markdown(
     "<hr style='border: 1.5px solid orange; margin-top: 30px; margin-bottom: 10px;'>"
-    "<h3>Early Insights from the Metrics</h3>",
+    "<h3>Early Insights...</h3>",
     unsafe_allow_html=True
 )
 
 st.markdown(
-    f"<h4><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h4>",
+    f"""
+    <h4><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h4>
+    <ul>
+        <li>Most customers contribute very little — value is concentrated in a small elite segment.</li>
+        <li>Average spend clusters tightly at lower levels, showing a strong price comfort zone.</li>
+        <li>Occasional high-value bookings reveal hidden premium potential even among low-frequency customers.</li>
+    </ul>
+    """,
     unsafe_allow_html=True
 )
 
+
 st.markdown(
-    f"<h4><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h4>",
+    f"""
+    <h4><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h4>
+    <ul>
+        <li>Most customers book once or twice — repeat travellers are a very small but influential group.</li>
+        <li>Destination diversity is low for most, signalling a preference for familiar, repeat destinations.</li>
+        <li>Recency skew shows the base is largely dormant, with only a handful of recently active customers.</li>
+    </ul>
+    """,
     unsafe_allow_html=True
 )
 
+
 st.markdown(
-    f"<h4><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h4>",
+    f"""
+    <h4><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h4>
+    <ul>
+        <li>Long-haul travellers are rare but strongly correlated with higher-value behaviour.</li>
+        <li>Package holidays show strong adoption, reinforcing a key commercial product line.</li>
+        <li>Channel Fit indicates most customers come via non-priority sources, highlighting partnership opportunities.</li>
+    </ul>
+    """,
     unsafe_allow_html=True
 )
