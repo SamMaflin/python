@@ -198,30 +198,40 @@ st.markdown(
 
 
 # --- customer value areas --- # 
-# economic value
+
+# Economic / Spend Value
 st.markdown(
-    '<h4>'
-    '<span style="color:orange; font-weight:bold;">● Spend — </span>'
-    '<span style="font-weight:300;">How customers contribute financially.</span>'
-    '</h4>'
-    '<p>Factors Included: Total Spend, Average (Mean) Booking Value, Highest Booking Value</p>',
+    '''
+    <h4>
+        <span style="color:orange; font-weight:bold;">● Spend — </span>
+        <span style="font-weight:300;">How customers contribute financially.</span>
+    </h4>
+    <p>Metrics Included: Total Spend, Average Booking Value, Maximum Booking Value</p>
+    ''',
     unsafe_allow_html=True
 )
-# behavioral value
+
+# Behavioural / Activity Value
 st.markdown(
-    '<h4>'
-    '<span style="color:orange; font-weight:bold;">● Activity — </span>'
-    '<span style="font-weight:300;">How customers interact and engage.</span>'
-    '</h4>',
-    '<p>Factors Included: Booking Frequency, Number of different destinations, Recency (Days Since Last Booking)</p>',
+    '''
+    <h4>
+        <span style="color:orange; font-weight:bold;">● Activity — </span>
+        <span style="font-weight:300;">How customers interact and engage.</span>
+    </h4>
+    <p>Metrics Included: Booking Frequency, Destination Diversity Index (Simpson’s), Recency (Days Since Last Booking)</p>
+    ''',
     unsafe_allow_html=True
 )
-# strategic value
+
+# Strategic Fit Value
 st.markdown(
-    '<h4>'
-    '<span style="color:orange; font-weight:bold;">● Strategic Asset — </span>'
-    '<span style="font-weight:300;">How customers align with business goals.</span>'
-    '</h4>',
+    '''
+    <h4>
+        <span style="color:orange; font-weight:bold;">● Strategic Asset — </span>
+        <span style="font-weight:300;">How customers align with business goals.</span>
+    </h4>
+    <p>Metrics Included: Long-Haul Alignment, Package Alignment, Channel Fit</p>
+    ''',
     unsafe_allow_html=True
 )
 
