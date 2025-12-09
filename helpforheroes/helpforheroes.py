@@ -210,40 +210,34 @@ st.markdown(
 
 # --- customer value areas --- # 
 
-# Economic / Spend Value
+# Spend
 st.markdown(
-    '''
-    <h4>
-        <span style="color:orange; font-weight:bold;">● Spend — </span>
-        <span style="font-weight:300;">How customers contribute financially.</span>
-    </h4>
-    <p>Metrics: Total Spend, Average Booking Value, Maximum Booking Value</p>
-    ''',
-    unsafe_allow_html=True
+    """
+<h4><span style="color:#6EC6FF; font-weight:bold;">● Spend — </span>
+<span style="font-weight:300;">How customers contribute financially.</span></h4>
+<p>Metrics: Total Spend, Average Booking Value, Maximum Booking Value</p>
+""",
+    unsafe_allow_html=True,
 )
 
-# Behavioural / Activity Value
+# Activity
 st.markdown(
-    '''
-    <h4>
-        <span style="color:orange; font-weight:bold;">● Activity — </span>
-        <span style="font-weight:300;">How customers interact and engage.</span>
-    </h4>
-    <p>Metrics: Booking Frequency, Destination Diversity Index (Simpson’s), Recency (Days Since Last Booking)</p>
-    ''',
-    unsafe_allow_html=True
+    """
+<h4><span style="color:#8DEB8D; font-weight:bold;">● Activity — </span>
+<span style="font-weight:300;">How customers interact and engage.</span></h4>
+<p>Metrics: Booking Frequency, Destination Diversity Index, Recency</p>
+""",
+    unsafe_allow_html=True,
 )
 
-# Strategic Fit Value
+# Strategic
 st.markdown(
-    '''
-    <h4>
-        <span style="color:orange; font-weight:bold;">● Strategic Asset — </span>
-        <span style="font-weight:300;">How customers align with business goals.</span>
-    </h4>
-    <p>Metrics: Long-Haul Alignment, Package Alignment, Channel Fit</p>
-    ''',
-    unsafe_allow_html=True
+    """
+<h4><span style="color:#FFB5D8; font-weight:bold;">● Strategic Asset — </span>
+<span style="font-weight:300;">How customers align with business goals.</span></h4>
+<p>Metrics: Long-Haul Alignment, Package Alignment, Channel Fit</p>
+""",
+    unsafe_allow_html=True,
 )
 
 
@@ -251,7 +245,7 @@ st.markdown(
 # research question
 st.markdown(
     "<hr style=\"border: 1.5px solid orange; margin-top: 30px; margin-bottom: 10px;\">"
-    "<h3>First Impressions...</h3>"
+    "<h3>Any Early Signals from the Metrics?</h3>"
     "<p>Metrics: Long-Haul Alignment, Package Alignment, Channel Fit</p>",
     unsafe_allow_html=True
 )
