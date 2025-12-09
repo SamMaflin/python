@@ -246,6 +246,11 @@ st.markdown(
 st.markdown(
     "<hr style=\"border: 1.5px solid orange; margin-top: 30px; margin-bottom: 10px;\">"
     "<h3>Any Early Signals from the Metrics?</h3>"
-    "<p>Metrics: Long-Haul Alignment, Package Alignment, Channel Fit</p>",
     unsafe_allow_html=True
 )
+
+
+st.markdown(
+    """
+<h4><span style="color:#0095FF; font-weight:bold;">Spend:</span>
+""")
