@@ -158,7 +158,7 @@ st.markdown("""
 .stMarkdown h1 {
     font-size: 55px !important;
     font-weight: 700 !important;
-    margin: 20px 0 40px 0;
+    margin: 20px 0 20px 0;
 }
 .stMarkdown h2 {
     font-size: 45px !important;
