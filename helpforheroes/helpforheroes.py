@@ -203,7 +203,7 @@ st.markdown(
 
 # research question
 st.markdown(
-    "<hr style=\"border: 1px solid orange; margin-top: 30px; margin-bottom: 10px;\">"
+    "<hr style=\"border: 1.5px solid orange; margin-top: 30px; margin-bottom: 10px;\">"
     "<h3>But how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h3>",
     unsafe_allow_html=True
 )
@@ -250,6 +250,7 @@ st.markdown(
 
 # research question
 st.markdown(
+    "<hr style=\"border: 1.5px solid orange; margin-top: 30px; margin-bottom: 10px;\">"
     "<h3>First Impressions...</h3>"
     "<p>Metrics: Long-Haul Alignment, Package Alignment, Channel Fit</p>",
     unsafe_allow_html=True
