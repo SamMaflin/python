@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st, numpy as np
 
+ 
 
 def load_helpforheroes_data(file_path):
     # Load the Excel file
@@ -13,74 +14,121 @@ def load_helpforheroes_data(file_path):
     data['People_Data'] = pd.DataFrame(data.get('People_Data', pd.DataFrame()))
     data['Bookings_Data'] = pd.DataFrame(data.get('Bookings_Data', pd.DataFrame()))
 
+    # print unqiue destination in bookings data
+    unique_destinations = data['Bookings_Data']['Destination'].unique()
+    print(f"Unique Destinations in Bookings Data: {unique_destinations}")
+
     return data
 
-# calculate economic, behavioural and strategic value metrics 
-def calculate_customer_value_metrics(people_df, bookings_df):
+# calculate metrics
+def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
 
-    # --- Merge People and Bookings ---
+    # ------- Merge Data -------
     merged_df = pd.merge(people_df, bookings_df, on='Person URN', how='left')
 
-    # Ensure BookingAmount column exists and fill missing with 0 (no bookings)
+    # Ensure BookingAmount exists
     merged_df['BookingAmount'] = merged_df['BookingAmount'].fillna(0)
 
-    # --- Economic Value Metrics ---
+    # ============================================================
+    #                   ECONOMIC VALUE METRICS
+    # ============================================================
+
     economic_metrics = merged_df.groupby('Person URN').agg(
         TotalBookingAmount=('BookingAmount', 'sum'),
         AverageBookingAmount=('BookingAmount', 'mean'),
         MaximumBookingAmount=('BookingAmount', 'max'),
-        MinBookingAmount=('BookingAmount', 'min')  # needed for REV
+        MinBookingAmount=('BookingAmount', 'min')
     )
 
-    # --- Relative Economic Variability (REV) ---
-    # REV = (max - min) / average   --> avoid division by zero
+    # Relative Economic Variability
     economic_metrics['RelativeEconomicVariability'] = (
         (economic_metrics['MaximumBookingAmount'] - economic_metrics['MinBookingAmount']) /
         economic_metrics['AverageBookingAmount'].replace(0, np.nan)
     ).fillna(0)
 
-    # Drop min column from final output
     economic_metrics = economic_metrics.drop(columns=['MinBookingAmount'])
 
-    return economic_metrics
- 
+    # ============================================================
+    #                   BEHAVIOURAL VALUE METRICS
+    # ============================================================
 
-def calculate_behavioral_metrics(bookings_df, reference_date=None):
-    """
-    Calculates behavioural metrics:
-    - Booking Frequency
-    - Destination Diversity
-    - Recency (days since last booking)
-    """
+    bookings_df['Booking Date'] = pd.to_datetime(bookings_df['Booking Date'], errors='ignore')
 
-    # ensure Booking Date is datetime
-    bookings_df['Booking Date'] = pd.to_datetime(bookings_df['Booking Date'], errors='coerce')
+    reference_date = bookings_df['Booking Date'].max()
 
-    # Use a reference date for recency calculations (e.g. today or max booking date)
-    if reference_date is None:
-        reference_date = bookings_df['Booking Date'].max()
-
-    # Group by Person URN to compute behavioural metrics
     behavioural_metrics = bookings_df.groupby('Person URN').agg(
         BookingFrequency=('Booking URN', 'count'),
         DestinationDiversity=('Destination', lambda x: x.nunique()),
         LastBookingDate=('Booking Date', 'max')
     )
 
-    # Calculate Recency (days since last booking)
-    behavioural_metrics['RecencyDays'] = (reference_date - behavioural_metrics['LastBookingDate']).dt.days
+    behavioural_metrics['RecencyDays'] = (
+        reference_date - behavioural_metrics['LastBookingDate']
+    ).dt.days
 
-    # Replace NaNs (customers with no bookings)
     behavioural_metrics = behavioural_metrics.fillna({
         'BookingFrequency': 0,
         'DestinationDiversity': 0,
-        'RecencyDays': np.nan  # No recency for customers without bookings
+        'RecencyDays': np.nan
     })
 
-    # Drop LastBookingDate (internal column)
     behavioural_metrics = behavioural_metrics.drop(columns=['LastBookingDate'])
 
-    return behavioural_metrics
+    # ============================================================
+    #                   STRATEGIC VALUE METRICS
+    # ============================================================
+
+    # Define long-haul destinations
+    long_haul_destinations = [
+        'United States', 'USA', 'Australia', 'New Zealand',
+        'South Africa', 'Namibia', 'Senegal', 'Mali', 'Kuwait'
+    ]
+
+    strategic_temp = bookings_df.groupby('Person URN').agg(
+        TotalBookings=('Booking URN', 'count'),
+        LongHaulBookings=('Destination', lambda x: sum(x.isin(long_haul_destinations))),
+        PackageBookings=('Product', lambda x: sum(x == 'Package Holiday'))
+    )
+
+    strategic_metrics = pd.DataFrame(index=strategic_temp.index)
+
+    # Long-haul alignment
+    strategic_metrics['LongHaulShare'] = (
+        strategic_temp['LongHaulBookings'] /
+        strategic_temp['TotalBookings'].replace(0, np.nan)
+    ).fillna(0)
+
+    # Package holiday alignment
+    strategic_metrics['PackageShare'] = (
+        strategic_temp['PackageBookings'] /
+        strategic_temp['TotalBookings'].replace(0, np.nan)
+    ).fillna(0)
+
+    # Channel Fit (based on People Data)
+    if priority_sources is None:
+        priority_sources = ['Expedia']   # Example — change if you prefer
+
+    people_df['ChannelFit'] = people_df['Source'].apply(
+        lambda x: 1 if x in priority_sources else 0
+    )
+
+    strategic_metrics = strategic_metrics.merge(
+        people_df[['Person URN', 'ChannelFit']],
+        on='Person URN',
+        how='left'
+    )
+
+    # ============================================================
+    #                   MERGE ALL VALUE DIMENSIONS
+    # ============================================================
+
+    combined = (
+        economic_metrics
+        .merge(behavioural_metrics, left_index=True, right_index=True, how='left')
+        .merge(strategic_metrics.set_index('Person URN'), left_index=True, right_index=True, how='left')
+    )
+
+    return combined
 
 
 
@@ -142,7 +190,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# intro
+# research question
 st.markdown(
     "<h3>But how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h2>",
     unsafe_allow_html=True
@@ -170,7 +218,12 @@ st.markdown(
 st.markdown(
     '<h4>'
     '<span style="color:orange; font-weight:bold;">● Strategic Fit — </span>'
-    '<span style="font-weight:300;">How customers align with business goals.</span>'
+    '<span style="font-weight:300;">How customers align with business goals (For purposes of our analysis the following destinations are considered long-haul priorities: \'United States\', \'USA\', \'Australia\', \'New Zealand\','
+        'South Africa\', \'Namibia\', \'Senegal\', \'Mali\', \'Kuwait\').</span>'
     '</h4>',
     unsafe_allow_html=True
 )
+
+
+# load
+data = load_helpforheroes_data('helpforheroes/helpforheroes.xls')
