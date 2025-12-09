@@ -213,7 +213,7 @@ st.markdown(
 # Spend
 st.markdown(
     """
-<h4><span style="color:#6EC6FF; font-weight:bold;">● Spend — </span>
+<h4><span style="color:#0095FF; font-weight:bold;">● Spend — </span>
 <span style="font-weight:300;">How customers contribute financially.</span></h4>
 <p>Metrics: Total Spend, Average Booking Value, Maximum Booking Value</p>
 """,
@@ -223,7 +223,7 @@ st.markdown(
 # Activity
 st.markdown(
     """
-<h4><span style="color:#8DEB8D; font-weight:bold;">● Activity — </span>
+<h4><span style="color:#00FF80; font-weight:bold;">● Activity — </span>
 <span style="font-weight:300;">How customers interact and engage.</span></h4>
 <p>Metrics: Booking Frequency, Destination Diversity Index, Recency</p>
 """,
@@ -233,7 +233,7 @@ st.markdown(
 # Strategic
 st.markdown(
     """
-<h4><span style="color:#FFB5D8; font-weight:bold;">● Strategic Asset — </span>
+<h4><span style="color:#FF476C; font-weight:bold;">● Strategic Asset — </span>
 <span style="font-weight:300;">How customers align with business goals.</span></h4>
 <p>Metrics: Long-Haul Alignment, Package Alignment, Channel Fit</p>
 """,
