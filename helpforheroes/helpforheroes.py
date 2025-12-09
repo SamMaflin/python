@@ -6,9 +6,9 @@ import streamlit as st
 # ============================================================
 # COLOUR PALETTE (Scalable + Accessible)
 # ============================================================
-SPEND_COLOR = "#1F77B4"        # deep blue
-ACTIVITY_COLOR = "#2CA02C"     # green-teal
-STRATEGIC_COLOR = "#D62728"    # crimson red
+SPEND_COLOR = "#0095FF"        # deep blue
+ACTIVITY_COLOR = "#00FF80"     # green-teal
+STRATEGIC_COLOR = "#FF476C"    # crimson red
 
 
 # ============================================================
