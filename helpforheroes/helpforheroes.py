@@ -327,36 +327,68 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# ============================================================
+# SPEND SECTION
+# ============================================================
 st.markdown(
     f"""
-    <h4><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h4>
+    <h3><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h3>
     <ul>
-        <li>Spend was heavily right-skewed, with a small number of customers contributing the majority of total revenue.</li>
-        <li>Raw spend couldn’t be compared directly because a few very high-value customers distorted the scale.</li> 
+        <li>Spend was heavily right-skewed, with a small number of customers contributing a large share of revenue.</li>
+        <li>This long-tail pattern meant raw spend values could not be compared directly across customers.</li>
     </ul>
+
     <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
     <ul>
-    <li>A percentile-based SpendScore (0–100) was applied.</li>
-    <li>Percentiles handle long-tail spend patterns naturally and place each customer relative to the overall population, enabling fair comparison across value segments.</li>
+        <li>Spend was transformed using a percentile-based SpendScore (0–100).</li>
+        <li>This method handles skew naturally and positions each customer relative to the wider population, creating a fair value comparison.</li>
     </ul>
     """,
     unsafe_allow_html=True
 )
 
 
+# ============================================================
+# ACTIVITY SECTION
+# ============================================================
 st.markdown(
     f"""
-    <h4><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h4> 
+    <h3><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h3>
+
+    <ul>
+        <li>Booking frequencies were low and concentrated around 1–2 bookings, typical of holiday behaviour.</li>
+        <li>Recency was highly skewed, with very few recent bookings and most customers booking 3–5 years ago.</li>
+        <li>Destination diversity was polarised: most customers visited only one destination, with a small group showing broader exploration.</li>
+    </ul>
+
+    <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
+    <ul>
+        <li>Frequency was scaled to a 0–100 FrequencyScore to allow fair comparison with other metrics.</li>
+        <li>Recency was transformed using holiday-aware buckets (e.g., 1 year, 2 years, 3+ years), reflecting realistic travel cycles.</li>
+        <li>Diversity was grouped into behavioural buckets (0, 50, 100) to distinguish single-destination travellers from explorers.</li>
+    </ul>
     """,
     unsafe_allow_html=True
 )
 
 
+# ============================================================
+# STRATEGIC SECTION
+# ============================================================
 st.markdown(
     f"""
-    <h4><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h4> 
+    <h3><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h3>
+
+    <ul>
+        <li>Strategic indicators (long-haul, package adoption, channel source) were binary in nature.</li>
+        <li>Leaving them as 0/1 would make them incomparable to other value pillars (which are scaled 0–100).</li>
+    </ul>
+
+    <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
+    <ul>
+        <li>Each strategic signal was converted to 0 or 100, aligning with the unified scoring framework.</li>
+        <li>A weighted StrategicScore (0–100) was created to reflect the relative importance of long-haul (50%), packages (30%), and channel fit (20%).</li>
+    </ul>
     """,
     unsafe_allow_html=True
 )
-
-
