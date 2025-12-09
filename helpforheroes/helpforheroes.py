@@ -194,8 +194,8 @@ st.markdown("""
 
 .stMarkdown h2 { 
     font-size: 50px !important; 
-    font-weight: 400 !important; 
-    margin: 20px 0 20px 0; 
+    font-weight: 700 !important; 
+    margin: 100px 0 20px 0; 
 }
 
 /* Large H3 (for main sections) */
