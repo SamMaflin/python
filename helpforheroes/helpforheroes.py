@@ -177,9 +177,9 @@ except:
 st.markdown("""
 <style>
 h3.page-header {
-    font-size: 40px !important;
-    margin-top: 40px !important;
-    margin-bottom: 10px !important;
+    font-size: 60px !important;
+    margin-top: 50px !important;
+    margin-bottom: 50px !important;
 }
 
 h3.section-header {
