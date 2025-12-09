@@ -273,7 +273,7 @@ st.markdown(
 # ----------------------
 # EARLY INSIGHTS
 # ----------------------
-st.markdown("<h2>Early Insights</h2>", unsafe_allow_html=True)
+st.markdown("<h2>Metric Construction</h2>", unsafe_allow_html=True)
 
 
 # ============================================================
@@ -314,7 +314,7 @@ st.markdown(
     <h4>Fixes:</h4>
     <ul>
         <li>Frequency metric scaled to a 0–100 FrequencyScore.</li>
-        <li>Recency metric bucketed into realistic holiday cycles (1 year, 2 years, ..., 5+ years ).</li>
+        <li>Recency metric bucketed into realistic holiday cycles (1 year, 2 years, ... 5+ years ).</li>
         <li>Diversity metric grouped into behavioural buckets (0, 50, 100) to distinguish repeaters from explorers.</li>
     </ul>
     """,
