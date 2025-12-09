@@ -257,13 +257,13 @@ st.markdown("<h2>How Do We Measure Customer Value?</h2>", unsafe_allow_html=True
 
 st.markdown(
     f"""
-<h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend</span> — Financial contribution</h4>
+<h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend Score</span> — Financial contribution</h4>
 <p>Metrics: Total Spend, Average Booking Value, Maximum Booking Value</p>
 
-<h4><span style="color:{ACTIVITY_COLOR}; font-weight:bold;">● Activity</span> — Engagement & behaviour</h4>
+<h4><span style="color:{ACTIVITY_COLOR}; font-weight:bold;">● Activity Score</span> — Engagement & behaviour</h4>
 <p>Metrics: Booking Frequency, Destination Diversity, Recency</p>
 
-<h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic</span> — Alignment with business goals</h4>
+<h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — Alignment with business goals</h4>
 <p>Metrics: Long-Haul, Package Adoption, Channel Fit</p>
 """,
     unsafe_allow_html=True
@@ -281,7 +281,7 @@ st.markdown("<h2>Early Insights</h2>", unsafe_allow_html=True)
 # ============================================================
 st.markdown(
     f"""
-    <h3 class='small-h3'><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h3>
+    <h3 class='small-h3'><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend Score</span></h3>
     <ul>
         <li>Spend is heavily right-skewed — a small share of customers generate the majority of revenue.</li>
         <li>This long-tail pattern makes raw spend unsuitable for direct comparison.</li>
@@ -302,7 +302,7 @@ st.markdown(
 # ============================================================
 st.markdown(
     f"""
-    <h3 class='small-h3'><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h3>
+    <h3 class='small-h3'><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity Score</span></h3>
 
     <ul>
         <li>Most customers book only once or twice.</li>
@@ -327,7 +327,7 @@ st.markdown(
 # ============================================================
 st.markdown(
     f"""
-    <h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h3>
+    <h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic Score</span></h3>
 
     <ul>
         <li>Long-haul, package adoption, and channel fit are binary strategic signals.</li>
