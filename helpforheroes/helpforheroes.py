@@ -28,8 +28,10 @@ def load_helpforheroes_data(file_obj):
 # ============================================================
 def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
 
+    # Merge datasets
     merged_df = pd.merge(people_df, bookings_df, on='Person URN', how='left')
 
+    # Standardise booking amount
     if 'BookingAmount' not in merged_df.columns and 'Cost' in merged_df.columns:
         merged_df['BookingAmount'] = merged_df['Cost']
     merged_df['BookingAmount'] = merged_df['BookingAmount'].fillna(0)
@@ -62,7 +64,10 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         LastBookingDate=('Booking Date', 'max')
     )
 
-    behavioural_metrics['RecencyDays'] = (reference_date - behavioural_metrics['LastBookingDate']).dt.days
+    behavioural_metrics['RecencyDays'] = (
+        reference_date - behavioural_metrics['LastBookingDate']
+    ).dt.days
+
     behavioural_metrics.drop(columns=['LastBookingDate'], inplace=True)
 
     behavioural_metrics.fillna({
@@ -162,147 +167,177 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     return combined
 
 
+
 # ============================================================
 # STREAMLIT APP UI
 # ============================================================
 
+# -------------------------------
+# LOGO (Optional)
+# -------------------------------
 try:
     st.image("helpforheroes/hfh_logo.png", width=200)
 except:
     pass
 
 # -------------------------------
-# CSS FIX (Header Spacing)
+# UPDATED CSS WITH TWO H3 CLASSES
 # -------------------------------
 st.markdown("""
 <style>
-h3.page-header {
-    font-size: 60px !important;
-    margin-top: 50px !important;
-    margin-bottom: 50px !important;
+
+.stMarkdown h1 { 
+    font-size: 60px !important; 
+    font-weight: 700 !important; 
+    margin: 20px 0 20px 0; 
 }
 
-h3.section-header {
+.stMarkdown h2 { 
+    font-size: 50px !important; 
+    font-weight: 400 !important; 
+    margin: 20px 0 20px 0; 
+}
+
+/* Large H3 (for main sections) */
+h3.big-h3 {
+    font-size: 40px !important;
+    font-weight: 700 !important;
+    margin: 80px 0 20px 0 !important;
+}
+
+/* Small H3 (for Spend / Activity / Strategic) */
+h3.small-h3 {
     font-size: 34px !important;
-    margin-top: 20px !important;
-    margin-bottom: 10px !important;
+    font-weight: 700 !important;
+    margin: 25px 0 10px 0 !important;
 }
 
-h4 {
-    margin-top: 10px !important;
+.stMarkdown h4 {
+    font-size: 28px !important;
+    font-weight: 700 !important;
+    margin: 20px 0 10px 0 !important;
+}
+
+.stMarkdown p  { 
+    font-size: 22px !important; 
+    margin: 20px 0 40px 0; 
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# -------------------------------
+# ----------------------
 # TITLE
-# -------------------------------
-st.markdown("<h3 class='page-header'>Help for Heroes Interview Task — Customer Holiday Bookings Insights</h3>", unsafe_allow_html=True)
+# ----------------------
+st.markdown("<h3 class='big-h3'>Help for Heroes Interview Task — Customer Holiday Bookings Insights</h3>", unsafe_allow_html=True)
 
 
-# -------------------------------
-# INTRO
-# -------------------------------
-st.markdown("<h3 class='page-header'>Introduction</h3>", unsafe_allow_html=True)
+# ----------------------
+# INTRO SECTION
+# ----------------------
+st.markdown("<h3 class='big-h3'>Introduction</h3>", unsafe_allow_html=True)
 
 st.markdown(
     """
 <p>
-<span style="color:orange; font-weight:bold;">All customers create value</span> — but not in the same way.  
-Some generate high spend, others book frequently, and some perfectly match strategic business goals.  
-Understanding <b>how</b> each customer contributes enables stronger targeting, segmentation, and strategy.
+<span style="color:orange; font-weight:bold;">All customers create value</span> — just not in the same way.  
+Some generate high spend, others show strong behavioural loyalty, and some perfectly align with strategic priorities.  
+Understanding <b>how</b> each customer contributes allows us to target better, personalise better, and grow value more effectively.
 </p>
 """,
     unsafe_allow_html=True
 )
 
 
-# -------------------------------
+# ----------------------
 # VALUE DIMENSIONS
-# -------------------------------
-st.markdown("<h3 class='page-header'>How do we measure customer value?</h3>", unsafe_allow_html=True)
+# ----------------------
+st.markdown("<h3 class='big-h3'>How Do We Measure Customer Value?</h3>", unsafe_allow_html=True)
 
 st.markdown(
     f"""
-<h4><span style="color:{SPEND_COLOR}; font-weight:bold;">Spend</span> — Financial contribution</h4>
+<h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend</span> — Financial contribution</h4>
 <p>Metrics: Total Spend, Average Booking Value, Maximum Booking Value</p>
 
-<h4><span style="color:{ACTIVITY_COLOR}; font-weight:bold;">Activity</span> — Engagement & behaviour</h4>
+<h4><span style="color:{ACTIVITY_COLOR}; font-weight:bold;">● Activity</span> — Engagement & behaviour</h4>
 <p>Metrics: Booking Frequency, Destination Diversity, Recency</p>
 
-<h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">Strategic</span> — Alignment with business goals</h4>
+<h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic</span> — Alignment with business goals</h4>
 <p>Metrics: Long-Haul, Package Adoption, Channel Fit</p>
 """,
     unsafe_allow_html=True
 )
 
 
-# -------------------------------
+# ----------------------
 # EARLY INSIGHTS
-# -------------------------------
-st.markdown("<h3 class='page-header'>Early Insights</h3>", unsafe_allow_html=True)
+# ----------------------
+st.markdown("<h3 class='big-h3'>Early Insights</h3>", unsafe_allow_html=True)
+
 
 # ============================================================
 # SPEND SECTION
 # ============================================================
 st.markdown(
     f"""
-    <h3 class='section-header'><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h3>
+    <h3 class='small-h3'><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h3>
     <ul>
-        <li>Spend is heavily right-skewed — a small group of customers accounts for most revenue.</li>
-        <li>This long-tail structure makes raw spend values poor for comparison.</li>
+        <li>Spend is heavily right-skewed — a small share of customers generate the majority of revenue.</li>
+        <li>This long-tail pattern makes raw spend unsuitable for direct comparison.</li>
     </ul>
 
     <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
     <ul>
         <li>Spend was transformed into a percentile-based SpendScore (0–100).</li>
-        <li>This ranks customers relative to the population and handles skew naturally.</li>
+        <li>This method handles skew naturally and ranks customers fairly across the population.</li>
     </ul>
     """,
     unsafe_allow_html=True
 )
+
 
 # ============================================================
 # ACTIVITY SECTION
 # ============================================================
 st.markdown(
     f"""
-    <h3 class='section-header'><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h3>
+    <h3 class='small-h3'><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h3>
 
     <ul>
-        <li>Booking frequency is low (1–2 bookings for most customers).</li>
-        <li>Recency is heavily skewed — very few recent travellers, most last booked 3–5 years ago.</li>
-        <li>Destination diversity is polarised: many visit only one destination, few explore widely.</li>
+        <li>Most customers book only once or twice.</li>
+        <li>Recency is highly skewed — very few recent travellers.</li>
+        <li>Destination diversity shows polarised behaviour: 
+            some customers revisit the same place, while a minority explore widely.</li>
     </ul>
 
     <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
     <ul>
-        <li>Frequency scaled to 0–100 to align with other metrics.</li>
+        <li>Frequency scaled to a 0–100 FrequencyScore.</li>
         <li>Recency bucketed into realistic holiday cycles (1 year, 2 years, etc.).</li>
-        <li>Diversity grouped into behavioural buckets (0, 50, 100) to distinguish repeaters vs explorers.</li>
+        <li>Diversity grouped into behavioural buckets (0, 50, 100) to distinguish repeaters from explorers.</li>
     </ul>
     """,
     unsafe_allow_html=True
 )
+
 
 # ============================================================
 # STRATEGIC SECTION
 # ============================================================
 st.markdown(
     f"""
-    <h3 class='section-header'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h3>
+    <h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h3>
 
     <ul>
-        <li>Strategic signals (long-haul, package, channel) are binary and unevenly distributed.</li>
-        <li>Raw 0/1 values cannot be compared to other 0–100 value scores.</li>
+        <li>Long-haul, package adoption, and channel fit are binary strategic signals.</li>
+        <li>Raw 0/1 values were incompatible with the 0–100 scaling used elsewhere.</li>
     </ul>
 
     <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
     <ul>
-        <li>Converted all strategic indicators to 0 or 100 to match the scoring framework.</li>
-        <li>Weighted StrategicScore built: Long-Haul (50%), Package (30%), Channel Fit (20%).</li>
+        <li>All strategic indicators were mapped to 0/100 to match the unified scoring framework.</li>
+        <li>Weighted StrategicScore created: Long-Haul (50%), Package (30%), Channel Fit (20%).</li>
     </ul>
     """,
     unsafe_allow_html=True
