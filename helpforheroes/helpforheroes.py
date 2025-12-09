@@ -230,13 +230,13 @@ h3.small-h3 {
 # ----------------------
 # TITLE
 # ----------------------
-st.markdown("<h3 class='big-h3'>Help for Heroes Interview Task — Customer Holiday Bookings Insights</h3>", unsafe_allow_html=True)
+st.markdown("<h1>Help for Heroes Interview Task — Customer Holiday Bookings Insights</h1>", unsafe_allow_html=True)
 
 
 # ----------------------
 # INTRO SECTION
 # ----------------------
-st.markdown("<h3 class='big-h3'>Introduction</h3>", unsafe_allow_html=True)
+st.markdown("<h2>Introduction</h2>", unsafe_allow_html=True)
 
 st.markdown(
     """
@@ -253,7 +253,7 @@ Understanding <b>how</b> each customer contributes allows us to target better, p
 # ----------------------
 # VALUE DIMENSIONS
 # ----------------------
-st.markdown("<h3 class='big-h3'>How Do We Measure Customer Value?</h3>", unsafe_allow_html=True)
+st.markdown("<h2>How Do We Measure Customer Value?</h2>", unsafe_allow_html=True)
 
 st.markdown(
     f"""
@@ -273,7 +273,7 @@ st.markdown(
 # ----------------------
 # EARLY INSIGHTS
 # ----------------------
-st.markdown("<h3 class='big-h3'>Early Insights</h3>", unsafe_allow_html=True)
+st.markdown("<h2>Early Insights</h2>", unsafe_allow_html=True)
 
 
 # ============================================================
