@@ -1,7 +1,7 @@
-import pandas as pd
+import pandas as pd, matplotlib.pyplot as plt
 import streamlit as st, numpy as np
 
- 
+file_path = 'helpforheroes/helpforheroes_data.xls'
 
 def load_helpforheroes_data(file_path):
     # Load the Excel file
@@ -206,7 +206,7 @@ st.markdown(
         <span style="color:orange; font-weight:bold;">● Spend — </span>
         <span style="font-weight:300;">How customers contribute financially.</span>
     </h4>
-    <p>Metrics Included: Total Spend, Average Booking Value, Maximum Booking Value</p>
+    <p>Metrics: Total Spend, Average Booking Value, Maximum Booking Value</p>
     ''',
     unsafe_allow_html=True
 )
@@ -218,7 +218,7 @@ st.markdown(
         <span style="color:orange; font-weight:bold;">● Activity — </span>
         <span style="font-weight:300;">How customers interact and engage.</span>
     </h4>
-    <p>Metrics Included: Booking Frequency, Destination Diversity Index (Simpson’s), Recency (Days Since Last Booking)</p>
+    <p>Metrics: Booking Frequency, Destination Diversity Index (Simpson’s), Recency (Days Since Last Booking)</p>
     ''',
     unsafe_allow_html=True
 )
@@ -230,8 +230,60 @@ st.markdown(
         <span style="color:orange; font-weight:bold;">● Strategic Asset — </span>
         <span style="font-weight:300;">How customers align with business goals.</span>
     </h4>
-    <p>Metrics Included: Long-Haul Alignment, Package Alignment, Channel Fit</p>
+    <p>Metrics: Long-Haul Alignment, Package Alignment, Channel Fit</p>
     ''',
     unsafe_allow_html=True
 )
 
+data = load_helpforheroes_data(file_path)
+combined_metrics = calculate_customer_value_metrics(data['People_Data'], data['Bookings_Data'])
+
+st.markdown("<h3>Customer Value Metric Distributions</h3>", unsafe_allow_html=True)
+
+# --- ECONOMIC METRIC DISTRIBUTIONS ---
+st.markdown("<h4 style='color:orange;'>Spend Value Distributions</h4>", unsafe_allow_html=True)
+
+economic_cols = ['TotalBookingAmount', 'AverageBookingAmount', 'MaximumBookingAmount']
+
+for col in economic_cols:
+    st.markdown(f"<p><b>{col.replace('_',' ')}</b></p>", unsafe_allow_html=True)
+    fig, ax = plt.subplots()
+    ax.hist(combined_metrics[col], bins=20, edgecolor='black')
+    ax.set_title(f"Distribution of {col}")
+    ax.set_xlabel(col)
+    ax.set_ylabel("Number of Customers")
+    st.pyplot(fig)
+
+
+# --- BEHAVIOURAL METRIC DISTRIBUTIONS ---
+st.markdown("<h4 style='color:orange;'>Activity Value Distributions</h4>", unsafe_allow_html=True)
+
+behavioural_cols = ['BookingFrequency', 'DestinationDiversityIndex', 'RecencyDays']
+
+for col in behavioural_cols:
+    st.markdown(f"<p><b>{col.replace('_',' ')}</b></p>", unsafe_allow_html=True)
+    fig, ax = plt.subplots()
+    ax.hist(combined_metrics[col].dropna(), bins=20, edgecolor='black')
+    ax.set_title(f"Distribution of {col}")
+    ax.set_xlabel(col)
+    ax.set_ylabel("Number of Customers")
+    st.pyplot(fig)
+
+
+# --- STRATEGIC METRIC DISTRIBUTIONS ---
+st.markdown("<h4 style='color:orange;'>Strategic Asset Distributions</h4>", unsafe_allow_html=True)
+
+strategic_cols = ['LongHaulShare', 'PackageShare', 'ChannelFit']
+
+for col in strategic_cols:
+    st.markdown(f"<p><b>{col.replace('_',' ')}</b></p>", unsafe_allow_html=True)
+    fig, ax = plt.subplots()
+    
+    # bar chart for binary metrics (0/1)
+    value_counts = combined_metrics[col].value_counts().sort_index()
+    ax.bar(value_counts.index.astype(str), value_counts.values, color=['grey','orange'])
+    
+    ax.set_title(f"{col} Distribution")
+    ax.set_xlabel("Value")
+    ax.set_ylabel("Number of Customers")
+    st.pyplot(fig) 
