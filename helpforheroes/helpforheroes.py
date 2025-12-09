@@ -167,7 +167,7 @@ st.markdown("""
 }
 .stMarkdown h3 {
     font-size: 35px !important; 
-    margin: 20px 0 20px 0;
+    margin: 60px 0 20px 0;
 }
 .stMarkdown h4 {
     font-size: 26px !important;
