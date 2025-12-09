@@ -131,10 +131,10 @@ except:
 # Styling
 st.markdown("""
 <style>
-.stMarkdown h1 { font-size: 55px !important; font-weight: 700 !important; margin: 20px 0 20px 0; }
-.stMarkdown h2 { font-size: 45px !important; font-weight: 400 !important; margin: 20px 0 20px 0; }
-.stMarkdown h3 { font-size: 35px !important; margin: 150px 0 20px 0; }
-.stMarkdown h4 { font-size: 26px !important; font-weight: 700 !important; margin: 20px 0 20px 0; }
+.stMarkdown h1 { font-size: 60px !important; font-weight: 700 !important; margin: 20px 0 20px 0; }
+.stMarkdown h2 { font-size: 50px !important; font-weight: 400 !important; margin: 20px 0 20px 0; }
+.stMarkdown h3 { font-size: 40px !important; margin: 150px 0 20px 0; }
+.stMarkdown h4 { font-size: 28px !important; font-weight: 700 !important; margin: 20px 0 20px 0; }
 .stMarkdown p  { font-size: 22px !important; margin: 20px 0 60px 0; }
 </style>
 """, unsafe_allow_html=True)
