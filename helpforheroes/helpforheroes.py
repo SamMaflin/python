@@ -203,6 +203,7 @@ st.markdown(
 
 # research question
 st.markdown(
+    "<hr style=\"border: 2px solid orange; margin-top: -10px; margin-bottom: 30px;\">"
     "<h3>But how can we measure <span style=\"color:orange; font-weight:bold;\">value</span> among customers?</h3>",
     unsafe_allow_html=True
 )
