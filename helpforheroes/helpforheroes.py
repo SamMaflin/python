@@ -245,73 +245,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ================================
-# FILE UPLOAD + METRIC CALCULATION
-# ================================
 
-st.markdown("### Upload Data File")
 
-uploaded_file = st.file_uploader(
-    "Upload the Excel file containing People_Data and Bookings_Data",
-    type=["xls", "xlsx"]
+# research question
+st.markdown(
+    "<h3>First Impressions...</h3>"
+    "<p>Metrics: Long-Haul Alignment, Package Alignment, Channel Fit</p>",
+    unsafe_allow_html=True
 )
-
-if uploaded_file is None:
-    st.warning("Please upload an Excel file to continue.")
-    st.stop()
-
-data = load_helpforheroes_data(uploaded_file)
-people_df = data['People_Data']
-bookings_df = data['Bookings_Data']
-
-# calculate all metrics
-combined_metrics = calculate_customer_value_metrics(people_df, bookings_df)
-
-# ================================
-# METRIC DISTRIBUTIONS
-# ================================
-
-st.markdown("<h3>Customer Value Metric Distributions</h3>", unsafe_allow_html=True)
-
-# --- ECONOMIC METRIC DISTRIBUTIONS ---
-st.markdown("<h4 style='color:orange;'>Spend Value Distributions</h4>", unsafe_allow_html=True)
-
-economic_cols = ['TotalBookingAmount', 'AverageBookingAmount', 'MaximumBookingAmount']
-
-for col in economic_cols:
-    st.markdown(f"<p><b>{col}</b></p>", unsafe_allow_html=True)
-    fig, ax = plt.subplots()
-    ax.hist(combined_metrics[col], bins=20, edgecolor='black')
-    ax.set_title(f"Distribution of {col}")
-    ax.set_xlabel(col)
-    ax.set_ylabel("Number of Customers")
-    st.pyplot(fig)
-
-# --- BEHAVIOURAL METRIC DISTRIBUTIONS ---
-st.markdown("<h4 style='color:orange;'>Activity Value Distributions</h4>", unsafe_allow_html=True)
-
-behavioural_cols = ['BookingFrequency', 'DestinationDiversityIndex', 'RecencyDays']
-
-for col in behavioural_cols:
-    st.markdown(f"<p><b>{col}</b></p>", unsafe_allow_html=True)
-    fig, ax = plt.subplots()
-    ax.hist(combined_metrics[col].dropna(), bins=20, edgecolor='black')
-    ax.set_title(f"Distribution of {col}")
-    ax.set_xlabel(col)
-    ax.set_ylabel("Number of Customers")
-    st.pyplot(fig)
-
-# --- STRATEGIC METRIC DISTRIBUTIONS ---
-st.markdown("<h4 style='color:orange;'>Strategic Asset Distributions</h4>", unsafe_allow_html=True)
-
-strategic_cols = ['LongHaulAlignment', 'PackageAlignment', 'ChannelFit']
-
-for col in strategic_cols:
-    st.markdown(f"<p><b>{col}</b></p>", unsafe_allow_html=True)
-    fig, ax = plt.subplots()
-    value_counts = combined_metrics[col].value_counts().sort_index()
-    ax.bar(value_counts.index.astype(str), value_counts.values)
-    ax.set_title(f"{col} Distribution")
-    ax.set_xlabel("Value (0 = No, 1 = Yes)")
-    ax.set_ylabel("Number of Customers")
-    st.pyplot(fig)
