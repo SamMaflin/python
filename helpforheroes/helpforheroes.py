@@ -26,36 +26,55 @@ def load_helpforheroes_data(file_obj):
     data['Bookings_Data'] = pd.DataFrame(data.get('Bookings_Data', pd.DataFrame()))
     return data
 
+ 
+# ============================================================
+# FULL METRIC ENGINE — Spend + Activity + Strategic
+# ============================================================
 
-# ============================================================
-# METRIC ENGINE
-# ============================================================
 def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
+    """
+    Computes:
+        - Economic Value (Spend)
+        - Activity Value (Frequency, Recency, Diversity)
+        - Strategic Value (Long-Haul, Package, Channel Fit)
+        - SpendScore (0–100 percentile)
+        - FrequencyScore (0–100)
+        - RecencyScore (holiday-aware)
+        - DiversityScore (0, 50, 100)
+        - ActivityScore (0–100 weighted)
+        - StrategicScore (0–100 weighted)
+    Returns:
+        Customer-level metrics dataframe.
+    """
 
-    # Merge datasets
+    # -------------------------------
+    # CLEAN + MERGE
+    # -------------------------------
     merged_df = pd.merge(people_df, bookings_df, on='Person URN', how='left')
 
-    # Ensure BookingAmount column exists
+    # Standardise booking amount
     if 'BookingAmount' not in merged_df.columns and 'Cost' in merged_df.columns:
         merged_df['BookingAmount'] = merged_df['Cost']
     merged_df['BookingAmount'] = merged_df['BookingAmount'].fillna(0)
 
-    # -------------------------------
-    # ECONOMIC (SPEND) VALUE
-    # -------------------------------
+
+    # ============================================================
+    # 1. ECONOMIC VALUE — Spend Metrics
+    # ============================================================
     economic_metrics = merged_df.groupby('Person URN').agg(
         TotalBookingAmount=('BookingAmount', 'sum'),
         AverageBookingAmount=('BookingAmount', 'mean'),
         MaximumBookingAmount=('BookingAmount', 'max')
     )
 
-    # -------------------------------
-    # BEHAVIOURAL (ACTIVITY) VALUE
-    # -------------------------------
+
+    # ============================================================
+    # 2. ACTIVITY VALUE — Behaviour Metrics
+    # ============================================================
     bookings_df['Booking Date'] = pd.to_datetime(bookings_df['Booking Date'], errors='coerce')
     reference_date = bookings_df['Booking Date'].max()
 
-    # Simpson Diversity Index
+    # Diversity (Simpson Index)
     def simpson_diversity(destinations):
         counts = destinations.value_counts()
         if counts.sum() == 0:
@@ -69,7 +88,10 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         LastBookingDate=('Booking Date', 'max')
     )
 
-    behavioural_metrics['RecencyDays'] = (reference_date - behavioural_metrics['LastBookingDate']).dt.days
+    behavioural_metrics['RecencyDays'] = (
+        reference_date - behavioural_metrics['LastBookingDate']
+    ).dt.days
+
     behavioural_metrics = behavioural_metrics.drop(columns=['LastBookingDate'])
 
     behavioural_metrics = behavioural_metrics.fillna({
@@ -78,9 +100,10 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         'RecencyDays': np.nan
     })
 
-    # -------------------------------
-    # STRATEGIC ALIGNMENT VALUE
-    # -------------------------------
+
+    # ============================================================
+    # 3. STRATEGIC VALUE — Alignment Metrics
+    # ============================================================
     long_haul_destinations = [
         'United States', 'USA', 'Australia', 'New Zealand',
         'South Africa', 'Namibia', 'Senegal', 'Mali', 'Kuwait'
@@ -92,14 +115,16 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     )
 
     strategic_metrics = pd.DataFrame(index=strategic_temp.index)
-
     strategic_metrics['LongHaulAlignment'] = (strategic_temp['LongHaulBookings'] > 0).astype(int)
     strategic_metrics['PackageAlignment'] = (strategic_temp['PackageBookings'] > 0).astype(int)
 
+    # Channel Fit
     if priority_sources is None:
         priority_sources = ['Expedia']
 
-    people_df['ChannelFit'] = people_df['Source'].apply(lambda x: 1 if x in priority_sources else 0)
+    people_df['ChannelFit'] = people_df['Source'].apply(
+        lambda x: 1 if x in priority_sources else 0
+    )
 
     strategic_metrics = strategic_metrics.merge(
         people_df[['Person URN', 'ChannelFit']],
@@ -107,16 +132,105 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         how='left'
     )
 
-    # -------------------------------
-    # COMBINE ALL METRICS
-    # -------------------------------
+
+    # ============================================================
+    # 4. COMBINE RAW METRICS
+    # ============================================================
     combined = (
         economic_metrics
         .merge(behavioural_metrics, left_index=True, right_index=True, how='left')
         .merge(strategic_metrics.set_index('Person URN'), left_index=True, right_index=True, how='left')
     )
 
+
+    # ============================================================
+    # 5. SPEND SCORE (Percentile)
+    # ============================================================
+    combined['SpendPercentile'] = combined['TotalBookingAmount'].rank(pct=True)
+    combined['SpendScore'] = (combined['SpendPercentile'] * 100).round(2)
+
+
+    # ============================================================
+    # 6. ACTIVITY TRANSFORMATIONS
+    # ============================================================
+
+    # -------------------------------
+    # FREQUENCY SCORE (0–100)
+    # -------------------------------
+    freq = combined['BookingFrequency'].fillna(0)
+    combined['FrequencyScore'] = (
+        (freq - freq.min()) / (freq.max() - freq.min()) * 100
+    ).round(2)
+
+    # -------------------------------
+    # RECENCY SCORE (holiday-aware buckets)
+    # -------------------------------
+    rec = combined['RecencyDays']
+
+    combined['RecencyScore'] = np.select(
+        [
+            rec <= 365,                # 0–1 year
+            rec <= 730,                # 1–2 years
+            rec <= 1095,               # 2–3 years
+            rec <= 1460,               # 3–4 years
+            rec <= 1825,               # 4–5 years
+            rec > 1825                 # 5+ years
+        ],
+        [
+            100,
+            80,
+            60,
+            40,
+            20,
+            0
+        ],
+        default=0
+    )
+
+    # -------------------------------
+    # DIVERSITY SCORE (0, 50, 100)
+    # -------------------------------
+    div = combined['DestinationDiversityIndex'].fillna(0)
+
+    combined['DiversityScore'] = np.select(
+        [
+            div == 0,
+            div <= 0.40,
+            div > 0.40
+        ],
+        [
+            0,
+            50,
+            100
+        ]
+    ).astype(int)
+
+
+    # -------------------------------
+    # FINAL ACTIVITY SCORE
+    # -------------------------------
+    combined['ActivityScore'] = (
+        0.5 * combined['FrequencyScore'] +
+        0.3 * combined['RecencyScore'] +
+        0.2 * combined['DiversityScore']
+    ).round(2)
+
+
+    # ============================================================
+    # 7. STRATEGIC SCORE (Weighted)
+    # ============================================================
+    combined['LongHaulScore'] = combined['LongHaulAlignment'].apply(lambda x: 100 if x == 1 else 0)
+    combined['PackageScore']  = combined['PackageAlignment'].apply(lambda x: 100 if x == 1 else 0)
+    combined['ChannelScore']  = combined['ChannelFit'].apply(lambda x: 100 if x == 1 else 0)
+
+    combined['StrategicScore'] = (
+        0.5 * combined['LongHaulScore'] +
+        0.3 * combined['PackageScore'] +
+        0.2 * combined['ChannelScore']
+    ).round(2)
+
     return combined
+
 
 
 # ============================================================
@@ -217,9 +331,13 @@ st.markdown(
     f"""
     <h4><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend</span></h4>
     <ul>
-        <li>Most customers contribute very little — value is concentrated in a small elite segment.</li>
-        <li>Average spend clusters tightly at lower levels, showing a strong price comfort zone.</li>
-        <li>Occasional high-value bookings reveal hidden premium potential even among low-frequency customers.</li>
+        <li>Spend was heavily right-skewed, with a small number of customers contributing the majority of total revenue.</li>
+        <li>Raw spend couldn’t be compared directly because a few very high-value customers distorted the scale.</li> 
+    </ul>
+    <h5>Fix</h5>
+    <ul>
+    <li>A percentile-based SpendScore (0–100) was applied.</li>
+    <li>Percentiles handle long-tail spend patterns naturally and place each customer relative to the overall population, enabling fair comparison across value segments.</li>
     </ul>
     """,
     unsafe_allow_html=True
@@ -228,12 +346,7 @@ st.markdown(
 
 st.markdown(
     f"""
-    <h4><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h4>
-    <ul>
-        <li>Most customers book once or twice — repeat travellers are a very small but influential group.</li>
-        <li>Destination diversity is low for most, signalling a preference for familiar, repeat destinations.</li>
-        <li>Recency skew shows the base is largely dormant, with only a handful of recently active customers.</li>
-    </ul>
+    <h4><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity</span></h4> 
     """,
     unsafe_allow_html=True
 )
@@ -241,12 +354,9 @@ st.markdown(
 
 st.markdown(
     f"""
-    <h4><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h4>
-    <ul>
-        <li>Long-haul travellers are rare but strongly correlated with higher-value behaviour.</li>
-        <li>Package holidays show strong adoption, reinforcing a key commercial product line.</li>
-        <li>Channel Fit indicates most customers come via non-priority sources, highlighting partnership opportunities.</li>
-    </ul>
+    <h4><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic</span></h4> 
     """,
     unsafe_allow_html=True
 )
+
+
