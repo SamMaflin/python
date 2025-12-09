@@ -287,7 +287,7 @@ st.markdown(
         <li>This long-tail pattern makes raw spend unsuitable for direct comparison.</li>
     </ul>
 
-    <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
+    <h4>Fixes:</h4>
     <ul>
         <li>Spend was transformed into a percentile-based SpendScore (0–100).</li>
         <li>This method handles skew naturally and ranks customers fairly across the population.</li>
@@ -311,7 +311,7 @@ st.markdown(
             some customers revisit the same place, while a minority explore widely.</li>
     </ul>
 
-    <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
+    <h4>Fixes:</h4>
     <ul>
         <li>Frequency scaled to a 0–100 FrequencyScore.</li>
         <li>Recency bucketed into realistic holiday cycles (1 year, 2 years, etc.).</li>
@@ -334,7 +334,7 @@ st.markdown(
         <li>Raw 0/1 values were incompatible with the 0–100 scaling used elsewhere.</li>
     </ul>
 
-    <h4><span style="color:orange; font-weight:bold;">Fix</span></h4>
+    <h4>Fixes:</h4>
     <ul>
         <li>All strategic indicators were mapped to 0/100 to match the unified scoring framework.</li>
         <li>Weighted StrategicScore created: Long-Haul (50%), Package (30%), Channel Fit (20%).</li>
