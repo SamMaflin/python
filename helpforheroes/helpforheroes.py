@@ -384,9 +384,6 @@ st.markdown(
 )
 
 
-# ----------------------
-# SEGMENTATION ANALYSIS
-# ----------------------
 st.markdown("<h2>Segmentation Insights</h2>", unsafe_allow_html=True)
 
 st.markdown("""
@@ -394,14 +391,13 @@ st.markdown("""
 
 .segment-matrix {
     border-collapse: separate;
-    border-spacing: 18px 26px; /* more space between cells */
+    border-spacing: 18px 26px; 
     width: 100%;
     text-align: center;
     font-size: 20px;
     table-layout: fixed;
 }
 
-/* Header cells */
 .segment-matrix th {
     padding: 18px;
     background-color: #f2f2f2;
@@ -411,28 +407,26 @@ st.markdown("""
     color: black !important;
 }
 
-/* Data cells */
 .segment-matrix td {
-    padding: 32px 22px;          /* more internal space */
+    padding: 32px 22px;
     border-radius: 14px;
     font-weight: 700;
-    color: black !important;     /* force black text */
+    color: black !important;
 }
 
 /* Colour palette */
-.red-strong   { background-color: #D32F2F; }   /* Low-Low */
-.orange       { background-color: #FFA726; }   /* Mid-Low / Low-Mid */
-.yellow       { background-color: #FFEB3B; }   /* Mid-Mid */
-.green-pale   { background-color: #C8F7C5; }   /* High-Low */
-.green        { background-color: #4CAF50; }   /* Mid-High */
-.green-strong { background-color: #1B5E20; }   /* High-High */
+.red-strong   { background-color: #D32F2F; }
+.orange       { background-color: #FFA726; }
+.yellow       { background-color: #FFEB3B; }
+.green-pale   { background-color: #C8F7C5; }
+.green        { background-color: #4CAF50; }
+.green-strong { background-color: #1B5E20; }
 
 </style>
 
-<h3 class="small-h3">Customer Value Matrix — Spend × Activity</h3>
+<h3 class='small-h3'>Customer Value Matrix — Spend × Activity</h3>
 
 <table class="segment-matrix">
-
     <tr>
         <th></th>
         <th>Low Activity</th>
@@ -460,6 +454,6 @@ st.markdown("""
         <td class="green">Premium Regulars</td>
         <td class="green-strong">Premium Loyalists</td>
     </tr>
-
 </table>
+
 """, unsafe_allow_html=True)
