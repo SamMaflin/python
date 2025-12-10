@@ -389,3 +389,35 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Segmentation Insights</h2>", unsafe_allow_html=True)
 
+st.markdown("Customer Value Matrix (Spend × Activity)")
+
+segment_grid = [
+    ["Premium Loyalists", "Loyal Value", "Engaged Low-Spend"],
+    ["Premium Regulars", "Developing Value", "Steady Low-Spend"],
+    ["One-Off Premiums", "At-Risk Decliners", "Dormant Base"]
+]
+
+colors = {
+    "Premium Loyalists": "#1f77b4",
+    "Loyal Value": "#2ca02c",
+    "Engaged Low-Spend": "#17becf",
+    "Premium Regulars": "#9467bd",
+    "Developing Value": "#8c564b",
+    "Steady Low-Spend": "#bcbd22",
+    "One-Off Premiums": "#ff7f0e",
+    "At-Risk Decliners": "#d62728",
+    "Dormant Base": "#7f7f7f"
+}
+
+for row in segment_grid:
+    cols = st.columns(3)
+    for idx, segment in enumerate(row):
+        with cols[idx]:
+            st.markdown(
+                f"""
+                <div style='padding:15px; border-radius:10px; 
+                background-color:{colors[segment]}; color:white; text-align:center;'>
+                    <b>{segment}</b>
+                </div>
+                """, unsafe_allow_html=True
+            )
