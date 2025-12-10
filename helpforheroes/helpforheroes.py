@@ -207,9 +207,30 @@ def render_segment_insights():
         unsafe_allow_html=True
     )
 
+
 def render_customer_profiles(df, bookings_df, people_df):
     st.markdown("<h2>Who Are These Customers? — Segment Profiles</h2>", unsafe_allow_html=True)
-    customer_profiles(df, bookings_df, people_df)
+
+    # Get profiles, dominance tables, and insights
+    prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
+
+    # Display merged profile dataset (optional)
+    st.markdown("### Full Profile Dataset (merged segmentation + demographics)")
+    st.dataframe(prof_df)
+
+    # Display each dominance table
+    st.markdown("### Segment Demographic Breakdown")
+
+    for field, table in results.items():
+        st.markdown(f"#### {field}")
+        st.dataframe(table)
+
+    # Display insights
+    st.markdown("### Key Profiling Insights")
+    for i in insights:
+        st.markdown(f"- {i}")
+
+
 
 # ============================================================
 # MAIN APP
@@ -230,7 +251,7 @@ def main():
     df   = calculate_customer_value_metrics(data["People_Data"], data["Bookings_Data"])
 
     render_segment_barchart(df, data["Bookings_Data"])
-    render_customer_profiles(df, data["Bookings_Data"], data["People_Data"])
+    render_customer_profiles()
     render_segment_insights()
 
 
