@@ -465,88 +465,43 @@ rev_segment = (
 total_revenue = rev_segment["Revenue"].sum()
 rev_segment["ShareOfRevenue"] = (rev_segment["Revenue"] / total_revenue * 100).round(1)
 
-# ------------------ Merge for butterfly chart ------------------
-butterfly = segment_counts.merge(
-    rev_segment[["Segment", "ShareOfRevenue"]],
-    on="Segment",
-    how="left"
-)
+# ------------------ Merge + sort by revenue share ------------------
+merged = segment_counts.merge(rev_segment[["Segment", "ShareOfRevenue"]], on="Segment")
+merged = merged.sort_values("ShareOfRevenue", ascending=False)
 
-segments = butterfly["Segment"]
-customer_vals = butterfly["ShareOfBase"]
-revenue_vals = butterfly["ShareOfRevenue"]
-
+segments = merged["Segment"].tolist()
+customer_vals = merged["ShareOfBase"].tolist()
+revenue_vals = merged["ShareOfRevenue"].tolist()
 
 # ------------------------------------------------------------
-# BUTTERFLY CHART (Mirrored, no negatives, coloured)
+# GROUPED BAR CHART
 # ------------------------------------------------------------
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import numpy as np
 
-# Colour scaling red → yellow → green
-norm = mcolors.Normalize(
-    vmin=0,
-    vmax=max(customer_vals.max(), revenue_vals.max())
-)
-cmap = plt.cm.get_cmap("RdYlGn")
+fig, ax = plt.subplots(figsize=(12, 8))
 
-customer_colors = [cmap(norm(v)) for v in customer_vals]
-revenue_colors = [cmap(norm(v)) for v in revenue_vals]
+bar_width = 0.35
+x = np.arange(len(segments))
 
-fig, ax = plt.subplots(figsize=(14, 10))
+# Colours (consistent + clean)
+customer_color = "#0095FF"   # blue
+revenue_color = "#FF476C"    # red
 
-y_positions = np.arange(len(segments))
+# Bars
+ax.bar(x - bar_width/2, customer_vals, width=bar_width, label="Customer Share (%)", color=customer_color)
+ax.bar(x + bar_width/2, revenue_vals, width=bar_width, label="Revenue Share (%)", color=revenue_color)
 
-# LEFT BAR (Customer Share) — mirrored by flipping x-axis
-ax.barh(
-    y_positions,
-    customer_vals,
-    color=customer_colors,
-    alpha=0.9,
-    label="Customer Share (%)"
-)
+# Labels & formatting
+ax.set_xticks(x)
+ax.set_xticklabels(segments, rotation=45, ha="right", fontsize=12)
+ax.set_ylabel("Percentage (%)", fontsize=14, fontweight="bold")
+ax.set_title("Customer Base vs Revenue Contribution by Segment", fontsize=18, fontweight="bold", pad=20)
 
-# RIGHT BAR (Revenue Share)
-ax2 = ax.twiny()
-ax2.barh(
-    y_positions,
-    revenue_vals,
-    color=revenue_colors,
-    alpha=0.9,
-    label="Revenue Share (%)"
-)
+ax.legend(fontsize=12)
 
-# Y labels
-ax.set_yticks(y_positions)
-ax.set_yticklabels(segments, fontsize=13, fontweight="bold")
-
-# Invert left x-axis for mirror effect
-ax.invert_xaxis()
-
-# Axis labels with extra spacing
-ax.set_xlabel("Customer Share (%)", fontsize=14, fontweight="bold", labelpad=20)
-ax2.set_xlabel("Revenue Share (%)", fontsize=14, fontweight="bold", labelpad=20)
-
-# Dotted guide lines
-for y, c_val, r_val in zip(y_positions, customer_vals, revenue_vals):
-    ax.plot([0, c_val], [y, y], linestyle=":", color="grey", alpha=0.6)
-    ax2.plot([0, r_val], [y, y], linestyle=":", color="grey", alpha=0.6)
-
-# Center line
-ax.axvline(0, color="black", linewidth=1.5)
-
-# Remove clutter spines
-for spine in ["top", "right", "left"]:
-    ax.spines[spine].set_visible(False)
-    ax2.spines[spine].set_visible(False)
-
-plt.title(
-    "Customer Base vs Revenue Contribution by Segment",
-    fontsize=18,
-    fontweight="bold",
-    pad=25
-)
+# Gridlines for readability
+ax.grid(axis="y", linestyle="--", alpha=0.4)
 
 plt.tight_layout()
 
