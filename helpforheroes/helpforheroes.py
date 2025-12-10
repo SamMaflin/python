@@ -389,35 +389,61 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Segmentation Insights</h2>", unsafe_allow_html=True)
 
-st.markdown("Customer Value Matrix (Spend × Activity)")
+st.markdown("### Customer Value Matrix (Spend × Activity)", unsafe_allow_html=True)
 
-segment_grid = [
-    ["Premium Loyalists", "Loyal Value", "Engaged Low-Spend"],
-    ["Premium Regulars", "Developing Value", "Steady Low-Spend"],
-    ["One-Off Premiums", "At-Risk Decliners", "Dormant Base"]
+# Matrix order: rows = Activity (Low→Mid→High), columns = Spend (Low→Mid→High)
+matrix = [
+    ["Dormant Base", "At-Risk Decliners", "One-Off Premiums"],
+    ["Steady Low-Spend", "Developing Value", "Premium Regulars"],
+    ["Engaged Low-Spend", "Loyal Value", "Premium Loyalists"]
 ]
 
-colors = {
-    "Premium Loyalists": "#1f77b4",
-    "Loyal Value": "#2ca02c",
-    "Engaged Low-Spend": "#17becf",
-    "Premium Regulars": "#9467bd",
-    "Developing Value": "#8c564b",
-    "Steady Low-Spend": "#bcbd22",
-    "One-Off Premiums": "#ff7f0e",
-    "At-Risk Decliners": "#d62728",
-    "Dormant Base": "#7f7f7f"
+# Define colours for each segment
+segment_colors = {
+    "Premium Loyalists": "#005BBB",
+    "Loyal Value": "#1E90FF",
+    "Engaged Low-Spend": "#87CEFA",
+
+    "Premium Regulars": "#6A0DAD",
+    "Developing Value": "#BA55D3",
+    "Steady Low-Spend": "#D8BFD8",
+
+    "One-Off Premiums": "#FF8C00",
+    "At-Risk Decliners": "#FF6347",
+    "Dormant Base": "#A9A9A9",
 }
 
-for row in segment_grid:
+# Axis labels
+st.markdown("""
+<div style='text-align:center; font-size:20px; margin-bottom:10px;'>
+<b>High Activity ↑</b>
+</div>
+""", unsafe_allow_html=True)
+
+for row in matrix[::-1]:  # reverse so High Activity is on top
     cols = st.columns(3)
-    for idx, segment in enumerate(row):
-        with cols[idx]:
+    for i, seg in enumerate(row):
+        with cols[i]:
             st.markdown(
                 f"""
-                <div style='padding:15px; border-radius:10px; 
-                background-color:{colors[segment]}; color:white; text-align:center;'>
-                    <b>{segment}</b>
+                <div style="
+                    background-color:{segment_colors[seg]};
+                    padding:25px;
+                    border-radius:12px;
+                    text-align:center;
+                    color:white;
+                    font-weight:bold;
+                    font-size:18px;
+                    ">
+                    {seg}
                 </div>
-                """, unsafe_allow_html=True
+                """,
+                unsafe_allow_html=True
             )
+
+# Spend axis label
+st.markdown("""
+<div style='text-align:center; font-size:20px; margin-top:10px;'>
+<b>Low Spend → Mid Spend → High Spend</b>
+</div>
+""", unsafe_allow_html=True)
