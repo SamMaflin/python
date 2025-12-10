@@ -2,41 +2,83 @@ import pandas as pd
 import numpy as np
 
 
-def prepare_people_data(people_df, bookings_df=None, reference_date=None):
+# ============================================================
+# 1. CLEAN PEOPLE DATA → Age + AgeBracket
+# ============================================================
+def prepare_people_data(people_df):
     people = people_df.copy()
 
-    # Parse DOB
+    # Convert DOB to datetime
     people["DOB"] = pd.to_datetime(
         people["DOB"], format="%d/%m/%Y", errors="coerce"
     )
 
-    # Choose a sensible reference date
-    if reference_date is None:
-        if bookings_df is not None and "Booking Date" in bookings_df.columns:
-            ref = pd.to_datetime(bookings_df["Booking Date"], errors="coerce").max()
-        else:
-            ref = pd.Timestamp.today().normalize()
-    else:
-        ref = pd.to_datetime(reference_date)
-
-    # Calculate age at reference date
+    # Compute ages relative to TODAY (not max dob)
+    today = pd.Timestamp("today")
     people["Age"] = people["DOB"].apply(
-        lambda d: int((ref - d).days / 365.25) if pd.notnull(d) else np.nan
+        lambda d: int((today - d).days / 365.25) if pd.notnull(d) else np.nan
     )
 
-    # Age brackets (with a proper <18 bucket)
-    bins   = [0, 18, 30, 40, 50, 60, 70, 200]
-    labels = ["<18", "18–29", "30–39", "40–49", "50–59", "60–69", "70+"]
-
+    # Create age groups
+    bins = [0, 29, 39, 49, 59, 69, 200]
+    labels = ["18–29", "30–39", "40–49", "50–59", "60–69", "70+"]
     people["AgeBracket"] = pd.cut(
-        people["Age"], bins=bins, labels=labels, right=False, include_lowest=True
+        people["Age"], bins=bins, labels=labels, include_lowest=True
     )
 
     return people
 
 
 # ============================================================
-# 2. POPULATION BASELINE
+# 2. BEHAVIOURAL FIELDS FROM BOOKINGS → RecencyBand + FrequencyBand
+# ============================================================
+def derive_booking_behaviour(bookings_df):
+    bookings = bookings_df.copy()
+
+    # Convert booking date
+    bookings["Booking Date"] = pd.to_datetime(
+        bookings["Booking Date"], format="%d/%m/%Y", errors="coerce"
+    )
+
+    today = pd.Timestamp("today")
+
+    # ---- Frequency: count bookings per person ----
+    freq = bookings.groupby("Person URN")["Booking URN"].count().rename("Frequency")
+
+    # Create frequency bands
+    def freq_band(n):
+        if n == 1: return "One-Time"
+        if n <= 3: return "Occasional"
+        if n <= 6: return "Regular"
+        return "Frequent"
+
+    freq_band_series = freq.apply(freq_band).rename("FrequencyBand")
+
+    # ---- Recency: days since latest booking ----
+    last_booking = (
+        bookings.groupby("Person URN")["Booking Date"].max().rename("LastBooking")
+    )
+
+    recency_days = (today - last_booking).dt.days.rename("RecencyDays")
+
+    # Create recency bands
+    def rec_band(d):
+        if d <= 90: return "Very Recent"
+        if d <= 180: return "Recent"
+        if d <= 365: return "Lapsed"
+        return "Dormant"
+
+    recency_band = recency_days.apply(rec_band).rename("RecencyBand")
+
+    # ---- Combine and return ----
+    behaviour = pd.concat([freq, freq_band_series, last_booking,
+                           recency_days, recency_band], axis=1)
+
+    return behaviour
+
+
+# ============================================================
+# 3. POPULATION BASELINE
 # ============================================================
 def population_baseline(prof_df, field):
     counts = prof_df[field].value_counts(dropna=False)
@@ -45,7 +87,7 @@ def population_baseline(prof_df, field):
 
 
 # ============================================================
-# 3. SEGMENT DISTRIBUTION
+# 4. SEGMENT DISTRIBUTION
 # ============================================================
 def segment_distribution(prof_df, field, segment_col="Segment"):
     counts = prof_df.groupby([segment_col, field])["Person URN"].count()
@@ -54,7 +96,7 @@ def segment_distribution(prof_df, field, segment_col="Segment"):
 
 
 # ============================================================
-# 4. DOMINANCE TABLE
+# 5. DOMINANCE TABLE
 # ============================================================
 def dominance_table(prof_df, field):
     pop_pct = population_baseline(prof_df, field)
@@ -83,23 +125,32 @@ def dominance_table(prof_df, field):
 
 
 # ============================================================
-# 5. FULL SEGMENTATION BREAKDOWN
+# 6. COMBINE → create segmentation dataset + run dominance for all fields
 # ============================================================
-def full_segmentation_breakdown(seg_df, people_df):
+def full_segmentation_breakdown(df, bookings_df, people_df):
     """
-    seg_df    = metrics engine output (must contain Person URN + Segment)
-    people_df = raw demographic dataset
+    df = metrics output (Person URN, Segment)
     """
 
     people_clean = prepare_people_data(people_df)
+    behaviour = derive_booking_behaviour(bookings_df)
 
-    # Merge segmentation + demographics
-    prof_df = seg_df.merge(people_clean, on="Person URN", how="left")
+    # Merge segmentation + demographics + behaviour
+    prof_df = df.merge(people_clean, on="Person URN", how="left") \
+                .merge(behaviour, on="Person URN", how="left")
 
-    fields = ["AgeBracket", "Income", "Gender", "Occupation", "Source"]
+    profiling_fields = [
+        "AgeBracket",
+        "Income",
+        "Gender",
+        "Occupation",
+        "Source",
+        "FrequencyBand",
+        "RecencyBand"
+    ]
 
     results = {}
-    for field in fields:
+    for field in profiling_fields:
         if field in prof_df.columns:
             results[field] = dominance_table(prof_df, field)
 
@@ -107,7 +158,7 @@ def full_segmentation_breakdown(seg_df, people_df):
 
 
 # ============================================================
-# 6. INSIGHT GENERATOR
+# 7. INSIGHT GENERATOR (picks only meaningful differences)
 # ============================================================
 def generate_dominance_insights(results_dict):
     insights = []
@@ -115,28 +166,17 @@ def generate_dominance_insights(results_dict):
     for field, table in results_dict.items():
         for (segment, category), row in table.iterrows():
 
-            seg_pct, pop_pct, idx, dom = (
-                row["Segment %"], row["Population %"],
-                row["Index"], row["Dominance"]
+            dom = row["Dominance"]
+            if dom not in ["HIGHLY dominant", "Strongly dominant", "Under-represented"]:
+                continue  # skip noise
+
+            seg_pct = row["Segment %"]
+            pop_pct = row["Population %"]
+            idx = row["Index"]
+
+            insights.append(
+                f"[{field}] {segment}: {dom} for '{category}' "
+                f"(Segment {seg_pct:.1%} vs Pop {pop_pct:.1%}, Index={idx:.2f})"
             )
 
-            if dom in ["HIGHLY dominant", "Strongly dominant", "Under-represented"]:
-                insights.append(
-                    f"[{field}] {segment}: {dom} for '{category}' "
-                    f"(Segment {seg_pct:.1%} vs Pop {pop_pct:.1%}, Index={idx:.2f})"
-                )
-
     return insights
-
-
-# ============================================================
-# 7. PUBLIC ENTRYPOINT (no Streamlit)
-# ============================================================
-def customer_profiles(seg_df, bookings_df, people_df):
-    """
-    Returns pure dataframes and insight text.
-    """
-    prof_df, results = full_segmentation_breakdown(seg_df, people_df)
-    insights = generate_dominance_insights(results)
-
-    return prof_df, results, insights
