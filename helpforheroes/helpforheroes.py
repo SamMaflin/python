@@ -27,28 +27,33 @@ def load_helpforheroes_data(file_obj):
 # FULL METRIC ENGINE + SEGMENTATION
 # ============================================================
 def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
+    """
+    Full metric engine for Spend, Activity, Strategic scores + 3×3 segmentation.
+    Returns a customer-level DataFrame with all calculated metrics and segments.
+    """
 
     # ---------------------- MERGE ----------------------
-    merged = pd.merge(people_df, bookings_df, on='Person URN', how='left')
+    merged = pd.merge(people_df, bookings_df, on="Person URN", how="left")
 
+    # Standardise booking amount field
     if "BookingAmount" not in merged.columns and "Cost" in merged.columns:
         merged["BookingAmount"] = merged["Cost"]
 
     merged["BookingAmount"] = merged["BookingAmount"].fillna(0)
 
-    # ---------------------- ECONOMIC ----------------------
+    # ---------------------- ECONOMIC METRICS ----------------------
     economic = merged.groupby("Person URN").agg(
         TotalBookingAmount=("BookingAmount", "sum"),
         AverageBookingAmount=("BookingAmount", "mean"),
         MaximumBookingAmount=("BookingAmount", "max"),
     )
 
-    # ---------------------- ACTIVITY ----------------------
+    # ---------------------- ACTIVITY METRICS ----------------------
     bookings_df["Booking Date"] = pd.to_datetime(bookings_df["Booking Date"], errors="coerce")
-    ref_date = bookings_df["Booking Date"].max()
+    reference_date = bookings_df["Booking Date"].max()
 
-    def simpson(div):
-        counts = div.value_counts()
+    def simpson_diversity(x):
+        counts = x.value_counts()
         if counts.sum() == 0:
             return 0
         p = counts / counts.sum()
@@ -56,11 +61,11 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 
     behavioural = bookings_df.groupby("Person URN").agg(
         BookingFrequency=("Booking URN", "count"),
-        DestinationDiversityIndex=("Destination", simpson),
+        DestinationDiversityIndex=("Destination", simpson_diversity),
         LastBookingDate=("Booking Date", "max")
     )
 
-    behavioural["RecencyDays"] = (ref_date - behavioural["LastBookingDate"]).dt.days
+    behavioural["RecencyDays"] = (reference_date - behavioural["LastBookingDate"]).dt.days
     behavioural.drop(columns=["LastBookingDate"], inplace=True)
 
     behavioural.fillna({
@@ -69,14 +74,14 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         "RecencyDays": np.nan
     }, inplace=True)
 
-    # ---------------------- STRATEGIC ----------------------
-    long_haul = [
-        'United States', 'USA', 'Australia', 'New Zealand',
-        'South Africa', 'Namibia', 'Senegal', 'Mali', 'Kuwait'
+    # ---------------------- STRATEGIC METRICS ----------------------
+    long_haul_destinations = [
+        "United States", "USA", "Australia", "New Zealand",
+        "South Africa", "Namibia", "Senegal", "Mali", "Kuwait"
     ]
 
     strategic_temp = bookings_df.groupby("Person URN").agg(
-        LongHaulBookings=("Destination", lambda x: np.sum(x.isin(long_haul))),
+        LongHaulBookings=("Destination", lambda x: np.sum(x.isin(long_haul_destinations))),
         PackageBookings=("Product", lambda x: np.sum(x == "Package Holiday"))
     )
 
@@ -95,7 +100,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         how="left"
     )
 
-    # ---------------------- COMBINE RAW METRICS ----------------------
+    # ---------------------- COMBINE ALL METRICS ----------------------
     df = (
         economic
         .merge(behavioural, left_index=True, right_index=True)
@@ -107,14 +112,12 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 
     # ---------------------- ACTIVITY SCORE ----------------------
     freq = df["BookingFrequency"]
-
     if freq.max() != freq.min():
         df["FrequencyScore"] = ((freq - freq.min()) / (freq.max() - freq.min()) * 100).round(2)
     else:
         df["FrequencyScore"] = 0
 
     rec = df["RecencyDays"]
-
     df["RecencyScore"] = np.select(
         [
             rec <= 365,
@@ -129,10 +132,10 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     )
 
     div = df["DestinationDiversityIndex"]
-
     df["DiversityScore"] = np.select(
         [div == 0, div <= 0.40, div > 0.40],
-        [0, 50, 100]
+        [0, 50, 100],
+        default=0
     )
 
     df["ActivityScore"] = (
@@ -153,22 +156,32 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     ).round(2)
 
     # ============================================================
-    # SEGMENTATION (3×3 framework)
+    # 3×3 SEGMENTATION FRAMEWORK
     # ============================================================
     spend33, spend66 = df["SpendScore"].quantile([0.33, 0.66])
     act33, act66 = df["ActivityScore"].quantile([0.33, 0.66])
 
     df["SpendTier"] = np.select(
-        [df["SpendScore"] <= spend33, df["SpendScore"] <= spend66, df["SpendScore"] > spend66],
-        ["Low Spend", "Mid Spend", "High Spend"]
+        [
+            df["SpendScore"] <= spend33,
+            df["SpendScore"] <= spend66,
+            df["SpendScore"] > spend66
+        ],
+        ["Low Spend", "Mid Spend", "High Spend"],
+        default="Unknown"
     )
 
     df["ActivityTier"] = np.select(
-        [df["ActivityScore"] <= act33, df["ActivityScore"] <= act66, df["ActivityScore"] > act66],
-        ["Low Activity", "Mid Activity", "High Activity"]
+        [
+            df["ActivityScore"] <= act33,
+            df["ActivityScore"] <= act66,
+            df["ActivityScore"] > act66
+        ],
+        ["Low Activity", "Mid Activity", "High Activity"],
+        default="Unknown"
     )
 
-    # ---- 9 customer segments ----
+    # ---------------------- ASSIGN 9 SEGMENTS ----------------------
     def assign_segment(row):
         if row["ActivityTier"] == "High Activity":
             if row["SpendTier"] == "High Spend": return "Premium Loyalists"
@@ -189,8 +202,8 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 
     df["Segment"] = df.apply(assign_segment, axis=1)
 
-    # ---- Descriptions ----
-    desc = {
+    # ---------------------- SEGMENT DESCRIPTIONS ----------------------
+    descriptions = {
         "Premium Loyalists": "High spend & high activity — top value core.",
         "Loyal Value": "Frequent mid-spenders showing loyalty & upsell potential.",
         "Engaged Low-Spend": "Low spend but high activity — strong engagement.",
@@ -199,12 +212,14 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         "Steady Low-Spend": "Consistent low-value users.",
         "One-Off Premiums": "High spend but very inactive — big reactivation upside.",
         "At-Risk Decliners": "Mid-spend users showing reduced activity — churn risk.",
-        "Dormant Base": "Low spend & low activity — lowest commercial priority."
+        "Dormant Base": "Low spend & low activity — lowest commercial priority.",
+        "Unclassified": "Does not fit segmentation rules."
     }
 
-    df["SegmentDescription"] = df["Segment"].map(desc)
+    df["SegmentDescription"] = df["Segment"].map(descriptions)
 
     return df
+
 
 
 
