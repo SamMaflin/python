@@ -15,6 +15,10 @@ STRATEGIC_COLOR = "#FF476C"    # crimson red
 # DATA LOADING
 # ============================================================
 def load_helpforheroes_data(file_obj):
+    """
+    Load Excel file and return a dict with People_Data and Bookings_Data
+    as DataFrames (empty if missing).
+    """
     xls = pd.ExcelFile(file_obj)
     data = {sheet: pd.read_excel(xls, sheet) for sheet in xls.sheet_names}
 
@@ -24,8 +28,6 @@ def load_helpforheroes_data(file_obj):
     return data
 
 
-
-
 # ============================================================
 # FULL METRIC ENGINE + SEGMENTATION (WITH BLENDED DIVERSITY)
 # ============================================================
@@ -33,8 +35,13 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     """
     Calculates Spend, Activity, Strategic scores and assigns customers to a 
     3×3 segmentation matrix.
-    Includes **blended destination diversity metric**:
-        80% UniqueDestinations + 20% ExplorationRatio
+
+    Key design choices:
+      - SpendScore: composite of Avg + Max booking amount (70% / 30%), normalised 0–100.
+      - ActivityScore: combines Frequency, Recency and a blended Diversity metric:
+            Diversity = 80% UniqueDestinations + 20% ExplorationRatio.
+      - StrategicScore: binary signals (Long-haul, Package, ChannelFit) mapped to 0/100.
+      - Segmentation: tertiles on SpendScore and ActivityScore → 3×3 grid.
     """
 
     # ---------------------- MERGE ----------------------
@@ -53,6 +60,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     )
 
     # ---------------------- ACTIVITY ----------------------
+    bookings_df = bookings_df.copy()
     bookings_df["Booking Date"] = pd.to_datetime(bookings_df["Booking Date"], errors="coerce")
     reference_date = bookings_df["Booking Date"].max()
 
@@ -89,6 +97,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     if priority_sources is None:
         priority_sources = ["Expedia"]
 
+    people_df = people_df.copy()
     people_df["ChannelFit"] = people_df["Source"].apply(lambda x: int(x in priority_sources))
 
     strategic = strategic.merge(
@@ -100,16 +109,22 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     # ---------------------- COMBINE ----------------------
     df = (
         economic
-        .merge(behavioural, left_index=True, right_index=True)
-        .merge(strategic.set_index("Person URN"), left_index=True, right_index=True)
+        .merge(behavioural, left_index=True, right_index=True, how="left")
+        .merge(strategic.set_index("Person URN"), left_index=True, right_index=True, how="left")
     ).fillna(0)
 
     # ============================================================
-    # SPEND SCORE (Avg + Max composite)
+    # SPEND SCORE (Avg + Max composite with light winsorisation)
     # ============================================================
+    # Normalise average spend using percentile ranking
     df["AvgSpendNorm"] = df["AverageBookingAmount"].rank(pct=True) * 100
-    df["MaxSpendNorm"] = df["MaximumBookingAmount"].rank(pct=True) * 100
 
+    # Winsorise max spend at 95th percentile to reduce outlier distortion
+    max_cap = df["MaximumBookingAmount"].quantile(0.95)
+    df["MaxSpendClipped"] = df["MaximumBookingAmount"].clip(upper=max_cap)
+    df["MaxSpendNorm"] = df["MaxSpendClipped"].rank(pct=True) * 100
+
+    # Composite spend score
     df["SpendScore"] = (
         0.7 * df["AvgSpendNorm"] +
         0.3 * df["MaxSpendNorm"]
@@ -119,15 +134,18 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     # ACTIVITY SCORE
     # ============================================================
 
-    # ---- Frequency
+    # ---- Frequency (percentile, not raw scaling)
     freq = df["BookingFrequency"]
-    df["FrequencyScore"] = (
-        ((freq - freq.min()) / (freq.max() - freq.min())) * 100
-        if freq.max() != freq.min() else 0
-    )
+    if freq.max() != freq.min():
+        df["FrequencyScore"] = freq.rank(pct=True) * 100
+    else:
+        df["FrequencyScore"] = 0
 
-    # ---- Recency
-    rec = df["RecencyDays"]
+    # ---- Recency (bucketed holiday cycles; no-booking customers treated as very old)
+    rec = df["RecencyDays"].copy()
+    # Customers with no bookings should look "old", not 0 days ago
+    rec[(df["BookingFrequency"] == 0) | (rec <= 0) | rec.isna()] = 9999
+
     df["RecencyScore"] = np.select(
         [
             rec <= 365,
@@ -141,19 +159,17 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         default=0
     )
 
-    # ---- BLENDED DIVERSITY SCORE (Option B)
+    # ---- BLENDED DIVERSITY SCORE
     # Step 1: Normalise components
-    df["UniqueNorm"] = (
-        (df["UniqueDestinations"] - df["UniqueDestinations"].min()) /
-        (df["UniqueDestinations"].max() - df["UniqueDestinations"].min() + 1e-9)
-    ) * 100
+    unique_min = df["UniqueDestinations"].min()
+    unique_range = df["UniqueDestinations"].max() - unique_min + 1e-9
+    df["UniqueNorm"] = ((df["UniqueDestinations"] - unique_min) / unique_range) * 100
 
-    df["ExploreNorm"] = (
-        (df["ExplorationRatio"] - df["ExplorationRatio"].min()) /
-        (df["ExplorationRatio"].max() - df["ExplorationRatio"].min() + 1e-9)
-    ) * 100
+    explore_min = df["ExplorationRatio"].min()
+    explore_range = df["ExplorationRatio"].max() - explore_min + 1e-9
+    df["ExploreNorm"] = ((df["ExplorationRatio"] - explore_min) / explore_range) * 100
 
-    # Step 2: Weighted blend
+    # Step 2: Weighted blend (80% breadth, 20% "how exploratory?")
     df["DiversityScore"] = (
         0.8 * df["UniqueNorm"] +
         0.2 * df["ExploreNorm"]
@@ -169,6 +185,10 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     # ============================================================
     # STRATEGIC SCORE
     # ============================================================
+    df[["LongHaulAlignment", "PackageAlignment", "ChannelFit"]] = df[
+        ["LongHaulAlignment", "PackageAlignment", "ChannelFit"]
+    ].fillna(0)
+
     df["StrategicScore"] = (
         0.5 * (df["LongHaulAlignment"] * 100) +
         0.3 * (df["PackageAlignment"] * 100) +
@@ -229,6 +249,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 
     df["SegmentDescription"] = df["Segment"].map(descriptions).fillna("Unclassified group")
 
+    # Final tidy frame with Person URN as a column
     return df.reset_index().rename(columns={"index": "Person URN"})
 
 
@@ -241,7 +262,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 # -------------------------------
 try:
     st.image("helpforheroes/hfh_logo.png", width=200)
-except:
+except Exception:
     pass
 
 # -------------------------------
@@ -322,20 +343,20 @@ st.markdown("<h2>How Do We Measure Customer Value?</h2>", unsafe_allow_html=True
 st.markdown(
     f"""
 <h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend Score</span> — Financial contribution</h4>
-<p>Metrics: Average Booking Value, Maximum Booking Value</p>
+<p>Metrics: Average Booking Value, Maximum Booking Value (composited into a 0–100 SpendScore).</p>
 
 <h4><span style="color:{ACTIVITY_COLOR}; font-weight:bold;">● Activity Score</span> — Engagement & behaviour</h4>
-<p>Metrics: Booking Frequency, Destination Diversity, Booking Recency</p>
+<p>Metrics: Booking Frequency, Destination Diversity, Booking Recency.</p>
 
-<h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — (Optional) Alignment with business goals</h4>
-<p>Metrics: Long-Haul, Package Adoption, Channel Fit</p>
+<h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — Alignment with business goals</h4>
+<p>Metrics: Long-Haul participation, Package Adoption, Channel Fit.</p>
 """,
     unsafe_allow_html=True
 )
 
 
 # ----------------------
-# EARLY INSIGHTS
+# METRIC CONSTRUCTION
 # ----------------------
 st.markdown("<h2>Metric Construction</h2>", unsafe_allow_html=True)
 
@@ -347,14 +368,10 @@ st.markdown(
     f"""
     <h3 class='small-h3'><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend Score (0–100)</span></h3>
     <ul>
-        <li>Each Spend metric is right-skewed — a small share of customers generate the majority of revenue.</li>
-        <li>This long-tail pattern makes raw spend metrics unsuitable for direct comparison.</li>
-    </ul>
-
-    <h4>Fixes:</h4>
-    <ul>
-        <li>Spend metrics are transformed into a percentile-based SpendScore (0–100).</li>
-    </ul>
+        <li><b>Average Booking Amount</b> is the primary financial signal — it avoids inflating scores for frequent travellers and reflects typical spend per holiday.</li>
+        <li><b>Maximum Booking Amount</b> picks up occasional high-value or premium purchases that average spend would flatten.</li>
+        <li>A composite SpendScore (70% Avg, 30% Max), normalised 0–100, balances stable spend behaviour with sensitivity to premium trips and corrects skewed spend distributions.</li>
+    </ul> 
     """,
     unsafe_allow_html=True
 )
@@ -368,17 +385,9 @@ st.markdown(
     <h3 class='small-h3'><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity Score (0–100)</span></h3>
 
     <ul>
-        <li>Most customers book only once or twice.</li>
-        <li>Recency metric is highly skewed — very few recent travellers.</li>
-        <li>Destination diversity metric shows polarised behaviour: 
-            some customers revisit the same place, while a minority explore widely.</li>
-    </ul>
-
-    <h4>Fixes:</h4>
-    <ul>
-        <li>Frequency metric scaled to a 0–100 FrequencyScore.</li>
-        <li>Recency metric bucketed into realistic holiday cycles (1 year, 2 years, ... 5+ years ).</li>
-        <li>Diversity metric grouped into behavioural buckets (0, 50, 100) to distinguish repeaters from explorers.</li>
+        <li>Blends <b>Frequency</b> (percentile of total trips), <b>Recency</b> (bucketed into realistic holiday cycles: 1–5+ years) and a <b>Diversity</b> metric.</li>
+        <li>Diversity is a blend of <b>Unique Destinations</b> (breadth of travel) and an <b>Exploration Ratio</b> (unique destinations ÷ trips), rewarding both wide and authentic exploration.</li>
+        <li>Weighting of 50% Frequency, 30% Recency, 20% Diversity prioritises ongoing engagement while still surfacing explorers and churn risk.</li>
     </ul>
     """,
     unsafe_allow_html=True
@@ -393,14 +402,8 @@ st.markdown(
     <h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic Score (0–100)</span></h3>
 
     <ul>
-        <li>Long-haul, package adoption, and channel fit are binary strategic signals.</li>
-        <li>Raw 0/1 values were incompatible with the 0–100 scaling used elsewhere.</li>
-    </ul>
-
-    <h4>Fixes:</h4>
-    <ul>
-        <li>All strategic indicators were mapped to 0/100 to match the unified scoring framework.</li>
-        <li>Weighted StrategicScore created: Long-Haul (50%), Package (30%), Channel Fit (20%).</li>
+        <li>Long-haul, package adoption, and channel fit are treated as binary strategic signals and mapped to 0/100 for consistency.</li>
+        <li>Weighted StrategicScore: Long-Haul (50%), Package (30%), Channel Fit (20%) — reflecting their relative commercial importance.</li>
     </ul>
     """,
     unsafe_allow_html=True
@@ -412,8 +415,8 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
 
-# show matrix
-st.image("helpforheroes/matrix_plot.png", use_column_width=True) 
+# Show pre-generated matrix plot image
+st.image("helpforheroes/matrix_plot.png", use_column_width=True)
 
 
 # ------------------------------------------------------------
@@ -426,9 +429,9 @@ df = calculate_customer_value_metrics(
     data["Bookings_Data"]
 )
 
-# ------------------------------------------------------------#
+# ------------------------------------------------------------
 # CUSTOMER DISTRIBUTION BY SEGMENT
-# ------------------------------------------------------------#
+# ------------------------------------------------------------
 st.markdown("<h2>How Are Customers Distributed by Segment?</h2>", unsafe_allow_html=True)
 
 segment_counts = (
@@ -438,10 +441,11 @@ segment_counts = (
     .reset_index(name="CustomerCount")
 )
 
-# count unique Person URNs for total customers
-total_customers = df['Person URN'].nunique()
+total_customers = df["Person URN"].nunique()
 segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
+
 st.dataframe(segment_counts, use_container_width=True)
+
 st.bar_chart(
     segment_counts.set_index("Segment")["CustomerCount"],
     use_container_width=True
