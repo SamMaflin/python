@@ -241,14 +241,13 @@ we measured:<br></br>
 <br>• The % of the <b>overall population</b> in each category  
 <br>• The % of the <b>segment</b> in each category  
 </p>
-<p>
-This shows whether a segment has <b>more</b> or <b>fewer</b> of a group than expected.
+<p>This shows whether a segment has <b>more</b> or <b>fewer</b> of a group than expected.<br></br>
 </p>
 
 <h4>2️⃣ Z-Test for Statistical Reliability</h4>
 <p>
 We apply a <b>proportions Z-test</b> to confirm whether those differences are
-statistically meaningful and not random noise. 
+statistically meaningful and not random noise.<br></br>
 </p>
 
 <h4>3️⃣ Index for Effect Size</h4>
@@ -257,12 +256,8 @@ We also compute an intuitive Index:
 <br><b>1.0</b> = exactly as expected  
 <br><b>2.0</b> = twice as common as expected  
 <br><b>0.5</b> = half as common as expected  
-</p>
-
-<p>
-This combination lets us produce <b>valid, human-readable profiles</b> based on real,
-statistically supported differences.
-</p>
+</p> 
+<br></br>
 
 <hr>
         """,
