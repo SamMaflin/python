@@ -183,29 +183,10 @@ def render_segmentation_matrix():
 # SEGMENT BAR CHART
 # ============================================================
 def render_segment_barchart(df, bookings_df):
-    st.markdown("<h2>📊 Customer Base vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
+    st.markdown("<h2>📊 Customer Base vs Revenue Contribution by Segment...</h2>", unsafe_allow_html=True)
     segment_barchart_plot(df, bookings_df)
 
-
-# ============================================================
-# INSIGHT SECTION
-# ============================================================
-def render_segment_insights():
-    st.markdown("<h3>Early Segment Insights</h3>", unsafe_allow_html=True)
-
-    st.markdown(
-        """
-        <ul>
-            <li><b>Premium Loyalists</b> & <b>Premium Regulars</b> generate the most revenue.</li>
-            <li><b>Loyal Value</b> & <b>Developing Value</b> segments represent your best growth potential.</li>
-            <li><b>One-Off Premiums</b> are the biggest reactivation upside.</li>
-            <li><b>At-Risk Decliners</b> signal churn risk and need intervention.</li>
-            <li><b>Engaged Low-Spend</b> can be monetised with tailored offers.</li>
-            <li><b>Dormant Base</b> should receive minimal investment.</li>
-        </ul>
-        """,
-        unsafe_allow_html=True
-    )
+ 
 
 
 import streamlit as st
@@ -218,7 +199,7 @@ def render_customer_profiles(df, bookings_df, people_df):
     # ============================================================
     # SECTION HEADER
     # ============================================================
-    st.markdown("<h2>📊 Customer Segment Profiles</h2>", unsafe_allow_html=True)
+    st.markdown("<h2>📊 Customer Segment Profiles...</h2>", unsafe_allow_html=True)
 
     import streamlit as st
 
