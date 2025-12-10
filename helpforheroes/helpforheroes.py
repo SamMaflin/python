@@ -384,76 +384,59 @@ st.markdown(
 )
 
 
-st.markdown("<h2>Segmentation Insights</h2>", unsafe_allow_html=True)
+st.markdown("## Segmentation Matrix — Spend × Activity (Colour-Coded)")
 
-st.markdown("""
-<style>
+matrix = pd.DataFrame(
+    {
+        "Low Activity": [
+            "Dormant Base",
+            "Steady Low-Spend",
+            "One-Off Premiums"
+        ],
+        "Mid Activity": [
+            "At-Risk Decliners",
+            "Developing Value",
+            "Premium Regulars"
+        ],
+        "High Activity": [
+            "Engaged Low-Spend",
+            "Loyal Value",
+            "Premium Loyalists"
+        ],
+    },
+    index=["Low Spend", "Mid Spend", "High Spend"]
+)
 
-.segment-matrix {
-    border-collapse: separate;
-    border-spacing: 18px 26px; 
-    width: 100%;
-    text-align: center;
-    font-size: 20px;
-    table-layout: fixed;
+# --- Colour rules ---
+colour_map = {
+    ("Low Spend", "Low Activity"): "#D32F2F",   # strong red
+    ("Mid Spend", "Low Activity"): "#FFA726",   # orange
+    ("High Spend", "Low Activity"): "#C8F7C5",  # pale green
+
+    ("Low Spend", "Mid Activity"): "#FFA726",   # orange
+    ("Mid Spend", "Mid Activity"): "#FFEB3B",   # yellow
+    ("High Spend", "Mid Activity"): "#4CAF50",  # green
+
+    ("Low Spend", "High Activity"): "#FFEB3B",  # yellow
+    ("Mid Spend", "High Activity"): "#4CAF50",  # green
+    ("High Spend", "High Activity"): "#1B5E20"  # strong green
 }
 
-.segment-matrix th {
-    padding: 18px;
-    background-color: #f2f2f2;
-    font-size: 22px;
-    font-weight: 800;
-    border-radius: 10px;
-    color: black !important;
-}
+def colour_cells(val, row, col):
+    return f"background-color: {colour_map[(row, col)]}; color: black; font-weight: 700;"
 
-.segment-matrix td {
-    padding: 32px 22px;
-    border-radius: 14px;
-    font-weight: 700;
-    color: black !important;
-}
+def style_matrix(df):
+    styled = df.style.apply(
+        lambda _: [
+            [
+                f"background-color: {colour_map[(df.index[i], df.columns[j])]}; "
+                "color: black; font-weight: 700;"
+                for j in range(df.shape[1])
+            ]
+            for i in range(df.shape[0])
+        ],
+        axis=None
+    )
+    return styled
 
-/* Colour palette */
-.red-strong   { background-color: #D32F2F; }
-.orange       { background-color: #FFA726; }
-.yellow       { background-color: #FFEB3B; }
-.green-pale   { background-color: #C8F7C5; }
-.green        { background-color: #4CAF50; }
-.green-strong { background-color: #1B5E20; }
-
-</style>
-
-<h3 class='small-h3'>Customer Value Matrix — Spend × Activity</h3>
-
-<table class="segment-matrix">
-    <tr>
-        <th></th>
-        <th>Low Activity</th>
-        <th>Mid Activity</th>
-        <th>High Activity</th>
-    </tr>
-
-    <tr>
-        <th>Low Spend</th>
-        <td class="red-strong">Dormant Base</td>
-        <td class="orange">At-Risk Decliners</td>
-        <td class="yellow">Engaged Low-Spend</td>
-    </tr>
-
-    <tr>
-        <th>Mid Spend</th>
-        <td class="orange">Steady Low-Spend</td>
-        <td class="yellow">Developing Value</td>
-        <td class="green">Loyal Value</td>
-    </tr>
-
-    <tr>
-        <th>High Spend</th>
-        <td class="green-pale">One-Off Premiums</td>
-        <td class="green">Premium Regulars</td>
-        <td class="green-strong">Premium Loyalists</td>
-    </tr>
-</table>
-
-""", unsafe_allow_html=True)
+st.dataframe(style_matrix(matrix), height=350)
