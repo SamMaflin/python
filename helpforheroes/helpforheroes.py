@@ -3,254 +3,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-# ============================================================
-# COLOUR PALETTE (Scalable + Accessible)
-# ============================================================
-SPEND_COLOR = "#0095FF"        # deep blue
-Engagement_COLOR = "#00FF80"     # green-teal
-STRATEGIC_COLOR = "#FF476C"    # crimson red
+from data_loader import load_helpforheroes_data
+from metrics_engine import calculate_customer_value_metrics
+from segment_barchart import segment_barchart_plot
 
 
 # ============================================================
-# DATA LOADING
+# COLOUR PALETTE (Consistent Across Dashboard)
 # ============================================================
-def load_helpforheroes_data(file_obj):
-    """
-    Load Excel file and return a dict with People_Data and Bookings_Data
-    as DataFrames (empty if missing).
-    """
-    xls = pd.ExcelFile(file_obj)
-    data = {sheet: pd.read_excel(xls, sheet) for sheet in xls.sheet_names}
-
-    data['People_Data'] = pd.DataFrame(data.get('People_Data', pd.DataFrame()))
-    data['Bookings_Data'] = pd.DataFrame(data.get('Bookings_Data', pd.DataFrame()))
-
-    return data
-
-
-# ============================================================
-# FULL METRIC ENGINE + SEGMENTATION (WITH BLENDED DIVERSITY)
-# ============================================================
-def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
-    """
-    Calculates Spend, Engagement, Strategic scores and assigns customers to a 
-    3×3 segmentation matrix.
-
-    Key design choices:
-      - SpendScore: composite of Avg + Max booking amount (70% / 30%), normalised 0–100.
-      - EngagementScore: combines Frequency, Recency and a blended Diversity metric:
-            Diversity = 80% UniqueDestinations + 20% ExplorationRatio.
-      - StrategicScore: binary signals (Long-haul, Package, ChannelFit) mapped to 0/100.
-      - Segmentation: tertiles on SpendScore and EngagementScore → 3×3 grid.
-    """
-
-    # ---------------------- MERGE ----------------------
-    merged = pd.merge(people_df, bookings_df, on="Person URN", how="left")
-
-    # Standardise spend column
-    if "BookingAmount" not in merged.columns:
-        merged["BookingAmount"] = merged["Cost"] if "Cost" in merged.columns else 0
-    merged["BookingAmount"] = merged["BookingAmount"].fillna(0)
-
-    # ---------------------- ECONOMIC ----------------------
-    economic = merged.groupby("Person URN").agg(
-        AverageBookingAmount=("BookingAmount", "mean"),
-        MaximumBookingAmount=("BookingAmount", "max"),
-        TotalBookings=("BookingAmount", "count")
-    )
-
-    # ---------------------- Engagement ----------------------
-    bookings_df = bookings_df.copy()
-    bookings_df["Booking Date"] = pd.to_datetime(bookings_df["Booking Date"], errors="coerce")
-    reference_date = bookings_df["Booking Date"].max()
-
-    behavioural = bookings_df.groupby("Person URN").agg(
-        BookingFrequency=("Booking URN", "count"),
-        UniqueDestinations=("Destination", lambda x: x.nunique()),
-        LastBookingDate=("Booking Date", "max")
-    )
-
-    behavioural["RecencyDays"] = (reference_date - behavioural["LastBookingDate"]).dt.days
-    behavioural = behavioural.drop(columns=["LastBookingDate"]).fillna(0)
-
-    # ---- Exploration Ratio (Unique / Frequency), safe divide
-    behavioural["ExplorationRatio"] = behavioural.apply(
-        lambda r: r["UniqueDestinations"] / r["BookingFrequency"] if r["BookingFrequency"] > 0 else 0,
-        axis=1
-    )
-
-    # ---------------------- STRATEGIC ----------------------
-    long_haul_list = [
-        "United States", "USA", "Australia", "New Zealand",
-        "South Africa", "Namibia", "Senegal", "Mali", "Kuwait"
-    ]
-
-    strategic_temp = bookings_df.groupby("Person URN").agg(
-        LongHaulBookings=("Destination", lambda x: np.sum(x.isin(long_haul_list))),
-        PackageBookings=("Product", lambda x: np.sum(x == "Package Holiday"))
-    )
-
-    strategic = pd.DataFrame(index=strategic_temp.index)
-    strategic["LongHaulAlignment"] = (strategic_temp["LongHaulBookings"] > 0).astype(int)
-    strategic["PackageAlignment"] = (strategic_temp["PackageBookings"] > 0).astype(int)
-
-    if priority_sources is None:
-        priority_sources = ["Expedia"]
-
-    people_df = people_df.copy()
-    people_df["ChannelFit"] = people_df["Source"].apply(lambda x: int(x in priority_sources))
-
-    strategic = strategic.merge(
-        people_df[["Person URN", "ChannelFit"]],
-        on="Person URN",
-        how="left"
-    )
-
-    # ---------------------- COMBINE ----------------------
-    df = (
-        economic
-        .merge(behavioural, left_index=True, right_index=True, how="left")
-        .merge(strategic.set_index("Person URN"), left_index=True, right_index=True, how="left")
-    ).fillna(0)
-
-    # ============================================================
-    # SPEND SCORE (Avg + Max composite with light winsorisation)
-    # ============================================================
-    # Normalise average spend using percentile ranking
-    df["AvgSpendNorm"] = df["AverageBookingAmount"].rank(pct=True) * 100
-
-    # Winsorise max spend at 95th percentile to reduce outlier distortion
-    max_cap = df["MaximumBookingAmount"].quantile(0.95)
-    df["MaxSpendClipped"] = df["MaximumBookingAmount"].clip(upper=max_cap)
-    df["MaxSpendNorm"] = df["MaxSpendClipped"].rank(pct=True) * 100
-
-    # Composite spend score
-    df["SpendScore"] = (
-        0.7 * df["AvgSpendNorm"] +
-        0.3 * df["MaxSpendNorm"]
-    ).round(2)
-
-    # ============================================================
-    # Engagement SCORE
-    # ============================================================
-
-    # ---- Frequency (percentile, not raw scaling)
-    freq = df["BookingFrequency"]
-    if freq.max() != freq.min():
-        df["FrequencyScore"] = freq.rank(pct=True) * 100
-    else:
-        df["FrequencyScore"] = 0
-
-    # ---- Recency (bucketed holiday cycles; no-booking customers treated as very old)
-    rec = df["RecencyDays"].copy()
-    # Customers with no bookings should look "old", not 0 days ago
-    rec[(df["BookingFrequency"] == 0) | (rec <= 0) | rec.isna()] = 9999
-
-    df["RecencyScore"] = np.select(
-        [
-            rec <= 365,
-            rec <= 730,
-            rec <= 1095,
-            rec <= 1460,
-            rec <= 1825,
-            rec > 1825,
-        ],
-        [100, 80, 60, 40, 20, 0],
-        default=0
-    )
-
-    # ---- BLENDED DIVERSITY SCORE
-    # Step 1: Normalise components
-    unique_min = df["UniqueDestinations"].min()
-    unique_range = df["UniqueDestinations"].max() - unique_min + 1e-9
-    df["UniqueNorm"] = ((df["UniqueDestinations"] - unique_min) / unique_range) * 100
-
-    explore_min = df["ExplorationRatio"].min()
-    explore_range = df["ExplorationRatio"].max() - explore_min + 1e-9
-    df["ExploreNorm"] = ((df["ExplorationRatio"] - explore_min) / explore_range) * 100
-
-    # Step 2: Weighted blend (80% breadth, 20% "how exploratory?")
-    df["DiversityScore"] = (
-        0.8 * df["UniqueNorm"] +
-        0.2 * df["ExploreNorm"]
-    ).round(2)
-
-    # ---- Final Engagement Score
-    df["EngagementScore"] = (
-        0.5 * df["FrequencyScore"] +
-        0.3 * df["RecencyScore"] +
-        0.2 * df["DiversityScore"]
-    ).round(2)
-
-    # ============================================================
-    # STRATEGIC SCORE
-    # ============================================================
-    df[["LongHaulAlignment", "PackageAlignment", "ChannelFit"]] = df[
-        ["LongHaulAlignment", "PackageAlignment", "ChannelFit"]
-    ].fillna(0)
-
-    df["StrategicScore"] = (
-        0.5 * (df["LongHaulAlignment"] * 100) +
-        0.3 * (df["PackageAlignment"] * 100) +
-        0.2 * (df["ChannelFit"] * 100)
-    ).round(2)
-
-    # ============================================================
-    # SEGMENTATION
-    # ============================================================
-
-    spend33, spend66 = df["SpendScore"].quantile([0.33, 0.66])
-    act33, act66 = df["EngagementScore"].quantile([0.33, 0.66])
-
-    df["SpendTier"] = np.select(
-        [df["SpendScore"] <= spend33, df["SpendScore"] <= spend66, df["SpendScore"] > spend66],
-        ["Low Spend", "Mid Spend", "High Spend"],
-        default="Unknown"
-    ).astype(object)
-
-    df["EngagementTier"] = np.select(
-        [df["EngagementScore"] <= act33, df["EngagementScore"] <= act66, df["EngagementScore"] > act66],
-        ["Low Engagement", "Mid Engagement", "High Engagement"],
-        default="Unknown"
-    ).astype(object)
-
-    # ---- Segment Lookup
-    segment_map = {
-        ("Low Spend", "Low Engagement"): "Dormant Base",
-        ("Low Spend", "Mid Engagement"): "Steady Low-Spend",
-        ("Low Spend", "High Engagement"): "Engaged Low-Spend",
-
-        ("Mid Spend", "Low Engagement"): "At-Risk Decliners",
-        ("Mid Spend", "Mid Engagement"): "Developing Value",
-        ("Mid Spend", "High Engagement"): "Loyal Value",
-
-        ("High Spend", "Low Engagement"): "One-Off Premiums",
-        ("High Spend", "Mid Engagement"): "Premium Regulars",
-        ("High Spend", "High Engagement"): "Premium Loyalists",
-    }
-
-    df["Segment"] = df.apply(
-        lambda r: segment_map.get((r["SpendTier"], r["EngagementTier"]), "Unclassified"),
-        axis=1
-    )
-
-    # ---- Descriptions
-    descriptions = {
-        "Premium Loyalists": "High spend + high Engagement — highest value.",
-        "Loyal Value": "Mid spend + high Engagement — strong loyalty.",
-        "Engaged Low-Spend": "Low spend + high Engagement — engaged but low value.",
-        "Premium Regulars": "High spend + mid Engagement — stable premium group.",
-        "Developing Value": "Mid spend + mid Engagement — growth segment.",
-        "Steady Low-Spend": "Low spend + mid Engagement — active but low value.",
-        "One-Off Premiums": "High spend + low Engagement — reactivation opportunity.",
-        "At-Risk Decliners": "Mid spend + low Engagement — declining engagement.",
-        "Dormant Base": "Low spend + low Engagement — lowest priority."
-    }
-
-    df["SegmentDescription"] = df["Segment"].map(descriptions).fillna("Unclassified group")
-
-    # Final tidy frame with Person URN as a column
-    return df.reset_index().rename(columns={"index": "Person URN"})
+SPEND_COLOR       = "#0095FF"   # deep blue
+ENGAGEMENT_COLOR  = "#00FF80"   # green-teal
+STRATEGIC_COLOR   = "#FF476C"   # crimson red
 
 
 # ============================================================
@@ -258,295 +21,181 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 # ============================================================
 
 # -------------------------------
-# LOGO (Optional)
+# LOGO
 # -------------------------------
 try:
     st.image("helpforheroes/hfh_logo.png", width=200)
-except Exception:
+except:
     pass
 
+
 # -------------------------------
-# UPDATED CSS WITH TWO H3 CLASSES
+# GLOBAL CSS STYLING
 # -------------------------------
 st.markdown("""
 <style>
 
-.stMarkdown h1 { 
-    font-size: 60px !important; 
-    font-weight: 700 !important; 
-    margin: 20px 0 20px 0; 
-}
+h1 { font-size: 60px !important; font-weight: 700 !important; }
+h2 { font-size: 50px !important; font-weight: 700 !important; margin-top: 120px !important; }
 
-.stMarkdown h2 { 
-    font-size: 50px !important; 
-    font-weight: 700 !important; 
-    margin: 150px 0 20px 0; 
-}
-
-/* Large H3 (for main sections) */
-h3.big-h3 {
-    font-size: 40px !important;
-    font-weight: 700 !important;
-    margin: 80px 0 20px 0 !important;
-}
-
-/* Small H3 (for Spend / Engagement / Strategic) */
 h3.small-h3 {
     font-size: 34px !important;
     font-weight: 700 !important;
-    margin: 25px 0 10px 0 !important;
+    margin: 30px 0 15px 0 !important;
 }
 
-.stMarkdown h4 {
-    font-size: 28px !important;
-    font-weight: 700 !important;
-    margin: 20px 0 10px 0 !important;
-}
-
-.stMarkdown p  { 
+p, li { 
     font-size: 22px !important; 
-    margin: 20px 0 40px 0; 
+    line-height: 1.45 !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# ----------------------
+# -------------------------------
 # TITLE
-# ----------------------
-st.markdown("<h1>Help for Heroes Interview Task — Customer Holiday Bookings Insights</h1>", unsafe_allow_html=True)
+# -------------------------------
+st.markdown("<h1>Help for Heroes — Customer Holiday Bookings Insights</h1>", unsafe_allow_html=True)
 
 
-# ----------------------
-# INTRO SECTION
-# ----------------------
+
+# ============================================================
+# INTRODUCTION
+# ============================================================
 st.markdown("<h2>Introduction</h2>", unsafe_allow_html=True)
 
-st.markdown(
-    """
+st.markdown("""
 <p>
-<span style="color:orange; font-weight:bold;">All customers create value</span> — just not in the same way.  
-Some generate high spend, others show strong behavioural loyalty, and some perfectly align with strategic priorities.  
-Understanding <b>how</b> each customer contributes allows us to target better, personalise better, and grow value more effectively.
+All customers create value — but not in the same way.  
+Some generate high spend, some demonstrate very strong behavioural loyalty,  
+and others align closely with strategic business priorities.
+
+Understanding <b>how</b> each customer contributes enables:
+• better targeting,  
+• more personalised marketing,  
+• and improved value growth.
 </p>
-""",
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 
-# ----------------------
-# VALUE DIMENSIONS
-# ----------------------
+
+# ============================================================
+# VALUE DIMENSIONS OVERVIEW
+# ============================================================
 st.markdown("<h2>How Do We Measure Customer Value?</h2>", unsafe_allow_html=True)
 
 st.markdown(
-    f"""
-<h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend Score</span> — Financial contribution</h4>
-<p>Metrics: Average Booking Value, Maximum Booking Value (composited into a 0–100 SpendScore).</p>
+f"""
+<h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend Score</span> — Financial Contribution</h4>
+<p>Based on Average Booking Value and Maximum Booking Value.</p>
 
-<h4><span style="color:{Engagement_COLOR}; font-weight:bold;">● Engagement Score</span> — Engagement & behaviour</h4>
-<p>Metrics: Booking Frequency, Destination Diversity, Booking Recency.</p>
+<h4><span style="color:{ENGAGEMENT_COLOR}; font-weight:bold;">● Engagement Score</span> — Behaviour & Loyalty</h4>
+<p>Based on Frequency, Destination Diversity, and Booking Recency.</p>
 
-<h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — Alignment with business goals</h4>
-<p>Metrics: Long-Haul participation, Package Adoption, Channel Fit.</p>
+<h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — Alignment With Business Goals</h4>
+<p>Based on Long-Haul behaviour, Package adoption, and Channel fit.</p>
 """,
-    unsafe_allow_html=True
-)
+unsafe_allow_html=True)
 
 
-# ----------------------
-# METRIC CONSTRUCTION
-# ----------------------
+
+# ============================================================
+# METRIC CONSTRUCTION SECTION
+# ============================================================
 st.markdown("<h2>Metric Construction</h2>", unsafe_allow_html=True)
 
 
-# ============================================================
-# SPEND SECTION
-# ============================================================
+
+# -------------------------------
+# SPEND SCORE
+# -------------------------------
 st.markdown(
-    f"""
-    <h3 class='small-h3'><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend Score (0–100)</span></h3>
-    <ul>
-        <li><b>Average Booking Amount</b> is the primary financial signal — it avoids inflating scores for frequent travellers and reflects typical spend per holiday.</li>
-        <li><b>Maximum Booking Amount</b> picks up occasional high-value or premium purchases that average spend would flatten.</li>
-        <li>A composite SpendScore (70% Avg, 30% Max), normalised 0–100, balances stable spend behaviour with sensitivity to premium trips and corrects skewed spend distributions.</li>
-    </ul> 
-    """,
-    unsafe_allow_html=True
+f"""
+<h3 class='small-h3'><span style='color:{SPEND_COLOR}; font-weight:bold;'>Spend Score (0–100)</span></h3>
+<ul>
+    <li><b>Average Booking Amount</b> reflects typical spend per trip.</li>
+    <li><b>Maximum Booking Amount</b> picks up premium or high-value trips.</li>
+    <li>The combined SpendScore (70% Avg / 30% Max), normalised 0–100, balances stability with sensitivity to premium purchases.</li>
+</ul>
+""",
+unsafe_allow_html=True
 )
 
 
-# ============================================================
-# Engagement SECTION
-# ============================================================
-st.markdown(
-    f"""
-    <h3 class='small-h3'><span style='color:{Engagement_COLOR}; font-weight:bold;'>Engagement Score (0–100)</span></h3>
 
-    <ul>
-        <li>Blends <b>Frequency</b> (percentile of total trips), <b>Recency</b> (bucketed into realistic holiday cycles: 1–5+ years) and a <b>Diversity</b> metric.</li>
-        <li>Diversity is a blend of <b>Unique Destinations</b> (breadth of travel) and an <b>Exploration Ratio</b> (unique destinations ÷ trips), rewarding both wide and authentic exploration.</li>
-        <li>Weighting of 50% Frequency, 30% Recency, 20% Diversity prioritises ongoing engagement while still surfacing explorers and churn risk.</li>
-    </ul>
-    """,
-    unsafe_allow_html=True
+# -------------------------------
+# ENGAGEMENT SCORE
+# -------------------------------
+st.markdown(
+f"""
+<h3 class='small-h3'><span style='color:{ENGAGEMENT_COLOR}; font-weight:bold;'>Engagement Score (0–100)</span></h3>
+<ul>
+    <li>Combines <b>Frequency</b>, <b>Recency</b>, and <b>Diversity</b> into a single index.</li>
+    <li><b>Diversity</b> blends unique destinations and exploration ratio (unique ÷ trips).</li>
+    <li>Weighting: 50% Frequency, 30% Recency, 20% Diversity — reflecting actual holiday behaviours and churn risk.</li>
+</ul>
+""",
+unsafe_allow_html=True
 )
 
 
-# ============================================================
-# STRATEGIC SECTION
-# ============================================================
-st.markdown(
-    f"""
-    <h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic Score (0–100)</span></h3>
 
-    <ul>
-        <li>Long-haul, package adoption, and channel fit are treated as binary strategic signals and mapped to 0/100 for consistency.</li>
-        <li>Weighted StrategicScore: Long-Haul (50%), Package (30%), Channel Fit (20%) — reflecting their relative commercial importance.</li>
-    </ul>
-    """,
-    unsafe_allow_html=True
+# -------------------------------
+# STRATEGIC SCORE
+# -------------------------------
+st.markdown(
+f"""
+<h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic Score (0–100)</span></h3>
+<ul>
+    <li>Binary indicators (Long-haul, Package, Channel Fit) mapped to 0/100 for consistency.</li>
+    <li>Weighted StrategicScore: Long-Haul (50%), Package (30%), Channel Fit (20%).</li>
+</ul>
+""",
+unsafe_allow_html=True
 )
 
 
-# ----------------------
-# SEGMENTATION GRID
-# ----------------------
+
+# ============================================================
+# SEGMENTATION GRID (IMAGE)
+# ============================================================
 st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
-
 st.image("helpforheroes/matrix_plot.png", use_column_width=True)
 
 
-# ------------------------------------------------------------
-# LOAD DATA + RUN METRICS ENGINE
-# ------------------------------------------------------------
+
+# ============================================================
+# LOAD DATA + CALCULATE METRICS
+# ============================================================
 data = load_helpforheroes_data("helpforheroes/helpforheroes.xls")
-
-df = calculate_customer_value_metrics(
-    data["People_Data"],
-    data["Bookings_Data"]
-)
+df = calculate_customer_value_metrics(data["People_Data"], data["Bookings_Data"])
 
 
-# ------------------------------------------------------------
-# CUSTOMER vs REVENUE — HORIZONTAL GROUPED BAR CHART (BIGGER BARS)
-# ------------------------------------------------------------
 
+# ============================================================
+# CUSTOMER BASE vs REVENUE CONTRIBUTION
+# ============================================================
 st.markdown("<h2>Customer Base vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
 
-# ------------------ Customer distribution ------------------
-segment_counts = (
-    df["Segment"]
-    .value_counts()
-    .rename_axis("Segment")
-    .reset_index(name="CustomerCount")
-)
-
-total_customers = df["Person URN"].nunique()
-segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
-
-# ------------------ Revenue distribution ------------------
-customer_revenue = (
-    data["Bookings_Data"]
-    .groupby("Person URN")["Cost"]
-    .sum()
-    .rename("TotalRevenue")
-)
-
-df_with_rev = df.merge(customer_revenue, on="Person URN", how="left").fillna({"TotalRevenue": 0})
-
-rev_segment = (
-    df_with_rev.groupby("Segment")["TotalRevenue"]
-    .sum()
-    .rename("Revenue")
-    .reset_index()
-)
-
-total_revenue = rev_segment["Revenue"].sum()
-rev_segment["ShareOfRevenue"] = (rev_segment["Revenue"] / total_revenue * 100).round(1)
-
-# ------------------ Merge + sort by revenue share ------------------
-merged = segment_counts.merge(rev_segment[["Segment", "ShareOfRevenue"]], on="Segment")
-merged = merged.sort_values("ShareOfRevenue", ascending=True)
-
-segments = merged["Segment"].tolist()
-customer_vals = merged["ShareOfBase"].tolist()
-revenue_vals = merged["ShareOfRevenue"].tolist()
-
-# ------------------------------------------------------------
-# HORIZONTAL GROUPED BAR CHART
-# ------------------------------------------------------------
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Bigger figure + more vertical spacing
-fig, ax = plt.subplots(figsize=(14, 10))
-
-bar_height = 0.5   # ⬅️ MUCH BIGGER BARS  
-y = np.arange(len(segments)) * 1.2  # ⬅️ add spacing between rows
-
-# Colours
-customer_color = "#0095FF"
-revenue_color = "#FF476C"
-
-# Bars
-bars1 = ax.barh(y - bar_height/2, customer_vals, height=bar_height, label="Customer Share (%)", color=customer_color)
-bars2 = ax.barh(y + bar_height/2, revenue_vals, height=bar_height, label="Revenue Share (%)", color=revenue_color)
-
-# Add labels inside bars (white)
-def add_labels_inside_h(bars):
-    for bar in bars:
-        width = bar.get_width()
-        ax.text(
-            width * 0.98,
-            bar.get_y() + bar.get_height()/2,
-            f"{width:.1f}%",
-            ha="right",
-            va="center",
-            fontsize=12,
-            fontweight="bold",
-            color="white"
-        )
-
-add_labels_inside_h(bars1)
-add_labels_inside_h(bars2)
-
-# Y-axis labels
-ax.set_yticks(y)
-ax.set_yticklabels(segments, fontsize=13)
-
-# Title & legend
-ax.set_title("Customer Base vs Revenue Contribution by Segment",
-             fontsize=20, fontweight="bold", pad=25)
-ax.legend(fontsize=13)
-
-# Remove x-axis completely
-ax.xaxis.set_visible(False)
-for spine in ["bottom", "top", "left", "right"]:
-    ax.spines[spine].set_visible(False)
-
-plt.tight_layout()
-st.pyplot(fig)
+# Render external chart module
+segment_barchart_plot(df, data["Bookings_Data"])
 
 
-# ------------------------------------------------------------
-# SEGMENT PERFORMANCE SUMMARY
-# ------------------------------------------------------------
 
-# h4 markdown "Segment Insights"
-st.markdown("<h3>Early Segment Insights</h3>", unsafe_allow_html=True)
+# ============================================================
+# SEGMENT INSIGHTS
+# ============================================================
+st.markdown("<h2>Early Segment Insights</h2>", unsafe_allow_html=True)
 
-st.markdown( 
-    """
+st.markdown("""
 <ul>
-    <li><b>Premium Loyalists</b> and <b>Premium Regulars</b> drive the majority of financial value, but for different behavioural reasons (frequency vs ticket size).</li>
-    <li><b>Loyal Value</b> & <b>Developing Value</b> are your best “growth” pools.</li>
-    <li><b>One-Off Premiums</b> represent the largest revenue unlock if reactivated.</li>
-    <li><b>At-Risk Decliners</b> represent the largest revenue loss risk.</li>
-    <li><b>Engaged Low-Spend</b> are a monetisation opportunity.</li>
-    <li><b>Dormant Base</b> should not receive heavy marketing investment.</li>
+    <li><b>Premium Loyalists</b> and <b>Premium Regulars</b> generate the largest share of revenue — but for different reasons (frequency vs ticket size).</li>
+    <li><b>Loyal Value</b> and <b>Developing Value</b> represent strong growth opportunities.</li>
+    <li><b>One-Off Premiums</b> hold the biggest reactivation opportunity.</li>
+    <li><b>At-Risk Decliners</b> are a priority group for retention intervention.</li>
+    <li><b>Engaged Low-Spend</b> show high loyalty but low spend — a monetisation opportunity.</li>
+    <li><b>Dormant Base</b> is low-value and should not receive heavy marketing investment.</li>
 </ul>
-    """,
-    unsafe_allow_html=True
-)
+""",
+unsafe_allow_html=True)
