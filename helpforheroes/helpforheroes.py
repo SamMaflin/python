@@ -389,5 +389,5 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Segmentation Matrix</h2>", unsafe_allow_html=True)
 
-# show image helpforheroes/matrix_plot.png
+# show matrix
 st.image("helpforheroes/matrix_plot.png", use_column_width=True)
