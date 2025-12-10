@@ -474,7 +474,7 @@ customer_vals = merged["ShareOfBase"].tolist()
 revenue_vals = merged["ShareOfRevenue"].tolist()
 
 # ------------------------------------------------------------
-# GROUPED BAR CHART WITH LABELS
+# GROUPED BAR CHART WITH INTERNAL LABELS
 # ------------------------------------------------------------
 import matplotlib.pyplot as plt
 import numpy as np
@@ -492,22 +492,23 @@ revenue_color = "#FF476C"
 bars1 = ax.bar(x - bar_width/2, customer_vals, width=bar_width, label="Customer Share (%)", color=customer_color)
 bars2 = ax.bar(x + bar_width/2, revenue_vals, width=bar_width, label="Revenue Share (%)", color=revenue_color)
 
-# Add percentage labels above each bar
-def add_labels(bars):
+# Add INTERNAL white percentage labels
+def add_labels_inside(bars):
     for bar in bars:
         height = bar.get_height()
         ax.text(
             bar.get_x() + bar.get_width()/2,
-            height + 1,
+            height * 0.85,                      # position INSIDE bar near the top
             f"{height:.1f}%",
             ha="center",
-            va="bottom",
+            va="center",
             fontsize=11,
-            fontweight="bold"
+            fontweight="bold",
+            color="white"
         )
 
-add_labels(bars1)
-add_labels(bars2)
+add_labels_inside(bars1)
+add_labels_inside(bars2)
 
 # Labels & formatting
 ax.set_xticks(x)
@@ -516,9 +517,7 @@ ax.set_ylabel("Percentage (%)", fontsize=14, fontweight="bold")
 ax.set_title("Customer Base vs Revenue Contribution by Segment", fontsize=18, fontweight="bold", pad=20)
 
 ax.legend(fontsize=12)
-
-# Gridlines
-ax.grid(axis="y", linestyle="--", alpha=0.4)
+ax.grid(axis="y", linestyle="--", alpha=0.3)
 
 plt.tight_layout()
 st.pyplot(fig)
