@@ -390,4 +390,74 @@ st.markdown(
 st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
 
 # show matrix
-st.image("helpforheroes/matrix_plot.png", use_column_width=True)
+st.image("helpforheroes/matrix_plot.png", use_column_width=True) 
+
+# ------------------------------------------------------------
+# SEGMENTATION INSIGHTS
+# ------------------------------------------------------------
+st.markdown("<h2>Insights</h2>", unsafe_allow_html=True)
+
+data = load_helpforheroes_data("helpforheroes/helpforheroes.xlsx")
+
+df = calculate_customer_value_metrics(
+    data["People_Data"],
+    data["Bookings_Data"]
+)
+
+# ---- Compute segment counts ----
+segment_counts = df["Segment"].value_counts().reset_index()
+segment_counts.columns = ["Segment", "Count"]
+
+# ---- Compute score averages ----
+segment_scores = (
+    df.groupby("Segment")[["SpendScore", "ActivityScore", "StrategicScore"]]
+    .mean()
+    .round(1)
+    .reset_index()
+)
+
+# ---- Display Insight Explanation ----
+st.markdown(
+    """
+    <p>
+    The segmentation matrix reveals how customers distribute across Spend × Activity tiers, helping identify 
+    high-value cohorts, stabilising segments, and groups with reactivation or growth potential.
+    Below are two summary tables:  
+    <br><br>
+    <b>1) Segment Size —</b> which segments dominate the customer base  
+    <br>
+    <b>2) Segment Scores —</b> how each group performs across Spend, Activity, and Strategic value dimensions
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
+# ---- Show Segment Size Table ----
+st.markdown("<h3 class='small-h3'>Segment Size Overview</h3>", unsafe_allow_html=True)
+st.dataframe(segment_counts, use_container_width=True)
+
+# ---- Show Score Profile Table ----
+st.markdown("<h3 class='small-h3'>Segment Score Profiles</h3>", unsafe_allow_html=True)
+st.dataframe(segment_scores, use_container_width=True)
+
+# ---- Add Recommendations Section ----
+st.markdown("<h3 class='small-h3'>Strategic Recommendations by Segment</h3>", unsafe_allow_html=True)
+
+recommendations = {
+    "Premium Loyalists": "VIP retention, exclusive offers, early-access benefits.",
+    "Loyal Value": "Upsell to premium packages; reward consistent behaviour.",
+    "Engaged Low-Spend": "Introduce value-add bundles to increase spend per trip.",
+    "Premium Regulars": "Strengthen loyalty mechanics; maintain stable engagement.",
+    "Developing Value": "Targeted nudges to increase frequency and spend.",
+    "Steady Low-Spend": "Low-touch nurture communications; watch for gradual growth.",
+    "One-Off Premiums": "High-ROI reactivation campaigns; personalised recovery journeys.",
+    "At-Risk Decliners": "Intervention messaging; highlight new destinations to prevent churn.",
+    "Dormant Base": "Low-cost broad reactivation; deprioritise heavy investment."
+}
+
+rec_df = pd.DataFrame(
+    [(seg, rec) for seg, rec in recommendations.items()],
+    columns=["Segment", "Recommended Action"]
+)
+
+st.dataframe(rec_df, use_container_width=True)
