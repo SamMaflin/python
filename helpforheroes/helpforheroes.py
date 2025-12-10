@@ -186,10 +186,7 @@ def render_segment_barchart(df, bookings_df):
     st.markdown("<h2>📊 Customer Base vs Revenue Contribution by Segment...</h2>", unsafe_allow_html=True)
     segment_barchart_plot(df, bookings_df)
 
- 
-
-
-import streamlit as st
+  
 
 def render_customer_profiles(df, bookings_df, people_df):
 
@@ -201,7 +198,7 @@ def render_customer_profiles(df, bookings_df, people_df):
     # ============================================================
     st.markdown("<h2>📊 Customer Segment Profiles...</h2>", unsafe_allow_html=True)
 
-    import streamlit as st
+
 
 def render_customer_profiles(df, bookings_df, people_df):
 
@@ -213,7 +210,7 @@ def render_customer_profiles(df, bookings_df, people_df):
     # ============================================================
     st.markdown(
         """
-<h2>Customer Profiling</h2>
+<h2>Customer Profiling...</h2>
 
 <h4>1️⃣ Proportional Representation</h4>
 <p>
