@@ -9,7 +9,7 @@ import streamlit as st
 from data_loader import load_helpforheroes_data
 from metrics_engine import calculate_customer_value_metrics
 from segment_barchart import segment_barchart_plot
-
+from customer_profiles import customer_profiles
 
 # ============================================================
 # PAGE CONFIG — NOW MATCHES YOUR ORIGINAL STYLE
@@ -98,7 +98,7 @@ def render_introduction():
         """
         <p>
         <span style="color:orange; font-weight:bold;">All customers create value</span> — just not equally.  
-        Some generate high spend, others show great loyalty, and some align closely with strategic goals.<br><br>
+        Some generate high spend, others show great loyalty, and some align closely with strategic goals.
         Understanding <b>how</b> customers differ enables better targeting, personalisation,  
         and more efficient value growth.
         </p>
@@ -118,7 +118,7 @@ def render_value_dimensions():
         <h4><span style="color:{ENGAGEMENT_COLOR}; font-weight:bold;">● Engagement Score</span> — Behaviour & Loyalty</h4>
         <p>Based on booking frequency, destination diversity, and recency.</p>
 
-        <h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — Strategic Alignment</h4>
+        <h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — (Optional) Strategic Alignment</h4>
         <p>Based on long-haul trips, package behaviour, and channel fit.</p>
         """,
         unsafe_allow_html=True
@@ -191,7 +191,7 @@ def render_segment_barchart(df, bookings_df):
 # INSIGHT SECTION
 # ============================================================
 def render_segment_insights():
-    st.markdown("<h2>Early Segment Insights</h2>", unsafe_allow_html=True)
+    st.markdown("<h3>Early Segment Insights</h3>", unsafe_allow_html=True)
 
     st.markdown(
         """
@@ -207,6 +207,9 @@ def render_segment_insights():
         unsafe_allow_html=True
     )
 
+def render_customer_profiles(df, bookings_df, people_df):
+    st.markdown("<h2>Who Are These Customers? — Segment Profiles</h2>", unsafe_allow_html=True)
+    customer_profiles(df, bookings_df, people_df)
 
 # ============================================================
 # MAIN APP
@@ -227,6 +230,7 @@ def main():
     df   = calculate_customer_value_metrics(data["People_Data"], data["Bookings_Data"])
 
     render_segment_barchart(df, data["Bookings_Data"])
+    render_customer_profiles(df, data["Bookings_Data"], data["People_Data"])
     render_segment_insights()
 
 
