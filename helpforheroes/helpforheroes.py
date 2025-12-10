@@ -219,6 +219,9 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 
     df["SegmentDescription"] = df["Segment"].map(descriptions)
 
+    # Reset index to have 'Person URN' as a column
+    df = df.reset_index()
+
     return df
 
 
@@ -436,13 +439,15 @@ segment_counts = (
     .reset_index(name="CustomerCount")
 )
 
+print(df.head())
+
 # count unique Person URNs for total customers
-total_customers = df['Person URN'].nunique()
-segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
+#total_customers = df['Person URN'].nunique()
+#segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
 
-st.dataframe(segment_counts, use_container_width=True)
+#st.dataframe(segment_counts, use_container_width=True)
 
-st.bar_chart(
-    segment_counts.set_index("Segment")["CustomerCount"],
-    use_container_width=True
-)
+#st.bar_chart(
+#    segment_counts.set_index("Segment")["CustomerCount"],
+#    use_container_width=True
+#)
