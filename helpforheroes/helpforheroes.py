@@ -400,7 +400,7 @@ st.markdown(
 
 
 # ----------------------
-# SEGMENTATION ANALYSIS
+# SEGMENTATION GRID
 # ----------------------
 st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
 
@@ -412,6 +412,9 @@ st.image("helpforheroes/matrix_plot.png", use_column_width=True)
 # ------------------------------------------------------------
 st.markdown("<h2>Insights</h2>", unsafe_allow_html=True)
 
+# ------------------------------------------------------------
+# LOAD DATA + RUN METRICS ENGINE
+# ------------------------------------------------------------
 data = load_helpforheroes_data("helpforheroes/helpforheroes.xls")
 
 df = calculate_customer_value_metrics(
@@ -420,3 +423,23 @@ df = calculate_customer_value_metrics(
 )
 
 
+# ------------------------------------------------------------#
+# CUSTOMER DISTRIBUTION BY SEGMENT
+# ------------------------------------------------------------#
+st.markdown("<h2>How Are Customers Distributed by Segment?</h2>", unsafe_allow_html=True)
+
+segment_counts = (
+    df["Segment"]
+    .value_counts()
+    .rename_axis("Segment")
+    .reset_index(name="CustomerCount")
+)
+
+segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
+
+st.dataframe(segment_counts, use_container_width=True)
+
+st.bar_chart(
+    segment_counts.set_index("Segment")["CustomerCount"],
+    use_container_width=True
+)
