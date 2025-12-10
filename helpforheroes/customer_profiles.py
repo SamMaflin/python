@@ -2,27 +2,34 @@ import pandas as pd
 import numpy as np
 
 
-# ============================================================
-# 1. CLEAN PEOPLE DATA → Age + AgeBracket
-# ============================================================
-def prepare_people_data(people_df):
+def prepare_people_data(people_df, bookings_df=None, reference_date=None):
     people = people_df.copy()
 
+    # Parse DOB
     people["DOB"] = pd.to_datetime(
         people["DOB"], format="%d/%m/%Y", errors="coerce"
     )
 
-    reference_date = people["DOB"].max()
+    # Choose a sensible reference date
+    if reference_date is None:
+        if bookings_df is not None and "Booking Date" in bookings_df.columns:
+            ref = pd.to_datetime(bookings_df["Booking Date"], errors="coerce").max()
+        else:
+            ref = pd.Timestamp.today().normalize()
+    else:
+        ref = pd.to_datetime(reference_date)
 
+    # Calculate age at reference date
     people["Age"] = people["DOB"].apply(
-        lambda d: int((reference_date - d).days / 365.25) if pd.notnull(d) else np.nan
+        lambda d: int((ref - d).days / 365.25) if pd.notnull(d) else np.nan
     )
 
-    bins = [0, 29, 39, 49, 59, 69, 200]
-    labels = ["18–29", "30–39", "40–49", "50–59", "60–69", "70+"]
+    # Age brackets (with a proper <18 bucket)
+    bins   = [0, 18, 30, 40, 50, 60, 70, 200]
+    labels = ["<18", "18–29", "30–39", "40–49", "50–59", "60–69", "70+"]
 
     people["AgeBracket"] = pd.cut(
-        people["Age"], bins=bins, labels=labels, include_lowest=True
+        people["Age"], bins=bins, labels=labels, right=False, include_lowest=True
     )
 
     return people
