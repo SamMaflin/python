@@ -415,7 +415,6 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
 
-# Show pre-generated matrix plot image
 st.image("helpforheroes/matrix_plot.png", use_column_width=True)
 
 
@@ -429,30 +428,24 @@ df = calculate_customer_value_metrics(
     data["Bookings_Data"]
 )
 
+
 # ------------------------------------------------------------
-# CUSTOMER BASE vs REVENUE CONTRIBUTION (Improved Butterfly Chart)
+# CUSTOMER & REVENUE DISTRIBUTIONS
 # ------------------------------------------------------------
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import numpy as np
+st.markdown("<h2>Customer vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
 
-st.markdown("<h2>Customer Base vs Revenue Contribution</h2>", unsafe_allow_html=True)
-
-
-# ============================
-# 1. DATA PREPARATION
-# ============================
-cust_counts = (
-    df.groupby("Segment")["Person URN"]
-    .nunique()
-    .rename("CustomerCount")
-    .reset_index()
+# ------------------ Customer distribution ------------------
+segment_counts = (
+    df["Segment"]
+    .value_counts()
+    .rename_axis("Segment")
+    .reset_index(name="CustomerCount")
 )
 
-total_customers = cust_counts["CustomerCount"].sum()
-cust_counts["CustomerShare"] = cust_counts["CustomerCount"] / total_customers * 100
+total_customers = df["Person URN"].nunique()
+segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
 
-
+# ------------------ Revenue distribution ------------------
 customer_revenue = (
     data["Bookings_Data"]
     .groupby("Person URN")["Cost"]
@@ -460,119 +453,101 @@ customer_revenue = (
     .rename("TotalRevenue")
 )
 
-df_rev = df.merge(customer_revenue, on="Person URN", how="left").fillna({"TotalRevenue": 0})
+df_with_rev = df.merge(customer_revenue, on="Person URN", how="left").fillna({"TotalRevenue": 0})
 
 rev_segment = (
-    df_rev.groupby("Segment")["TotalRevenue"]
+    df_with_rev.groupby("Segment")["TotalRevenue"]
     .sum()
     .rename("Revenue")
     .reset_index()
 )
 
 total_revenue = rev_segment["Revenue"].sum()
-rev_segment["RevenueShare"] = rev_segment["Revenue"] / total_revenue * 100
+rev_segment["ShareOfRevenue"] = (rev_segment["Revenue"] / total_revenue * 100).round(1)
 
-# Merge
-combined = (
-    cust_counts.merge(rev_segment, on="Segment", how="left")
-    .sort_values("CustomerShare", ascending=True)  # order visually
-    .reset_index(drop=True)
+# ------------------ Merge for butterfly chart ------------------
+butterfly = segment_counts.merge(
+    rev_segment[["Segment", "ShareOfRevenue"]],
+    on="Segment",
+    how="left"
 )
 
-y = np.arange(len(combined))
+segments = butterfly["Segment"]
+customer_vals = butterfly["ShareOfBase"]
+revenue_vals = butterfly["ShareOfRevenue"]
 
 
-# ============================
-# 2. COLOUR SCALES (Red → Yellow → Green)
-# ============================
-cmap = mcolors.LinearSegmentedColormap.from_list("RYG", ["#D32F2F", "#FFEB3B", "#1B5E20"])
+# ------------------------------------------------------------
+# BUTTERFLY CHART (Mirrored, no negatives, coloured)
+# ------------------------------------------------------------
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import numpy as np
 
-# Normalise values 0–100 into 0–1 for colouring
-cust_norm = combined["CustomerShare"] / combined["CustomerShare"].max()
-rev_norm  = combined["RevenueShare"] / combined["RevenueShare"].max()
+# Colour scaling red → yellow → green
+norm = mcolors.Normalize(
+    vmin=0,
+    vmax=max(customer_vals.max(), revenue_vals.max())
+)
+cmap = plt.cm.get_cmap("RdYlGn")
 
-cust_colors = [cmap(v) for v in cust_norm]
-rev_colors  = [cmap(v) for v in rev_norm]
+customer_colors = [cmap(norm(v)) for v in customer_vals]
+revenue_colors = [cmap(norm(v)) for v in revenue_vals]
 
-
-# ============================
-# 3. BUTTERFLY CHART (Dual Positive Axes)
-# ============================
 fig, ax = plt.subplots(figsize=(14, 10))
 
-bar_height = 0.35
+y_positions = np.arange(len(segments))
 
-# Left bars — Customer Share
+# LEFT BAR (Customer Share) — mirrored by flipping x-axis
 ax.barh(
-    y - bar_height/2,
-    combined["CustomerShare"],
-    color=cust_colors,
-    height=bar_height,
-    label="Customer Share (%)",
+    y_positions,
+    customer_vals,
+    color=customer_colors,
+    alpha=0.9,
+    label="Customer Share (%)"
 )
 
-# Right bars — Revenue Share using second axis
+# RIGHT BAR (Revenue Share)
 ax2 = ax.twiny()
 ax2.barh(
-    y + bar_height/2,
-    combined["RevenueShare"],
-    color=rev_colors,
-    height=bar_height,
-    label="Revenue Share (%)",
+    y_positions,
+    revenue_vals,
+    color=revenue_colors,
+    alpha=0.9,
+    label="Revenue Share (%)"
 )
 
+# Y labels
+ax.set_yticks(y_positions)
+ax.set_yticklabels(segments, fontsize=13, fontweight="bold")
 
-# ============================
-# 4. DOTTED GUIDE LINES
-# ============================
-for yi in y:
-    ax.axhline(yi - bar_height/2, color="grey", linestyle="dotted", linewidth=0.7, alpha=0.6)
-    ax2.axhline(yi + bar_height/2, color="grey", linestyle="dotted", linewidth=0.7, alpha=0.6)
+# Invert left x-axis for mirror effect
+ax.invert_xaxis()
 
+# Axis labels with extra spacing
+ax.set_xlabel("Customer Share (%)", fontsize=14, fontweight="bold", labelpad=20)
+ax2.set_xlabel("Revenue Share (%)", fontsize=14, fontweight="bold", labelpad=20)
 
-# ============================
-# 5. LABELS & TITLES
-# ============================
-ax.set_yticks(y)
-ax.set_yticklabels(combined["Segment"], fontsize=12)
+# Dotted guide lines
+for y, c_val, r_val in zip(y_positions, customer_vals, revenue_vals):
+    ax.plot([0, c_val], [y, y], linestyle=":", color="grey", alpha=0.6)
+    ax2.plot([0, r_val], [y, y], linestyle=":", color="grey", alpha=0.6)
 
-# Axis titles with larger spacing
-ax.set_xlabel("Customer Share (%)", fontsize=13, labelpad=20)
-ax2.set_xlabel("Revenue Share (%)", fontsize=13, labelpad=20)
+# Center line
+ax.axvline(0, color="black", linewidth=1.5)
 
-# Main chart title
+# Remove clutter spines
+for spine in ["top", "right", "left"]:
+    ax.spines[spine].set_visible(False)
+    ax2.spines[spine].set_visible(False)
+
 plt.title(
     "Customer Base vs Revenue Contribution by Segment",
     fontsize=18,
     fontweight="bold",
-    pad=30
+    pad=25
 )
 
-# Matching x-axis limits
-max_val = max(combined["CustomerShare"].max(), combined["RevenueShare"].max())
-ax.set_xlim(0, max_val * 1.15)
-ax2.set_xlim(0, max_val * 1.15)
-
-
-# ============================
-# 6. VALUE LABELS
-# ============================
-for i, row in combined.iterrows():
-
-    # Customer share labels (left)
-    ax.text(
-        row["CustomerShare"] + 0.5, i - bar_height/2,
-        f"{row['CustomerShare']:.1f}%",
-        va="center", fontsize=10
-    )
-
-    # Revenue share labels (right)
-    ax2.text(
-        row["RevenueShare"] + 0.5, i + bar_height/2,
-        f"{row['RevenueShare']:.1f}%",
-        va="center", fontsize=10
-    )
-
 plt.tight_layout()
-st.pyplot(fig)
 
+st.pyplot(fig)
