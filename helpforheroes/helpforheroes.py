@@ -7,7 +7,7 @@ import streamlit as st
 # COLOUR PALETTE (Scalable + Accessible)
 # ============================================================
 SPEND_COLOR = "#0095FF"        # deep blue
-ACTIVITY_COLOR = "#00FF80"     # green-teal
+Engagement_COLOR = "#00FF80"     # green-teal
 STRATEGIC_COLOR = "#FF476C"    # crimson red
 
 
@@ -33,15 +33,15 @@ def load_helpforheroes_data(file_obj):
 # ============================================================
 def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
     """
-    Calculates Spend, Activity, Strategic scores and assigns customers to a 
+    Calculates Spend, Engagement, Strategic scores and assigns customers to a 
     3×3 segmentation matrix.
 
     Key design choices:
       - SpendScore: composite of Avg + Max booking amount (70% / 30%), normalised 0–100.
-      - ActivityScore: combines Frequency, Recency and a blended Diversity metric:
+      - EngagementScore: combines Frequency, Recency and a blended Diversity metric:
             Diversity = 80% UniqueDestinations + 20% ExplorationRatio.
       - StrategicScore: binary signals (Long-haul, Package, ChannelFit) mapped to 0/100.
-      - Segmentation: tertiles on SpendScore and ActivityScore → 3×3 grid.
+      - Segmentation: tertiles on SpendScore and EngagementScore → 3×3 grid.
     """
 
     # ---------------------- MERGE ----------------------
@@ -59,7 +59,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         TotalBookings=("BookingAmount", "count")
     )
 
-    # ---------------------- ACTIVITY ----------------------
+    # ---------------------- Engagement ----------------------
     bookings_df = bookings_df.copy()
     bookings_df["Booking Date"] = pd.to_datetime(bookings_df["Booking Date"], errors="coerce")
     reference_date = bookings_df["Booking Date"].max()
@@ -131,7 +131,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     ).round(2)
 
     # ============================================================
-    # ACTIVITY SCORE
+    # Engagement SCORE
     # ============================================================
 
     # ---- Frequency (percentile, not raw scaling)
@@ -175,8 +175,8 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         0.2 * df["ExploreNorm"]
     ).round(2)
 
-    # ---- Final Activity Score
-    df["ActivityScore"] = (
+    # ---- Final Engagement Score
+    df["EngagementScore"] = (
         0.5 * df["FrequencyScore"] +
         0.3 * df["RecencyScore"] +
         0.2 * df["DiversityScore"]
@@ -200,7 +200,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     # ============================================================
 
     spend33, spend66 = df["SpendScore"].quantile([0.33, 0.66])
-    act33, act66 = df["ActivityScore"].quantile([0.33, 0.66])
+    act33, act66 = df["EngagementScore"].quantile([0.33, 0.66])
 
     df["SpendTier"] = np.select(
         [df["SpendScore"] <= spend33, df["SpendScore"] <= spend66, df["SpendScore"] > spend66],
@@ -208,43 +208,43 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         default="Unknown"
     ).astype(object)
 
-    df["ActivityTier"] = np.select(
-        [df["ActivityScore"] <= act33, df["ActivityScore"] <= act66, df["ActivityScore"] > act66],
-        ["Low Activity", "Mid Activity", "High Activity"],
+    df["EngagementTier"] = np.select(
+        [df["EngagementScore"] <= act33, df["EngagementScore"] <= act66, df["EngagementScore"] > act66],
+        ["Low Engagement", "Mid Engagement", "High Engagement"],
         default="Unknown"
     ).astype(object)
 
     # ---- Segment Lookup
     segment_map = {
-        ("Low Spend", "Low Activity"): "Dormant Base",
-        ("Low Spend", "Mid Activity"): "Steady Low-Spend",
-        ("Low Spend", "High Activity"): "Engaged Low-Spend",
+        ("Low Spend", "Low Engagement"): "Dormant Base",
+        ("Low Spend", "Mid Engagement"): "Steady Low-Spend",
+        ("Low Spend", "High Engagement"): "Engaged Low-Spend",
 
-        ("Mid Spend", "Low Activity"): "At-Risk Decliners",
-        ("Mid Spend", "Mid Activity"): "Developing Value",
-        ("Mid Spend", "High Activity"): "Loyal Value",
+        ("Mid Spend", "Low Engagement"): "At-Risk Decliners",
+        ("Mid Spend", "Mid Engagement"): "Developing Value",
+        ("Mid Spend", "High Engagement"): "Loyal Value",
 
-        ("High Spend", "Low Activity"): "One-Off Premiums",
-        ("High Spend", "Mid Activity"): "Premium Regulars",
-        ("High Spend", "High Activity"): "Premium Loyalists",
+        ("High Spend", "Low Engagement"): "One-Off Premiums",
+        ("High Spend", "Mid Engagement"): "Premium Regulars",
+        ("High Spend", "High Engagement"): "Premium Loyalists",
     }
 
     df["Segment"] = df.apply(
-        lambda r: segment_map.get((r["SpendTier"], r["ActivityTier"]), "Unclassified"),
+        lambda r: segment_map.get((r["SpendTier"], r["EngagementTier"]), "Unclassified"),
         axis=1
     )
 
     # ---- Descriptions
     descriptions = {
-        "Premium Loyalists": "High spend + high activity — highest value.",
-        "Loyal Value": "Mid spend + high activity — strong loyalty.",
-        "Engaged Low-Spend": "Low spend + high activity — engaged but low value.",
-        "Premium Regulars": "High spend + mid activity — stable premium group.",
-        "Developing Value": "Mid spend + mid activity — growth segment.",
-        "Steady Low-Spend": "Low spend + mid activity — active but low value.",
-        "One-Off Premiums": "High spend + low activity — reactivation opportunity.",
-        "At-Risk Decliners": "Mid spend + low activity — declining engagement.",
-        "Dormant Base": "Low spend + low activity — lowest priority."
+        "Premium Loyalists": "High spend + high Engagement — highest value.",
+        "Loyal Value": "Mid spend + high Engagement — strong loyalty.",
+        "Engaged Low-Spend": "Low spend + high Engagement — engaged but low value.",
+        "Premium Regulars": "High spend + mid Engagement — stable premium group.",
+        "Developing Value": "Mid spend + mid Engagement — growth segment.",
+        "Steady Low-Spend": "Low spend + mid Engagement — active but low value.",
+        "One-Off Premiums": "High spend + low Engagement — reactivation opportunity.",
+        "At-Risk Decliners": "Mid spend + low Engagement — declining engagement.",
+        "Dormant Base": "Low spend + low Engagement — lowest priority."
     }
 
     df["SegmentDescription"] = df["Segment"].map(descriptions).fillna("Unclassified group")
@@ -290,7 +290,7 @@ h3.big-h3 {
     margin: 80px 0 20px 0 !important;
 }
 
-/* Small H3 (for Spend / Activity / Strategic) */
+/* Small H3 (for Spend / Engagement / Strategic) */
 h3.small-h3 {
     font-size: 34px !important;
     font-weight: 700 !important;
@@ -345,7 +345,7 @@ st.markdown(
 <h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend Score</span> — Financial contribution</h4>
 <p>Metrics: Average Booking Value, Maximum Booking Value (composited into a 0–100 SpendScore).</p>
 
-<h4><span style="color:{ACTIVITY_COLOR}; font-weight:bold;">● Activity Score</span> — Engagement & behaviour</h4>
+<h4><span style="color:{Engagement_COLOR}; font-weight:bold;">● Engagement Score</span> — Engagement & behaviour</h4>
 <p>Metrics: Booking Frequency, Destination Diversity, Booking Recency.</p>
 
 <h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — Alignment with business goals</h4>
@@ -378,11 +378,11 @@ st.markdown(
 
 
 # ============================================================
-# ACTIVITY SECTION
+# Engagement SECTION
 # ============================================================
 st.markdown(
     f"""
-    <h3 class='small-h3'><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity Score (0–100)</span></h3>
+    <h3 class='small-h3'><span style='color:{Engagement_COLOR}; font-weight:bold;'>Engagement Score (0–100)</span></h3>
 
     <ul>
         <li>Blends <b>Frequency</b> (percentile of total trips), <b>Recency</b> (bucketed into realistic holiday cycles: 1–5+ years) and a <b>Diversity</b> metric.</li>
