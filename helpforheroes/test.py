@@ -1,30 +1,42 @@
-# ============================================================
-# test.py — Customer Insight Metric Engine + Distribution Explorer
-# ============================================================
-
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 
+# Labels inside the matrix (optional)
+labels = [
+    ["Pale Green", "Medium Green", "Strong Green"],  # High health
+    ["Light Red",  "Yellow",       "Pale Green"],    # Medium health
+    ["Strong Red", "Light Red",    "Yellow"]         # Low health
+]
 
-# ============================================================
-# DATA LOADING
-# ============================================================
-def load_helpforheroes_data(file_path):
-    """
-    Load Excel file with People_Data and Bookings_Data sheets.
-    """
-    xls = pd.ExcelFile(file_path)
-    data = {sheet: pd.read_excel(xls, sheet) for sheet in xls.sheet_names}
+# Matching colors
+colors = [
+    ["#b6e6b6", "#66cc66", "#009900"],  # pale, medium, strong green
+    ["#ff9999", "#ffff66", "#b6e6b6"],  # light red, yellow, pale green
+    ["#cc0000", "#ff9999", "#ffff66"]   # strong red, light red, yellow
+]
 
-    data['People_Data'] = pd.DataFrame(data.get('People_Data', pd.DataFrame()))
-    data['Bookings_Data'] = pd.DataFrame(data.get('Bookings_Data', pd.DataFrame()))
+fig, ax = plt.subplots(figsize=(6, 6))
 
-    # count number of unique customers
-    num_customers = data['People_Data']['Person URN'].nunique()
-    print(f"Loaded data with {num_customers} unique customers.")
+# Draw each cell
+for i in range(3):
+    for j in range(3):
+        ax.add_patch(plt.Rectangle((j, i), 1, 1,
+                                   facecolor=colors[2 - i][j],
+                                   edgecolor="black"))
+        ax.text(j + 0.5, i + 0.5, labels[2 - i][j],
+                ha='center', va='center', fontsize=11)
 
-    return data
+# Axes
+ax.set_xticks([0.5, 1.5, 2.5])
+ax.set_xticklabels(["Low", "Medium", "High"])
+ax.set_yticks([0.5, 1.5, 2.5])
+ax.set_yticklabels(["Low", "Medium", "High"])
 
-load_helpforheroes_data('helpforheroes/helpforheroes.xls')
+ax.set_xlabel("Carbon footprint")
+ax.set_ylabel("Health effect")
+
+ax.set_xlim(0, 3)
+ax.set_ylim(0, 3)
+ax.set_aspect("equal")
+
+plt.tight_layout()
+plt.show()

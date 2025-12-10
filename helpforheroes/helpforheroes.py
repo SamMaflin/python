@@ -389,26 +389,5 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Segmentation Matrix</h2>", unsafe_allow_html=True)
 
-
-segment_matrix = pd.DataFrame(
-    {
-        "Low Activity": [
-            "Dormant Base",
-            "Steady Low-Spend",
-            "One-Off Premiums"
-        ],
-        "Mid Activity": [
-            "At-Risk Decliners",
-            "Developing Value",
-            "Premium Regulars"
-        ],
-        "High Activity": [
-            "Engaged Low-Spend",
-            "Loyal Value",
-            "Premium Loyalists"
-        ],
-    },
-    index=["Low Spend", "Mid Spend", "High Spend"]
-)
-
-st.table(segment_matrix)
+# show image helpforheroes/matrix_plot.png
+st.image("helpforheroes/matrix_plot.png", use_column_width=True)
