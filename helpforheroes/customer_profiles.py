@@ -2,35 +2,61 @@ import pandas as pd
 import numpy as np
 
 # ============================================================
-# 1. CLEAN PEOPLE DATA → Age + AgeBracket
+# 1. CLEAN PEOPLE DATA → Age + AgeBracket + IncomeBand
 # ============================================================
 def prepare_people_data(people_df):
     people = people_df.copy()
 
     # Convert DOB safely
-    people["DOB"] = pd.to_datetime(people["DOB"], format="%d/%m/%Y", errors="coerce")
+    people["DOB"] = pd.to_datetime(
+        people["DOB"], format="%d/%m/%Y", errors="coerce"
+    )
 
-    # Age relative to TODAY (fine for demographics)
+    # Age relative to TODAY
     today = pd.Timestamp("today")
     people["Age"] = people["DOB"].apply(
         lambda d: int((today - d).days / 365.25) if pd.notnull(d) else np.nan
     )
- 
-    # Create improved marketing-friendly age brackets
+
+    # ---- NEW SIMPLIFIED AGE BRACKETS ----
     bins = [0, 29, 39, 59, 200]
     labels = ["18–29", "30–39", "40–59", "60+"]
-
     people["AgeBracket"] = pd.cut(
         people["Age"], bins=bins, labels=labels, include_lowest=True
     )
 
+    # ============================================================
+    # NEW INCOME GROUPING (STRING-BASED, NO PARSING)
+    # ============================================================
+    INCOME_GROUP_MAP = {
+        "< £10k":              "Low Income",
+
+        "£10 - 20k":           "Low–Middle Income",
+        "£20 - 30k":           "Low–Middle Income",
+
+        "£30 - 40k":           "Middle Income",
+        "£40 - 50k":           "Middle Income",
+        "£50 - 70k":           "Middle Income",
+
+        "£70 - 80k":           "High Income",
+        "£80 - 90k":           "High Income",
+        "£90 - 100k":          "High Income",
+
+        "£100k+":              "Executive Income",
+
+        "Unclassified":        "Unclassified"
+    }
+
+    # Normalise text formatting before mapping
+    people["Income"] = people["Income"].str.strip().str.replace("  ", "")
+
+    people["IncomeBand"] = people["Income"].map(INCOME_GROUP_MAP)
 
     return people
 
 
 # ============================================================
 # 2. BEHAVIOURAL FIELDS → FrequencyBand + RecencyBand
-#     Recency uses SAME thresholds as segmentation engine.
 # ============================================================
 def derive_booking_behaviour(bookings_df):
     bookings = bookings_df.copy()
@@ -39,7 +65,7 @@ def derive_booking_behaviour(bookings_df):
         bookings["Booking Date"], format="%d/%m/%Y", errors="coerce"
     )
 
-    # Reference date = max date in dataset (consistent with segmentation)
+    # Use same recency reference as segmentation engine
     reference_date = bookings["Booking Date"].max()
 
     # ------------------ FREQUENCY ------------------
@@ -57,12 +83,12 @@ def derive_booking_behaviour(bookings_df):
     last_booking = bookings.groupby("Person URN")["Booking Date"].max().rename("LastBooking")
     recency_days = (reference_date - last_booking).dt.days
 
-    # Replace NaN with "oldest + 1"
+    # Missing recency = oldest
     max_real = recency_days.dropna().max()
     recency_days = recency_days.fillna(max_real + 1)
     recency_days = recency_days.rename("RecencyDays")
 
-    # MATCH EXACT THRESHOLDS USED IN SEGMENTATION ENGINE
+    # ---- EXACT SAME THRESHOLDS AS SEGMENTATION ENGINE ----
     def rec_band(d):
         if d <= 365: return "0–1 yr (Very Recent)"
         if d <= 730: return "1–2 yr (Recent)"
@@ -73,7 +99,6 @@ def derive_booking_behaviour(bookings_df):
 
     recency_band = recency_days.apply(rec_band).rename("RecencyBand")
 
-    # ------------------ RETURN ------------------
     return pd.concat(
         [freq, freq_band_series, last_booking, recency_days, recency_band],
         axis=1
@@ -104,7 +129,6 @@ def dominance_table(prof_df, field):
     pop_pct = population_baseline(prof_df, field)
     seg_pct = segment_distribution(prof_df, field)
 
-    # Align population % to the segment multi-index
     aligned_pop = pop_pct.reindex(seg_pct.index.get_level_values(field)).values
 
     df = pd.DataFrame({
@@ -115,7 +139,7 @@ def dominance_table(prof_df, field):
     df["Index"] = df["Segment %"] / df["Population %"]
     df["Difference (pp)"] = df["Segment %"] - df["Population %"]
 
-    # Interpretation rules
+    # Interpretation logic
     def label(idx):
         if pd.isna(idx): return "No data"
         if idx >= 2.0: return "HIGHLY dominant"
@@ -133,11 +157,9 @@ def dominance_table(prof_df, field):
 # ============================================================
 def full_segmentation_breakdown(seg_df, bookings_df, people_df):
 
-    # Prepare demographic + behavioural features
     people_clean = prepare_people_data(people_df)
     behaviour = derive_booking_behaviour(bookings_df)
 
-    # Merge segmentation + demographics + behaviour
     prof_df = (
         seg_df.merge(people_clean, on="Person URN", how="left")
               .merge(behaviour, on="Person URN", how="left")
@@ -145,7 +167,7 @@ def full_segmentation_breakdown(seg_df, bookings_df, people_df):
 
     profiling_fields = [
         "AgeBracket",
-        "Income",
+        "IncomeBand",      # ← NEW GROUPED INCOME
         "Gender",
         "Occupation",
         "Source",
@@ -153,8 +175,11 @@ def full_segmentation_breakdown(seg_df, bookings_df, people_df):
         "RecencyBand"
     ]
 
-    results = {field: dominance_table(prof_df, field)
-               for field in profiling_fields if field in prof_df.columns}
+    results = {
+        field: dominance_table(prof_df, field)
+        for field in profiling_fields
+        if field in prof_df.columns
+    }
 
     return prof_df, results
 
@@ -163,13 +188,13 @@ def full_segmentation_breakdown(seg_df, bookings_df, people_df):
 # 7. INSIGHT GENERATOR
 # ============================================================
 def generate_dominance_insights(results_dict):
+
     insights = []
 
     for field, table in results_dict.items():
         for (segment, category), row in table.iterrows():
-            dom = row["Dominance"]
 
-            # Only meaningful signals
+            dom = row["Dominance"]
             if dom not in ["HIGHLY dominant", "Strongly dominant", "Under-represented"]:
                 continue
 
@@ -189,12 +214,8 @@ def generate_dominance_insights(results_dict):
 # 8. PUBLIC ENTRYPOINT
 # ============================================================
 def customer_profiles(seg_df, bookings_df, people_df):
-    """
-    Returns:
-        prof_df — merged dataset with demographics + behaviour + segmentation
-        results — dict of dominance tables for each profiling field
-        insights — list of meaningful differences
-    """
-    prof_df, results = full_segmentation_breakdown(seg_df, bookings_df, people_df)
+    prof_df, results = full_segmentation_breakdown(
+        seg_df, bookings_df, people_df
+    )
     insights = generate_dominance_insights(results)
     return prof_df, results, insights
