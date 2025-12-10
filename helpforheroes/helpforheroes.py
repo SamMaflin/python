@@ -430,29 +430,6 @@ df = calculate_customer_value_metrics(
 )
 
 # ------------------------------------------------------------
-# CUSTOMER DISTRIBUTION BY SEGMENT
-# ------------------------------------------------------------
-st.markdown("<h2>How Are Customers Distributed by Segment?</h2>", unsafe_allow_html=True)
-
-segment_counts = (
-    df["Segment"]
-    .value_counts()
-    .rename_axis("Segment")
-    .reset_index(name="CustomerCount")
-)
-
-total_customers = df["Person URN"].nunique()
-segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
-
-st.dataframe(segment_counts, use_container_width=True)
-
-st.bar_chart(
-    segment_counts.set_index("Segment")["CustomerCount"],
-    use_container_width=True
-)
-
-
-# ------------------------------------------------------------
 # REVENUE DISTRIBUTION BY SEGMENT
 # ------------------------------------------------------------
 st.markdown("<h2>Proportion of Revenue by Segment</h2>", unsafe_allow_html=True)
@@ -460,12 +437,12 @@ st.markdown("<h2>Proportion of Revenue by Segment</h2>", unsafe_allow_html=True)
 # Compute revenue per customer (sum of BookingAmount)
 customer_revenue = (
     data["Bookings_Data"]
-    .groupby("Person URN")["Cost"]  # or "BookingAmount" depending on file
+    .groupby("Person URN")["Cost"]  # or BookingAmount if available
     .sum()
     .rename("TotalRevenue")
 )
 
-# Merge revenue into final df
+# Merge into df
 df_with_rev = df.merge(customer_revenue, on="Person URN", how="left").fillna({"TotalRevenue": 0})
 
 # Revenue by segment
@@ -479,14 +456,37 @@ rev_segment = (
 total_revenue = rev_segment["Revenue"].sum()
 rev_segment["ShareOfRevenue"] = (rev_segment["Revenue"] / total_revenue * 100).round(1)
 
-# Sort high → low
+# Sort segments high → low
 rev_segment = rev_segment.sort_values("Revenue", ascending=False)
 
-# Show full table
-st.dataframe(rev_segment, use_container_width=True)
+# -----------------------------------------
+# MATPLOTLIB BAR CHART WITH LABELS
+# -----------------------------------------
+fig, ax = plt.subplots(figsize=(10, 6))
 
-# Revenue bar chart
-st.bar_chart(
-    rev_segment.set_index("Segment")["Revenue"],
-    use_container_width=True
+bars = ax.bar(
+    rev_segment["Segment"],
+    rev_segment["Revenue"],
+    color="#0095FF"
 )
+
+# Add % labels on top of bars
+for bar, pct in zip(bars, rev_segment["ShareOfRevenue"]):
+    height = bar.get_height()
+    ax.text(
+        bar.get_x() + bar.get_width() / 2,
+        height,
+        f"{pct}%",
+        ha="center",
+        va="bottom",
+        fontsize=12,
+        fontweight="bold"
+    )
+
+ax.set_ylabel("Revenue (£)")
+ax.set_xlabel("Segment")
+ax.set_title("Share of Revenue by Segment")
+ax.tick_params(axis='x', rotation=45)
+
+st.pyplot(fig)
+
