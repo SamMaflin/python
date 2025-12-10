@@ -20,6 +20,7 @@ def load_helpforheroes_data(file_obj):
 
     data['People_Data'] = pd.DataFrame(data.get('People_Data', pd.DataFrame()))
     data['Bookings_Data'] = pd.DataFrame(data.get('Bookings_Data', pd.DataFrame()))
+
     return data
 
 
@@ -435,6 +436,8 @@ segment_counts = (
     .reset_index(name="CustomerCount")
 )
 
+# count unique Person URNs for total customers
+total_customers = df['Person URN'].nunique()
 segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
 
 st.dataframe(segment_counts, use_container_width=True)
