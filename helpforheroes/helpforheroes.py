@@ -430,29 +430,17 @@ df = calculate_customer_value_metrics(
 )
 
 # ------------------------------------------------------------
-# SECTION: CUSTOMER BASE vs REVENUE CONTRIBUTION (Butterfly Chart)
+# CUSTOMER BASE vs REVENUE CONTRIBUTION (Improved Butterfly Chart)
 # ------------------------------------------------------------
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import numpy as np
+
 st.markdown("<h2>Customer Base vs Revenue Contribution</h2>", unsafe_allow_html=True)
 
-# ============================
-# 1. DEFINE SEGMENT COLOURS
-# ============================
-SEGMENT_COLORS = {
-    "Dormant Base":        "#D32F2F",  # strong red
-    "At-Risk Decliners":   "#F57C00",  # orange
-    "One-Off Premiums":    "#C8F7C5",  # pale green
-
-    "Steady Low-Spend":    "#F57C00",  # orange
-    "Developing Value":    "#FFEB3B",  # yellow
-    "Loyal Value":         "#4CAF50",  # green
-
-    "Engaged Low-Spend":   "#FFEB3B",  # yellow
-    "Premium Regulars":    "#4CAF50",  # green
-    "Premium Loyalists":   "#1B5E20",  # deep green
-}
 
 # ============================
-# 2. CUSTOMER COUNTS
+# 1. DATA PREPARATION
 # ============================
 cust_counts = (
     df.groupby("Segment")["Person URN"]
@@ -464,13 +452,10 @@ cust_counts = (
 total_customers = cust_counts["CustomerCount"].sum()
 cust_counts["CustomerShare"] = cust_counts["CustomerCount"] / total_customers * 100
 
-# ============================
-# 3. REVENUE BY SEGMENT
-# ============================
-# Extract revenue from original bookings data
+
 customer_revenue = (
     data["Bookings_Data"]
-    .groupby("Person URN")["Cost"]  # if renamed earlier, replace with BookingAmount
+    .groupby("Person URN")["Cost"]
     .sum()
     .rename("TotalRevenue")
 )
@@ -487,90 +472,107 @@ rev_segment = (
 total_revenue = rev_segment["Revenue"].sum()
 rev_segment["RevenueShare"] = rev_segment["Revenue"] / total_revenue * 100
 
-# Convert revenue to £ millions for readability
-rev_segment["RevenueMillions"] = (rev_segment["Revenue"] / 1_000_000).round(2)
-
-# ============================
-# 4. MERGE BOTH DATASETS IN CORRECT ORDER
-# ============================
-# Order segments in heatmap-friendly order
-segment_order = [
-    "Dormant Base", "At-Risk Decliners", "One-Off Premiums",
-    "Steady Low-Spend", "Developing Value", "Loyal Value",
-    "Engaged Low-Spend", "Premium Regulars", "Premium Loyalists"
-]
-
+# Merge
 combined = (
-    cust_counts
-    .merge(rev_segment, on="Segment", how="left")
-    .set_index("Segment")
-    .loc[segment_order]
-    .reset_index()
+    cust_counts.merge(rev_segment, on="Segment", how="left")
+    .sort_values("CustomerShare", ascending=True)  # order visually
+    .reset_index(drop=True)
 )
-
-combined["Color"] = combined["Segment"].map(SEGMENT_COLORS)
-
-# ============================
-# 5. BUTTERFLY CHART
-# ============================
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots(figsize=(12, 10))
 
 y = np.arange(len(combined))
 
-# LEFT SIDE — Customer Share (Negative values so bars go left)
-ax.barh(
-    y,
-    -combined["CustomerShare"],
-    color=combined["Color"],
-    alpha=0.9,
-    label="Customer Share (%)"
-)
-
-# RIGHT SIDE — Revenue Share (Positive values)
-ax.barh(
-    y,
-    combined["RevenueShare"],
-    color=combined["Color"],
-    alpha=0.9,
-    label="Revenue Share (%)"
-)
 
 # ============================
-# 6. LABELLING
+# 2. COLOUR SCALES (Red → Yellow → Green)
+# ============================
+cmap = mcolors.LinearSegmentedColormap.from_list("RYG", ["#D32F2F", "#FFEB3B", "#1B5E20"])
+
+# Normalise values 0–100 into 0–1 for colouring
+cust_norm = combined["CustomerShare"] / combined["CustomerShare"].max()
+rev_norm  = combined["RevenueShare"] / combined["RevenueShare"].max()
+
+cust_colors = [cmap(v) for v in cust_norm]
+rev_colors  = [cmap(v) for v in rev_norm]
+
+
+# ============================
+# 3. BUTTERFLY CHART (Dual Positive Axes)
+# ============================
+fig, ax = plt.subplots(figsize=(14, 10))
+
+bar_height = 0.35
+
+# Left bars — Customer Share
+ax.barh(
+    y - bar_height/2,
+    combined["CustomerShare"],
+    color=cust_colors,
+    height=bar_height,
+    label="Customer Share (%)",
+)
+
+# Right bars — Revenue Share using second axis
+ax2 = ax.twiny()
+ax2.barh(
+    y + bar_height/2,
+    combined["RevenueShare"],
+    color=rev_colors,
+    height=bar_height,
+    label="Revenue Share (%)",
+)
+
+
+# ============================
+# 4. DOTTED GUIDE LINES
+# ============================
+for yi in y:
+    ax.axhline(yi - bar_height/2, color="grey", linestyle="dotted", linewidth=0.7, alpha=0.6)
+    ax2.axhline(yi + bar_height/2, color="grey", linestyle="dotted", linewidth=0.7, alpha=0.6)
+
+
+# ============================
+# 5. LABELS & TITLES
 # ============================
 ax.set_yticks(y)
 ax.set_yticklabels(combined["Segment"], fontsize=12)
 
-ax.set_xlabel("← Customer Share (%)     |     Revenue Share (%) →", fontsize=13)
-ax.set_title("Customer Base vs Revenue Contribution by Segment", fontsize=16, fontweight="bold", pad=20)
+# Axis titles with larger spacing
+ax.set_xlabel("Customer Share (%)", fontsize=13, labelpad=20)
+ax2.set_xlabel("Revenue Share (%)", fontsize=13, labelpad=20)
 
-# Vertical line at zero
-ax.axvline(0, color="black", linewidth=1)
+# Main chart title
+plt.title(
+    "Customer Base vs Revenue Contribution by Segment",
+    fontsize=18,
+    fontweight="bold",
+    pad=30
+)
 
-# Format x-axis nicely
-ax.set_xlim(-max(combined["CustomerShare"]) * 1.2, max(combined["RevenueShare"]) * 1.2)
+# Matching x-axis limits
+max_val = max(combined["CustomerShare"].max(), combined["RevenueShare"].max())
+ax.set_xlim(0, max_val * 1.15)
+ax2.set_xlim(0, max_val * 1.15)
+
 
 # ============================
-# 7. ADD VALUE LABELS
+# 6. VALUE LABELS
 # ============================
 for i, row in combined.iterrows():
-    # Customer share label (left)
+
+    # Customer share labels (left)
     ax.text(
-        -row["CustomerShare"] - 0.5, i,
+        row["CustomerShare"] + 0.5, i - bar_height/2,
         f"{row['CustomerShare']:.1f}%",
-        va="center", ha="right", fontsize=10
+        va="center", fontsize=10
     )
-    # Revenue share label (right)
-    ax.text(
-        row["RevenueShare"] + 0.5, i,
+
+    # Revenue share labels (right)
+    ax2.text(
+        row["RevenueShare"] + 0.5, i + bar_height/2,
         f"{row['RevenueShare']:.1f}%",
-        va="center", ha="left", fontsize=10
+        va="center", fontsize=10
     )
 
 plt.tight_layout()
-
-# Render in Streamlit
 st.pyplot(fig)
 
