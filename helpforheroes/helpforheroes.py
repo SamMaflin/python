@@ -411,10 +411,6 @@ st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
 # show matrix
 st.image("helpforheroes/matrix_plot.png", use_column_width=True) 
 
-# ------------------------------------------------------------
-# SEGMENTATION INSIGHTS
-# ------------------------------------------------------------
-st.markdown("<h2>Insights</h2>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------
 # LOAD DATA + RUN METRICS ENGINE
@@ -425,7 +421,6 @@ df = calculate_customer_value_metrics(
     data["People_Data"],
     data["Bookings_Data"]
 )
-
 
 # ------------------------------------------------------------#
 # CUSTOMER DISTRIBUTION BY SEGMENT
@@ -439,15 +434,11 @@ segment_counts = (
     .reset_index(name="CustomerCount")
 )
 
-print(df.head())
-
 # count unique Person URNs for total customers
-#total_customers = df['Person URN'].nunique()
-#segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
-
-#st.dataframe(segment_counts, use_container_width=True)
-
-#st.bar_chart(
-#    segment_counts.set_index("Segment")["CustomerCount"],
-#    use_container_width=True
-#)
+total_customers = df['Person URN'].nunique()
+segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
+st.dataframe(segment_counts, use_container_width=True)
+st.bar_chart(
+    segment_counts.set_index("Segment")["CustomerCount"],
+    use_container_width=True
+)
