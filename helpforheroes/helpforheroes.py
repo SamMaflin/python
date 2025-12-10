@@ -430,7 +430,7 @@ df = calculate_customer_value_metrics(
 
 
 # ------------------------------------------------------------
-# CUSTOMER vs REVENUE — HORIZONTAL GROUPED BAR CHART (NO X-AXIS)
+# CUSTOMER vs REVENUE — HORIZONTAL GROUPED BAR CHART (BIGGER BARS)
 # ------------------------------------------------------------
 
 st.markdown("<h2>Customer vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
@@ -475,15 +475,16 @@ customer_vals = merged["ShareOfBase"].tolist()
 revenue_vals = merged["ShareOfRevenue"].tolist()
 
 # ------------------------------------------------------------
-# HORIZONTAL GROUPED BAR CHART (NO X-AXIS)
+# HORIZONTAL GROUPED BAR CHART
 # ------------------------------------------------------------
 import matplotlib.pyplot as plt
 import numpy as np
 
-fig, ax = plt.subplots(figsize=(12, 8))
+# Bigger figure + more vertical spacing
+fig, ax = plt.subplots(figsize=(14, 10))
 
-bar_height = 0.35
-y = np.arange(len(segments))
+bar_height = 0.5   # ⬅️ MUCH BIGGER BARS  
+y = np.arange(len(segments)) * 1.2  # ⬅️ add spacing between rows
 
 # Colours
 customer_color = "#0095FF"
@@ -503,7 +504,7 @@ def add_labels_inside_h(bars):
             f"{width:.1f}%",
             ha="right",
             va="center",
-            fontsize=11,
+            fontsize=12,
             fontweight="bold",
             color="white"
         )
@@ -513,20 +514,17 @@ add_labels_inside_h(bars2)
 
 # Y-axis labels
 ax.set_yticks(y)
-ax.set_yticklabels(segments, fontsize=12)
+ax.set_yticklabels(segments, fontsize=13)
 
 # Title & legend
-ax.set_title("Customer Base vs Revenue Contribution by Segment", fontsize=18, fontweight="bold", pad=20)
-ax.legend(fontsize=12)
+ax.set_title("Customer Base vs Revenue Contribution by Segment",
+             fontsize=20, fontweight="bold", pad=25)
+ax.legend(fontsize=13)
 
-# ---------------- REMOVE X-AXIS COMPLETELY ----------------
-ax.xaxis.set_visible(False)     # removes ticks + labels
-ax.spines['bottom'].set_visible(False)   # remove axis line
-ax.spines['top'].set_visible(False)
-ax.spines['left'].set_visible(False)
-ax.spines['right'].set_visible(False)
-
-ax.grid(axis="x", linestyle="--", alpha=0.0)  # ensure no faint lines remain
+# Remove x-axis completely
+ax.xaxis.set_visible(False)
+for spine in ["bottom", "top", "left", "right"]:
+    ax.spines[spine].set_visible(False)
 
 plt.tight_layout()
 st.pyplot(fig)
