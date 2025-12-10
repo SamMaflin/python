@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
 # ============================================================
 # DATA LOADING
 # ============================================================
@@ -15,8 +14,8 @@ def load_helpforheroes_data(file_obj):
     xls = pd.ExcelFile(file_obj)
     data = {sheet: pd.read_excel(xls, sheet) for sheet in xls.sheet_names}
 
-    data['People_Data'] = pd.DataFrame(data.get('People_Data', pd.DataFrame()))
-    data['Bookings_Data'] = pd.DataFrame(data.get('Bookings_Data', pd.DataFrame()))
+    data["People_Data"] = pd.DataFrame(data.get("People_Data", pd.DataFrame()))
+    data["Bookings_Data"] = pd.DataFrame(data.get("Bookings_Data", pd.DataFrame()))
 
     return data
 
@@ -49,61 +48,84 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     economic = merged.groupby("Person URN").agg(
         AverageBookingAmount=("BookingAmount", "mean"),
         MaximumBookingAmount=("BookingAmount", "max"),
-        TotalBookings=("BookingAmount", "count")
+        TotalBookings=("BookingAmount", "count"),
     )
 
     # ---------------------- Engagement ----------------------
     bookings_df = bookings_df.copy()
-    bookings_df["Booking Date"] = pd.to_datetime(bookings_df["Booking Date"], errors="coerce")
+    bookings_df["Booking Date"] = pd.to_datetime(
+        bookings_df["Booking Date"], errors="coerce"
+    )
     reference_date = bookings_df["Booking Date"].max()
 
     behavioural = bookings_df.groupby("Person URN").agg(
         BookingFrequency=("Booking URN", "count"),
         UniqueDestinations=("Destination", lambda x: x.nunique()),
-        LastBookingDate=("Booking Date", "max")
+        LastBookingDate=("Booking Date", "max"),
     )
 
-    behavioural["RecencyDays"] = (reference_date - behavioural["LastBookingDate"]).dt.days
+    behavioural["RecencyDays"] = (
+        reference_date - behavioural["LastBookingDate"]
+    ).dt.days
     behavioural = behavioural.drop(columns=["LastBookingDate"]).fillna(0)
 
     # ---- Exploration Ratio (Unique / Frequency), safe divide
     behavioural["ExplorationRatio"] = behavioural.apply(
-        lambda r: r["UniqueDestinations"] / r["BookingFrequency"] if r["BookingFrequency"] > 0 else 0,
-        axis=1
+        lambda r: r["UniqueDestinations"] / r["BookingFrequency"]
+        if r["BookingFrequency"] > 0
+        else 0,
+        axis=1,
     )
 
     # ---------------------- STRATEGIC ----------------------
     long_haul_list = [
-        "United States", "USA", "Australia", "New Zealand",
-        "South Africa", "Namibia", "Senegal", "Mali", "Kuwait"
+        "United States",
+        "USA",
+        "Australia",
+        "New Zealand",
+        "South Africa",
+        "Namibia",
+        "Senegal",
+        "Mali",
+        "Kuwait",
     ]
 
     strategic_temp = bookings_df.groupby("Person URN").agg(
         LongHaulBookings=("Destination", lambda x: np.sum(x.isin(long_haul_list))),
-        PackageBookings=("Product", lambda x: np.sum(x == "Package Holiday"))
+        PackageBookings=("Product", lambda x: np.sum(x == "Package Holiday")),
     )
 
     strategic = pd.DataFrame(index=strategic_temp.index)
-    strategic["LongHaulAlignment"] = (strategic_temp["LongHaulBookings"] > 0).astype(int)
-    strategic["PackageAlignment"] = (strategic_temp["PackageBookings"] > 0).astype(int)
+    strategic["LongHaulAlignment"] = (
+        strategic_temp["LongHaulBookings"] > 0
+    ).astype(int)
+    strategic["PackageAlignment"] = (
+        strategic_temp["PackageBookings"] > 0
+    ).astype(int)
 
     if priority_sources is None:
         priority_sources = ["Expedia"]
 
     people_df = people_df.copy()
-    people_df["ChannelFit"] = people_df["Source"].apply(lambda x: int(x in priority_sources))
+    people_df["ChannelFit"] = people_df["Source"].apply(
+        lambda x: int(x in priority_sources)
+    )
 
     strategic = strategic.merge(
-        people_df[["Person URN", "ChannelFit"]],
-        on="Person URN",
-        how="left"
+        people_df[["Person URN", "ChannelFit"]], on="Person URN", how="left"
     )
 
     # ---------------------- COMBINE ----------------------
     df = (
-        economic
-        .merge(behavioural, left_index=True, right_index=True, how="left")
-        .merge(strategic.set_index("Person URN"), left_index=True, right_index=True, how="left")
+        economic.merge(
+            behavioural, left_index=True, right_index=True, how="left"
+        )
+        .merge(
+            strategic.set_index("Person URN"),
+            left_index=True,
+            right_index=True,
+            how="left",
+        )
     ).fillna(0)
 
     # ============================================================
@@ -118,10 +140,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     df["MaxSpendNorm"] = df["MaxSpendClipped"].rank(pct=True) * 100
 
     # Composite spend score
-    df["SpendScore"] = (
-        0.7 * df["AvgSpendNorm"] +
-        0.3 * df["MaxSpendNorm"]
-    ).round(2)
+    df["SpendScore"] = (0.7 * df["AvgSpendNorm"] + 0.3 * df["MaxSpendNorm"]).round(2)
 
     # ============================================================
     # Engagement SCORE
@@ -149,30 +168,33 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
             rec > 1825,
         ],
         [100, 80, 60, 40, 20, 0],
-        default=0
+        default=0,
     )
 
     # ---- BLENDED DIVERSITY SCORE
     # Step 1: Normalise components
     unique_min = df["UniqueDestinations"].min()
     unique_range = df["UniqueDestinations"].max() - unique_min + 1e-9
-    df["UniqueNorm"] = ((df["UniqueDestinations"] - unique_min) / unique_range) * 100
+    df["UniqueNorm"] = (
+        (df["UniqueDestinations"] - unique_min) / unique_range
+    ) * 100
 
     explore_min = df["ExplorationRatio"].min()
     explore_range = df["ExplorationRatio"].max() - explore_min + 1e-9
-    df["ExploreNorm"] = ((df["ExplorationRatio"] - explore_min) / explore_range) * 100
+    df["ExploreNorm"] = (
+        (df["ExplorationRatio"] - explore_min) / explore_range
+    ) * 100
 
     # Step 2: Weighted blend (80% breadth, 20% "how exploratory?")
     df["DiversityScore"] = (
-        0.8 * df["UniqueNorm"] +
-        0.2 * df["ExploreNorm"]
+        0.8 * df["UniqueNorm"] + 0.2 * df["ExploreNorm"]
     ).round(2)
 
     # ---- Final Engagement Score
     df["EngagementScore"] = (
-        0.5 * df["FrequencyScore"] +
-        0.3 * df["RecencyScore"] +
-        0.2 * df["DiversityScore"]
+        0.5 * df["FrequencyScore"]
+        + 0.3 * df["RecencyScore"]
+        + 0.2 * df["DiversityScore"]
     ).round(2)
 
     # ============================================================
@@ -183,64 +205,79 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     ].fillna(0)
 
     df["StrategicScore"] = (
-        0.5 * (df["LongHaulAlignment"] * 100) +
-        0.3 * (df["PackageAlignment"] * 100) +
-        0.2 * (df["ChannelFit"] * 100)
+        0.5 * (df["LongHaulAlignment"] * 100)
+        + 0.3 * (df["PackageAlignment"] * 100)
+        + 0.2 * (df["ChannelFit"] * 100)
     ).round(2)
 
     # ============================================================
-    # SEGMENTATION
+    # SEGMENTATION (NEW NAMING)
+    # Spend: Saver / Economy / Premium
+    # Engagement: One-Timers / Casuals / Explorers
     # ============================================================
-
     spend33, spend66 = df["SpendScore"].quantile([0.33, 0.66])
     act33, act66 = df["EngagementScore"].quantile([0.33, 0.66])
 
     df["SpendTier"] = np.select(
-        [df["SpendScore"] <= spend33, df["SpendScore"] <= spend66, df["SpendScore"] > spend66],
-        ["Low Spend", "Mid Spend", "High Spend"],
-        default="Unknown"
+        [
+            df["SpendScore"] <= spend33,
+            df["SpendScore"] <= spend66,
+            df["SpendScore"] > spend66,
+        ],
+        ["Saver", "Economy", "Premium"],
+        default="Unknown",
     ).astype(object)
 
     df["EngagementTier"] = np.select(
-        [df["EngagementScore"] <= act33, df["EngagementScore"] <= act66, df["EngagementScore"] > act66],
-        ["Low Engagement", "Mid Engagement", "High Engagement"],
-        default="Unknown"
+        [
+            df["EngagementScore"] <= act33,
+            df["EngagementScore"] <= act66,
+            df["EngagementScore"] > act66,
+        ],
+        ["One-Timers", "Casuals", "Explorers"],
+        default="Unknown",
     ).astype(object)
 
-    # ---- Segment Lookup
+    # ---- Segment Lookup (3×3 grid)
     segment_map = {
-        ("Low Spend", "Low Engagement"): "Dormant Base",
-        ("Low Spend", "Mid Engagement"): "Steady Low-Spend",
-        ("Low Spend", "High Engagement"): "Engaged Low-Spend",
+        ("Saver", "One-Timers"): "Saver One-Timers",
+        ("Saver", "Casuals"): "Saver Casuals",
+        ("Saver", "Explorers"): "Saver Explorers",
 
-        ("Mid Spend", "Low Engagement"): "At-Risk Decliners",
-        ("Mid Spend", "Mid Engagement"): "Developing Value",
-        ("Mid Spend", "High Engagement"): "Loyal Value",
+        ("Economy", "One-Timers"): "Economy One-Timers",
+        ("Economy", "Casuals"): "Economy Casuals",
+        ("Economy", "Explorers"): "Economy Explorers",
 
-        ("High Spend", "Low Engagement"): "One-Off Premiums",
-        ("High Spend", "Mid Engagement"): "Premium Regulars",
-        ("High Spend", "High Engagement"): "Premium Loyalists",
+        ("Premium", "One-Timers"): "Premium One-Timers",
+        ("Premium", "Casuals"): "Premium Casuals",
+        ("Premium", "Explorers"): "Premium Explorers",
     }
 
     df["Segment"] = df.apply(
-        lambda r: segment_map.get((r["SpendTier"], r["EngagementTier"]), "Unclassified"),
-        axis=1
+        lambda r: segment_map.get(
+            (r["SpendTier"], r["EngagementTier"]), "Unclassified"
+        ),
+        axis=1,
     )
 
-    # ---- Descriptions
+    # ---- Descriptions (travel-friendly language)
     descriptions = {
-        "Premium Loyalists": "High spend + high Engagement — highest value.",
-        "Loyal Value": "Mid spend + high Engagement — strong loyalty.",
-        "Engaged Low-Spend": "Low spend + high Engagement — engaged but low value.",
-        "Premium Regulars": "High spend + mid Engagement — stable premium group.",
-        "Developing Value": "Mid spend + mid Engagement — growth segment.",
-        "Steady Low-Spend": "Low spend + mid Engagement — active but low value.",
-        "One-Off Premiums": "High spend + low Engagement — reactivation opportunity.",
-        "At-Risk Decliners": "Mid spend + low Engagement — declining engagement.",
-        "Dormant Base": "Low spend + low Engagement — lowest priority."
+        "Premium Explorers": "High-value, highly engaged frequent travellers.",
+        "Premium Casuals": "High spenders with steady, moderate engagement.",
+        "Premium One-Timers": "High spend but low repeat behaviour — strong reactivation potential.",
+
+        "Economy Explorers": "Engaged mid-spend travellers; strong commercial core.",
+        "Economy Casuals": "Mid-spend, predictable customers — consistent revenue.",
+        "Economy One-Timers": "Occasional mid-spend travellers with low engagement.",
+
+        "Saver Explorers": "Budget-conscious but active and enthusiastic travellers.",
+        "Saver Casuals": "Low spend but fairly consistent behaviour.",
+        "Saver One-Timers": "Very low engagement and spend — lowest commercial priority.",
     }
 
-    df["SegmentDescription"] = df["Segment"].map(descriptions).fillna("Unclassified group")
+    df["SegmentDescription"] = df["Segment"].map(descriptions).fillna(
+        "Unclassified group"
+    )
 
     # Final tidy frame with Person URN as a column
     return df.reset_index().rename(columns={"index": "Person URN"})
@@ -251,5 +288,158 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 # ------------------------------------------------------------
 data = load_helpforheroes_data("helpforheroes/helpforheroes.xls")
 
-# print unique income values
-print(data['People_Data']['Income'].unique())
+df = calculate_customer_value_metrics(
+    data["People_Data"],
+    data["Bookings_Data"],
+)
+
+print(df.columns.tolist())
+
+
+# ============================================================
+# CUSTOMER VALUE MATRIX — Scores First, Name Last
+# with NEW tiers + segment names
+# ============================================================
+
+# ---- Compute average scores per segment ----
+seg_avg = (
+    df.groupby("Segment")
+    .agg(
+        AvgSpend=("SpendScore", "mean"),
+        AvgEng=("EngagementScore", "mean"),
+    )
+    .round(1)
+)
+
+# ---- 3×3 Layout for Spend × Engagement (using tiers) ----
+segment_matrix = {
+    ("Saver", "One-Timers"): '"Saver One-Timers"',
+    ("Saver", "Casuals"): '"Saver Casuals"',
+    ("Saver", "Explorers"): '"Saver Explorers"',
+
+    ("Economy", "One-Timers"): '"Economy One-Timers"',
+    ("Economy", "Casuals"): '"Economy Casuals"',
+    ("Economy", "Explorers"): '"Economy Explorers"',
+
+    ("Premium", "One-Timers"): '"Premium One-Timers"',
+    ("Premium", "Casuals"): '"Premium Casuals"',
+    ("Premium", "Explorers"): '"Premium Explorers"',
+}
+
+rows = ["Saver", "Economy", "Premium"]          # Spend tiers (Y)
+cols = ["One-Timers", "Casuals", "Explorers"]   # Engagement tiers (X)
+
+# ------------------------------------------------------------
+# BUILD LABEL MATRIX — Scores First, Segment Name Last
+# ------------------------------------------------------------
+df_labels = pd.DataFrame(index=rows, columns=cols, dtype=str)
+
+for spend in rows:
+    for eng in cols:
+        seg_name = segment_matrix[(spend, eng)]
+        seg_clean = seg_name.strip('"')
+
+        avg_s = seg_avg.loc[seg_clean, "AvgSpend"] if seg_clean in seg_avg.index else 0
+        avg_e = seg_avg.loc[seg_clean, "AvgEng"] if seg_clean in seg_avg.index else 0
+
+        df_labels.loc[spend, eng] = (
+            f"Avg SpendScore: {avg_s}\n"
+            f"Avg EngageScore: {avg_e}\n\n"
+            f"{seg_name}"
+        )
+
+# ------------------------------------------------------------
+# COLOUR MATRIX (same heat logic, just different labels)
+# ------------------------------------------------------------
+color_matrix = [
+    ["#ff0011", "#ff9999", "#ffff66"],  # Saver row
+    ["#ff9999", "#ffff66", "#b6e6b6"],  # Economy row
+    ["#ffff66", "#b6e6b6", "#13DA48"],  # Premium row
+]
+
+# ------------------------------------------------------------
+# PLOT MATRIX — Scores First, Segment Last (Bold)
+# ------------------------------------------------------------
+fig, ax = plt.subplots(figsize=(10, 8))
+
+for i, spend in enumerate(df_labels.index):
+    for j, eng in enumerate(df_labels.columns):
+
+        # Draw cell background
+        ax.add_patch(
+            plt.Rectangle(
+                (j, i),
+                1,
+                1,
+                facecolor=color_matrix[i][j],
+                edgecolor="black",
+            )
+        )
+
+        # Pull lines
+        lines = df_labels.loc[spend, eng].split("\n")
+
+        score1 = lines[0]  # Avg SpendScore
+        score2 = lines[1]  # Avg EngageScore
+        seg_label = lines[3]  # Segment name (line 3 after blank line)
+
+        # --- Score1 (normal) ---
+        ax.text(
+            j + 0.5,
+            i + 0.38,
+            score1,
+            ha="center",
+            va="center",
+            fontsize=8,
+            fontweight="normal",
+        )
+
+        # --- Score2 (normal) ---
+        ax.text(
+            j + 0.5,
+            i + 0.52,
+            score2,
+            ha="center",
+            va="center",
+            fontsize=8,
+            fontweight="normal",
+        )
+
+        # --- Segment Name (bold) ---
+        ax.text(
+            j + 0.5,
+            i + 0.66,
+            seg_label,
+            ha="center",
+            va="center",
+            fontsize=10,
+            fontweight="bold",
+        )
+
+# ---- Axes formatting ----
+ax.set_xticks([0.5, 1.5, 2.5])
+ax.set_xticklabels(["One-Timers", "Casuals", "Explorers"], fontsize=10, fontweight="bold")
+
+ax.set_yticks([0.5, 1.5, 2.5])
+ax.set_yticklabels(["Saver", "Economy", "Premium"], fontsize=10, fontweight="bold", rotation=90)
+
+ax.tick_params(axis="both", length=0)
+plt.gca().invert_yaxis()
+
+ax.set_xlabel("Engagement (One-Timers → Explorers)", labelpad=25, fontsize=12, fontweight="bold")
+ax.set_ylabel("Spend (Saver → Premium)", labelpad=35, fontsize=12, fontweight="bold")
+
+plt.title(
+    "Customer Value Matrix\n(Avg SpendScore & Avg EngagementScore per Segment)",
+    fontsize=14,
+    fontweight="bold",
+    pad=20,
+)
+
+ax.set_xlim(0, 3)
+ax.set_ylim(0, 3)
+ax.set_aspect("equal")
+
+plt.tight_layout()
+plt.savefig("helpforheroes/matrix_plot.png", dpi=300, bbox_inches="tight")
+plt.show()

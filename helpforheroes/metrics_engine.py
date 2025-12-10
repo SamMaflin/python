@@ -1,19 +1,19 @@
-import pandas as pd, numpy as np
+import pandas as pd
+import numpy as np
 
 # ============================================================
-# FULL METRIC ENGINE + SEGMENTATION (WITH BLENDED DIVERSITY)
+# FULL METRIC ENGINE + NEW 3×3 SEGMENTATION MODEL
 # ============================================================
 def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
     """
-    Calculates Spend, Engagement, Strategic scores and assigns customers to a 
-    3×3 segmentation matrix.
+    Calculates SpendScore, EngagementScore, StrategicScore
+    and assigns customers to the NEW 3×3 segmentation:
 
-    Key design choices:
-      - SpendScore: composite of Avg + Max booking amount (70% / 30%), normalised 0–100.
-      - EngagementScore: combines Frequency, Recency and a blended Diversity metric:
-            Diversity = 80% UniqueDestinations + 20% ExplorationRatio.
-      - StrategicScore: binary signals (Long-haul, Package, ChannelFit) mapped to 0/100.
-      - Segmentation: tertiles on SpendScore and EngagementScore → 3×3 grid.
+        Spend Tiers:      Saver → Economy → Premium
+        Engagement Tiers: One-Timers → Casuals → Explorers
+
+    Produces 9 new segments, e.g.:
+        Premium Explorers, Saver Casuals, Economy One-Timers, etc.
     """
 
     # ---------------------- MERGE ----------------------
@@ -31,7 +31,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         TotalBookings=("BookingAmount", "count")
     )
 
-    # ---------------------- Engagement ----------------------
+    # ---------------------- ENGAGEMENT ----------------------
     bookings_df = bookings_df.copy()
     bookings_df["Booking Date"] = pd.to_datetime(bookings_df["Booking Date"], errors="coerce")
     reference_date = bookings_df["Booking Date"].max()
@@ -45,9 +45,9 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     behavioural["RecencyDays"] = (reference_date - behavioural["LastBookingDate"]).dt.days
     behavioural = behavioural.drop(columns=["LastBookingDate"]).fillna(0)
 
-    # ---- Exploration Ratio (Unique / Frequency), safe divide
     behavioural["ExplorationRatio"] = behavioural.apply(
-        lambda r: r["UniqueDestinations"] / r["BookingFrequency"] if r["BookingFrequency"] > 0 else 0,
+        lambda r: r["UniqueDestinations"] / r["BookingFrequency"]
+        if r["BookingFrequency"] > 0 else 0,
         axis=1
     )
 
@@ -66,17 +66,14 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     strategic["LongHaulAlignment"] = (strategic_temp["LongHaulBookings"] > 0).astype(int)
     strategic["PackageAlignment"] = (strategic_temp["PackageBookings"] > 0).astype(int)
 
+    # ChannelFit
     if priority_sources is None:
         priority_sources = ["Expedia"]
 
     people_df = people_df.copy()
     people_df["ChannelFit"] = people_df["Source"].apply(lambda x: int(x in priority_sources))
 
-    strategic = strategic.merge(
-        people_df[["Person URN", "ChannelFit"]],
-        on="Person URN",
-        how="left"
-    )
+    strategic = strategic.merge(people_df[["Person URN", "ChannelFit"]], on="Person URN", how="left")
 
     # ---------------------- COMBINE ----------------------
     df = (
@@ -86,72 +83,49 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     ).fillna(0)
 
     # ============================================================
-    # SPEND SCORE (Avg + Max composite with light winsorisation)
+    # SPEND SCORE
     # ============================================================
-    # Normalise average spend using percentile ranking
     df["AvgSpendNorm"] = df["AverageBookingAmount"].rank(pct=True) * 100
 
-    # Winsorise max spend at 95th percentile to reduce outlier distortion
     max_cap = df["MaximumBookingAmount"].quantile(0.95)
     df["MaxSpendClipped"] = df["MaximumBookingAmount"].clip(upper=max_cap)
     df["MaxSpendNorm"] = df["MaxSpendClipped"].rank(pct=True) * 100
 
-    # Composite spend score
-    df["SpendScore"] = (
-        0.7 * df["AvgSpendNorm"] +
-        0.3 * df["MaxSpendNorm"]
-    ).round(2)
+    df["SpendScore"] = (0.7 * df["AvgSpendNorm"] + 0.3 * df["MaxSpendNorm"]).round(2)
 
     # ============================================================
-    # Engagement SCORE
+    # ENGAGEMENT SCORE
     # ============================================================
-
-    # ---- Frequency (percentile, not raw scaling)
     freq = df["BookingFrequency"]
-    if freq.max() != freq.min():
-        df["FrequencyScore"] = freq.rank(pct=True) * 100
-    else:
-        df["FrequencyScore"] = 0
+    df["FrequencyScore"] = freq.rank(pct=True) * 100 if freq.max() != freq.min() else 0
 
-    # ---- Recency (using dataset max date instead of real-world today)
+    # Recency (keep your thresholds)
     rec = df["RecencyDays"].copy()
-
-    # No-booking customers treated as slightly older than the oldest real customer
     max_real = rec[rec > 0].max()
     rec[(df["BookingFrequency"] == 0) | rec.isna() | (rec <= 0)] = max_real + 1
 
-    # KEEP YOUR ORIGINAL TIME BUCKETS
     df["RecencyScore"] = np.select(
         [
-            rec <= 365,     # 0–1 year
-            rec <= 730,     # 1–2 years
-            rec <= 1095,    # 2–3 years
-            rec <= 1460,    # 3–4 years
-            rec <= 1825,    # 4–5 years
-            rec > 1825      # 5+ years
+            rec <= 365,
+            rec <= 730,
+            rec <= 1095,
+            rec <= 1460,
+            rec <= 1825,
+            rec > 1825
         ],
         [100, 80, 60, 40, 20, 0],
         default=0
     )
 
+    # Diversity score
+    unique_range = df["UniqueDestinations"].max() - df["UniqueDestinations"].min() + 1e-9
+    explore_range = df["ExplorationRatio"].max() - df["ExplorationRatio"].min() + 1e-9
 
-    # ---- BLENDED DIVERSITY SCORE
-    # Step 1: Normalise components
-    unique_min = df["UniqueDestinations"].min()
-    unique_range = df["UniqueDestinations"].max() - unique_min + 1e-9
-    df["UniqueNorm"] = ((df["UniqueDestinations"] - unique_min) / unique_range) * 100
+    df["UniqueNorm"] = (df["UniqueDestinations"] - df["UniqueDestinations"].min()) / unique_range * 100
+    df["ExploreNorm"] = (df["ExplorationRatio"] - df["ExplorationRatio"].min()) / explore_range * 100
 
-    explore_min = df["ExplorationRatio"].min()
-    explore_range = df["ExplorationRatio"].max() - explore_min + 1e-9
-    df["ExploreNorm"] = ((df["ExplorationRatio"] - explore_min) / explore_range) * 100
+    df["DiversityScore"] = (0.8 * df["UniqueNorm"] + 0.2 * df["ExploreNorm"]).round(2)
 
-    # Step 2: Weighted blend (80% breadth, 20% "how exploratory?")
-    df["DiversityScore"] = (
-        0.8 * df["UniqueNorm"] +
-        0.2 * df["ExploreNorm"]
-    ).round(2)
-
-    # ---- Final Engagement Score
     df["EngagementScore"] = (
         0.5 * df["FrequencyScore"] +
         0.3 * df["RecencyScore"] +
@@ -161,48 +135,54 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     # ============================================================
     # STRATEGIC SCORE
     # ============================================================
-    df[["LongHaulAlignment", "PackageAlignment", "ChannelFit"]] = df[
-        ["LongHaulAlignment", "PackageAlignment", "ChannelFit"]
-    ].fillna(0)
-
     df["StrategicScore"] = (
-        0.5 * (df["LongHaulAlignment"] * 100) +
-        0.3 * (df["PackageAlignment"] * 100) +
-        0.2 * (df["ChannelFit"] * 100)
+        0.5 * df["LongHaulAlignment"] * 100 +
+        0.3 * df["PackageAlignment"] * 100 +
+        0.2 * df["ChannelFit"] * 100
     ).round(2)
 
     # ============================================================
-    # SEGMENTATION
+    # NEW SEGMENTATION — Spend × Engagement
     # ============================================================
 
     spend33, spend66 = df["SpendScore"].quantile([0.33, 0.66])
-    act33, act66 = df["EngagementScore"].quantile([0.33, 0.66])
+    eng33, eng66 = df["EngagementScore"].quantile([0.33, 0.66])
 
+    # Spend tiers → Saver / Economy / Premium
     df["SpendTier"] = np.select(
-        [df["SpendScore"] <= spend33, df["SpendScore"] <= spend66, df["SpendScore"] > spend66],
-        ["Low Spend", "Mid Spend", "High Spend"],
+        [
+            df["SpendScore"] <= spend33,
+            df["SpendScore"] <= spend66,
+            df["SpendScore"] > spend66
+        ],
+        ["Saver", "Economy", "Premium"],
         default="Unknown"
-    ).astype(object)
+    )
 
+    # Engagement tiers → One-Timers / Casuals / Explorers
     df["EngagementTier"] = np.select(
-        [df["EngagementScore"] <= act33, df["EngagementScore"] <= act66, df["EngagementScore"] > act66],
-        ["Low Engagement", "Mid Engagement", "High Engagement"],
+        [
+            df["EngagementScore"] <= eng33,
+            df["EngagementScore"] <= eng66,
+            df["EngagementScore"] > eng66
+        ],
+        ["One-Timers", "Casuals", "Explorers"],
         default="Unknown"
-    ).astype(object)
+    )
 
-    # ---- Segment Lookup
+    # ---------------------- NEW SEGMENT GRID ----------------------
     segment_map = {
-        ("Low Spend", "Low Engagement"): "Dormant Base",
-        ("Low Spend", "Mid Engagement"): "Steady Low-Spend",
-        ("Low Spend", "High Engagement"): "Engaged Low-Spend",
+        ("Saver", "One-Timers"): "Saver One-Timers",
+        ("Saver", "Casuals"): "Saver Casuals",
+        ("Saver", "Explorers"): "Saver Explorers",
 
-        ("Mid Spend", "Low Engagement"): "At-Risk Decliners",
-        ("Mid Spend", "Mid Engagement"): "Developing Value",
-        ("Mid Spend", "High Engagement"): "Loyal Value",
+        ("Economy", "One-Timers"): "Economy One-Timers",
+        ("Economy", "Casuals"): "Economy Casuals",
+        ("Economy", "Explorers"): "Economy Explorers",
 
-        ("High Spend", "Low Engagement"): "One-Off Premiums",
-        ("High Spend", "Mid Engagement"): "Premium Regulars",
-        ("High Spend", "High Engagement"): "Premium Loyalists",
+        ("Premium", "One-Timers"): "Premium One-Timers",
+        ("Premium", "Casuals"): "Premium Casuals",
+        ("Premium", "Explorers"): "Premium Explorers",
     }
 
     df["Segment"] = df.apply(
@@ -210,20 +190,21 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         axis=1
     )
 
-    # ---- Descriptions
+    # ---------------------- NEW SEGMENT DESCRIPTIONS ----------------------
     descriptions = {
-        "Premium Loyalists": "High spend + high Engagement — highest value.",
-        "Loyal Value": "Mid spend + high Engagement — strong loyalty.",
-        "Engaged Low-Spend": "Low spend + high Engagement — engaged but low value.",
-        "Premium Regulars": "High spend + mid Engagement — stable premium group.",
-        "Developing Value": "Mid spend + mid Engagement — growth segment.",
-        "Steady Low-Spend": "Low spend + mid Engagement — active but low value.",
-        "One-Off Premiums": "High spend + low Engagement — reactivation opportunity.",
-        "At-Risk Decliners": "Mid spend + low Engagement — declining engagement.",
-        "Dormant Base": "Low spend + low Engagement — lowest priority."
+        "Premium Explorers": "High-value, highly engaged frequent travellers.",
+        "Premium Casuals": "High spenders with moderate, steady engagement.",
+        "Premium One-Timers": "High spend but low repeat activity — strong reactivation potential.",
+
+        "Economy Explorers": "Engaged mid-spend travellers; core repeating customers.",
+        "Economy Casuals": "Predictable, mid-spend customers with steady behaviours.",
+        "Economy One-Timers": "Occasional mid-spend travellers with low repeat behaviour.",
+
+        "Saver Explorers": "Low spend but highly engaged — budget-active travellers.",
+        "Saver Casuals": "Low spend but moderately engaged travellers.",
+        "Saver One-Timers": "Low spend + low engagement — lowest commercial priority.",
     }
 
     df["SegmentDescription"] = df["Segment"].map(descriptions).fillna("Unclassified group")
 
-    # Final tidy frame with Person URN as a column
     return df.reset_index().rename(columns={"index": "Person URN"})

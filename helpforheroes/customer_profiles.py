@@ -173,7 +173,7 @@ def full_segmentation_breakdown(seg_df, bookings_df, people_df):
         "Source",
         "FrequencyBand",
         "RecencyBand"
-        
+
     ]
 
     results = {
@@ -196,7 +196,7 @@ def generate_dominance_insights(results_dict):
         for (segment, category), row in table.iterrows():
 
             dom = row["Dominance"]
-            if dom not in ["HIGHLY dominant", "Strongly dominant", "Under-represented"]:
+            if dom not in ["Highly dominant", "Strongly dominant", "Under-represented"]:
                 continue
 
             seg_pct = row["Segment %"]
