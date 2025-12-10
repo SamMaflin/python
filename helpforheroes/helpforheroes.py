@@ -209,26 +209,46 @@ def render_segment_insights():
 
 
 def render_customer_profiles(df, bookings_df, people_df):
+
     st.markdown("<h2>Who Are These Customers? — Segment Profiles</h2>", unsafe_allow_html=True)
 
-    # Get profiles, dominance tables, and insights
+    # Run the profiling engine
     prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
 
-    # Display merged profile dataset (optional)
-    st.markdown("### Full Profile Dataset (merged segmentation + demographics)")
-    st.dataframe(prof_df)
+    # ------------------------------------------------------------------
+    # 1. Display merged segmentation + demographics dataset
+    # ------------------------------------------------------------------
+    st.markdown("### Full Profile Dataset (Segmentation + Demographics)")
+    st.dataframe(prof_df, use_container_width=True)
 
-    # Display each dominance table
-    st.markdown("### Segment Demographic Breakdown")
+    st.markdown("---")
+
+    # ------------------------------------------------------------------
+    # 2. Display each demographic dominance breakdown
+    # ------------------------------------------------------------------
+    st.markdown("### Segment Demographic Breakdown (Population vs Segment %)")
+
+    if not results:
+        st.info("No demographic fields available to profile.")
+        return
 
     for field, table in results.items():
         st.markdown(f"#### {field}")
-        st.dataframe(table)
+        st.dataframe(table, use_container_width=True)
+        st.markdown("")  # spacing
 
-    # Display insights
+    st.markdown("---")
+
+    # ------------------------------------------------------------------
+    # 3. Display insights
+    # ------------------------------------------------------------------
     st.markdown("### Key Profiling Insights")
-    for i in insights:
-        st.markdown(f"- {i}")
+
+    if insights:
+        for i in insights:
+            st.markdown(f"- {i}")
+    else:
+        st.markdown("_No standout demographic patterns detected._")
 
 
 
