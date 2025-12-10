@@ -15,11 +15,15 @@ def prepare_people_data(people_df):
     people["Age"] = people["DOB"].apply(
         lambda d: int((today - d).days / 365.25) if pd.notnull(d) else np.nan
     )
+ 
+    # Create improved marketing-friendly age brackets
+    bins = [0, 29, 39, 59, 200]
+    labels = ["18–29", "30–39", "40–59", "60+"]
 
-    # Age brackets used for profiling
-    bins = [0, 29, 39, 49, 59, 69, 200]
-    labels = ["18–29", "30–39", "40–49", "50–59", "60–69", "70+"]
-    people["AgeBracket"] = pd.cut(people["Age"], bins=bins, labels=labels, include_lowest=True)
+    people["AgeBracket"] = pd.cut(
+        people["Age"], bins=bins, labels=labels, include_lowest=True
+    )
+
 
     return people
 
