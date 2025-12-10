@@ -394,42 +394,42 @@ st.markdown("""
 
 .segment-matrix {
     border-collapse: separate;
-    border-spacing: 14px 22px;
+    border-spacing: 18px 26px; /* more space between cells */
     width: 100%;
     text-align: center;
     font-size: 20px;
     table-layout: fixed;
 }
 
-/* Headers */
+/* Header cells */
 .segment-matrix th {
-    padding: 16px;
-    background-color: #f3f3f3;
+    padding: 18px;
+    background-color: #f2f2f2;
     font-size: 22px;
     font-weight: 800;
     border-radius: 10px;
-    color: black;
+    color: black !important;
 }
 
-/* Cell styling */
+/* Data cells */
 .segment-matrix td {
-    padding: 30px 20px;
+    padding: 32px 22px;          /* more internal space */
     border-radius: 14px;
     font-weight: 700;
-    color: black !important;   /* <<< FORCE BLACK TEXT */
+    color: black !important;     /* force black text */
 }
 
-/* Colours (Updated palette) */
-.red-strong       { background-color: #D32F2F; }
-.orange           { background-color: #FFA726; }
-.yellow           { background-color: #FFEB3B; }
-.green-pale       { background-color: #C8F7C5; }
-.green            { background-color: #4CAF50; }
-.green-strong     { background-color: #1B5E20; }
+/* Colour palette */
+.red-strong   { background-color: #D32F2F; }   /* Low-Low */
+.orange       { background-color: #FFA726; }   /* Mid-Low / Low-Mid */
+.yellow       { background-color: #FFEB3B; }   /* Mid-Mid */
+.green-pale   { background-color: #C8F7C5; }   /* High-Low */
+.green        { background-color: #4CAF50; }   /* Mid-High */
+.green-strong { background-color: #1B5E20; }   /* High-High */
 
 </style>
 
-<h3>Customer Value Matrix — Spend × Activity (Final Colour System)</h3>
+<h3 class="small-h3">Customer Value Matrix — Spend × Activity</h3>
 
 <table class="segment-matrix">
 
@@ -463,4 +463,3 @@ st.markdown("""
 
 </table>
 """, unsafe_allow_html=True)
-
