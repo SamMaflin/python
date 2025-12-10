@@ -404,15 +404,4 @@ df = calculate_customer_value_metrics(
     data["Bookings_Data"]
 )
 
-# ---- Compute segment counts ----
-segment_counts = df["Segment"].value_counts().reset_index()
-segment_counts.columns = ["Segment", "Count"]
-
-# ---- Compute score averages ----
-segment_scores = (
-    df.groupby("Segment")[["SpendScore", "ActivityScore", "StrategicScore"]]
-    .mean()
-    .round(1)
-    .reset_index()
-)
 
