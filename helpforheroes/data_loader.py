@@ -13,6 +13,7 @@ def load_helpforheroes_data(file_obj):
 
     data['People_Data'] = pd.DataFrame(data.get('People_Data', pd.DataFrame()))
     data['Bookings_Data'] = pd.DataFrame(data.get('Bookings_Data', pd.DataFrame()))
+
     
 
     return data
