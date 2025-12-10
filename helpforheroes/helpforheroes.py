@@ -556,7 +556,7 @@ segment_summary = (
         CustomerCount=("Person URN", "nunique"),
         Revenue=("TotalRevenue", "sum"),
         AvgSpendScore=("SpendScore", "mean"),
-        AvgActivityScore=("ActivityScore", "mean"),
+        AvgEngagementScore=("EngagementScore", "mean"),
         AvgStrategicScore=("StrategicScore", "mean"),
     )
     .reset_index()
