@@ -404,5 +404,5 @@ ax.set_ylim(0, 3)
 ax.set_aspect("equal")
 
 plt.tight_layout()
-plt.savefig("helpforheroes/matrix_plot_full.png", dpi=300, bbox_inches='tight')
+plt.savefig("helpforheroes/matrix_plot.png", dpi=300, bbox_inches='tight')
 plt.show()
