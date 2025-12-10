@@ -430,8 +430,9 @@ df = calculate_customer_value_metrics(
 
 
 # ------------------------------------------------------------
-# CUSTOMER & REVENUE DISTRIBUTIONS
+# CUSTOMER vs REVENUE — HORIZONTAL GROUPED BAR CHART
 # ------------------------------------------------------------
+
 st.markdown("<h2>Customer vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
 
 # ------------------ Customer distribution ------------------
@@ -467,57 +468,59 @@ rev_segment["ShareOfRevenue"] = (rev_segment["Revenue"] / total_revenue * 100).r
 
 # ------------------ Merge + sort by revenue share ------------------
 merged = segment_counts.merge(rev_segment[["Segment", "ShareOfRevenue"]], on="Segment")
-merged = merged.sort_values("ShareOfRevenue", ascending=False)
+merged = merged.sort_values("ShareOfRevenue", ascending=True)   # bottom-up for horizontal plot
 
 segments = merged["Segment"].tolist()
 customer_vals = merged["ShareOfBase"].tolist()
 revenue_vals = merged["ShareOfRevenue"].tolist()
 
 # ------------------------------------------------------------
-# GROUPED BAR CHART WITH INTERNAL LABELS
+# HORIZONTAL GROUPED BAR CHART
 # ------------------------------------------------------------
 import matplotlib.pyplot as plt
 import numpy as np
 
 fig, ax = plt.subplots(figsize=(12, 8))
 
-bar_width = 0.35
-x = np.arange(len(segments))
+bar_height = 0.35
+y = np.arange(len(segments))
 
 # Colours
 customer_color = "#0095FF"
 revenue_color = "#FF476C"
 
-# Bars
-bars1 = ax.bar(x - bar_width/2, customer_vals, width=bar_width, label="Customer Share (%)", color=customer_color)
-bars2 = ax.bar(x + bar_width/2, revenue_vals, width=bar_width, label="Revenue Share (%)", color=revenue_color)
+# Bars (horizontal)
+bars1 = ax.barh(y - bar_height/2, customer_vals, height=bar_height, label="Customer Share (%)", color=customer_color)
+bars2 = ax.barh(y + bar_height/2, revenue_vals, height=bar_height, label="Revenue Share (%)", color=revenue_color)
 
-# Add INTERNAL white percentage labels
-def add_labels_inside(bars):
+# Add internal labels (white text inside bars)
+def add_labels_inside_h(bars):
     for bar in bars:
-        height = bar.get_height()
+        width = bar.get_width()
         ax.text(
-            bar.get_x() + bar.get_width()/2,
-            height * 0.85,                      # position INSIDE bar near the top
-            f"{height:.1f}%",
-            ha="center",
+            width * 0.98,                     # inside the bar near the far right
+            bar.get_y() + bar.get_height()/2,
+            f"{width:.1f}%",
+            ha="right",
             va="center",
             fontsize=11,
             fontweight="bold",
             color="white"
         )
 
-add_labels_inside(bars1)
-add_labels_inside(bars2)
+add_labels_inside_h(bars1)
+add_labels_inside_h(bars2)
+
+# Y-axis settings (rotated 90° left)
+ax.set_yticks(y)
+ax.set_yticklabels(segments, fontsize=12)
 
 # Labels & formatting
-ax.set_xticks(x)
-ax.set_xticklabels(segments, rotation=45, ha="right", fontsize=12)
-ax.set_ylabel("Percentage (%)", fontsize=14, fontweight="bold")
+ax.set_xlabel("Percentage (%)", fontsize=14, fontweight="bold", labelpad=15)
 ax.set_title("Customer Base vs Revenue Contribution by Segment", fontsize=18, fontweight="bold", pad=20)
 
 ax.legend(fontsize=12)
-ax.grid(axis="y", linestyle="--", alpha=0.3)
+ax.grid(axis="x", linestyle="--", alpha=0.3)
 
 plt.tight_layout()
 st.pyplot(fig)
