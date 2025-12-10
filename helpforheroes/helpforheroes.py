@@ -175,7 +175,7 @@ def render_metric_construction():
 # SEGMENT MATRIX
 # ============================================================
 def render_segmentation_matrix():
-    st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
+    st.markdown("<h2>⭐ Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
     st.image("helpforheroes/matrix_plot.png", use_column_width=True)
 
 
@@ -183,7 +183,7 @@ def render_segmentation_matrix():
 # SEGMENT BAR CHART
 # ============================================================
 def render_segment_barchart(df, bookings_df):
-    st.markdown("<h2>Customer Base vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
+    st.markdown("<h2>🔍 Customer Base vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
     segment_barchart_plot(df, bookings_df)
 
 
@@ -220,309 +220,348 @@ def render_customer_profiles(df, bookings_df, people_df):
     # ============================================================
     st.markdown("<h2>📊 Customer Segment Profiles</h2>", unsafe_allow_html=True)
 
+    import streamlit as st
+
+def render_customer_profiles(df, bookings_df, people_df):
+
+    # Run profiling engine
+    prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
+
+    # ============================================================
+    # INTRODUCTION
+    # ============================================================
     st.markdown(
         """
-### 🔍 How These Profiles Were Built — Clear, Non-Technical Overview
+<h2>🔍 How These Profiles Were Built</h2>
 
-To understand **who makes up each customer segment**, we compared the composition of each segment  
-against the **overall customer base** using three simple statistical ideas:
+<h4>1️⃣ Proportional Representation</h4>
+<p>
+For each characteristic (age, income, gender, occupation, channel, frequency, recency),
+we measured:
+<br>• The % of the <b>overall population</b> in each category  
+<br>• The % of the <b>segment</b> in each category  
+</p>
+<p>
+This shows whether a segment has <b>more</b> or <b>fewer</b> of a group than expected.
+</p>
 
-#### **1️⃣ Proportional Representation**
-For each characteristic (age, income, gender, occupation, channel, frequency, recency), we measured:
-- What % of the *whole base* falls into a category  
-- What % of the *segment* falls into that category  
+<h4>2️⃣ Z-Test for Statistical Reliability</h4>
+<p>
+We apply a <b>proportions Z-test</b> to confirm whether those differences are
+statistically meaningful and not random noise.
+<br><b>p &lt; 0.05</b> → reliable and worth using in a profile.
+</p>
 
-This tells us whether a segment has **more or fewer** of a group than expected.
+<h4>3️⃣ Index for Effect Size</h4>
+<p>
+We also compute an intuitive Index:
+<br><b>1.0</b> = exactly as expected  
+<br><b>2.0</b> = twice as common as expected  
+<br><b>0.5</b> = half as common as expected  
+</p>
 
-#### **2️⃣ Z-Test for Reliability**
-We then ran a **proportions Z-test** to check whether those differences are statistically meaningful  
-(rather than random noise).
+<p>
+This combination lets us produce <b>valid, human-readable profiles</b> based on real,
+statistically supported differences.
+</p>
 
-If the difference is unlikely to occur by chance (p < 0.05), we treat it as a **reliable insight**.
-
-#### **3️⃣ Index for Effect Size**
-We translate the difference into an intuitive Index:
-
-- `1.0` → exactly as expected  
-- `2.0` → twice as common as expected  
-- `0.5` → half as common as expected  
-
-This helps quantify *how strong* the difference is, not just whether it exists.
-
-Together, these steps allow us to produce **clear, human-readable segment profiles** that reflect  
-real patterns in behaviour and demographics, not guesswork.
-"""
+<hr>
+        """,
+        unsafe_allow_html=True
     )
 
-    st.markdown("---")
-
     # ============================================================
-    # SEGMENT PROFILES — PROFESSIONAL DESCRIPTIONS
+    # SEGMENT PROFILES (H2 → H3 → H4 hierarchy)
     # ============================================================
 
+    # -------------------------
     # 1️⃣ Economy Casuals
+    # -------------------------
     with st.expander("1️⃣ Economy Casuals"):
-        st.markdown("### **Profile Summary**")
-        st.markdown(
-            "**A low-engagement group that books infrequently, "
-            "typically by phone, and shows limited long-term value.**"
-        )
-
-        st.markdown("### **Who They Tend to Be**")
         st.markdown(
             """
-- Slight male lean  
-- Fewer retired and unemployed customers  
-- Income slightly below average  
-            """
+<h2>Economy Casuals</h2>
+
+<h3>Profile Summary</h3>
+<p>
+A low-engagement group that books infrequently—usually by phone—and shows limited long-term value.
+</p>
+
+<h4>Who They Tend to Be</h4>
+<p>
+• Slight male lean<br>
+• Fewer retired and unemployed customers<br>
+• Slightly below-average income levels  
+</p>
+
+<h4>How They Book & Behave</h4>
+<p>
+• Almost all are <b>occasional</b> travellers<br>
+• Very strong <b>telephone-first</b> habits<br>
+• Almost no website usage<br>
+• Many last booked <b>3–4 years ago</b>  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>Low-effort, low-frequency customers who prefer phone interactions and rarely return.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Almost all are **occasional travellers**  
-- Strong **telephone-first** behaviour  
-- Almost no **website usage**  
-- Many last booked **3–4 years ago**  
-            """
-        )
-
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **Occasional, low-effort customers who prefer phone interactions and seldom return.**"
-        )
-
+    # -------------------------
     # 2️⃣ Economy Explorers
+    # -------------------------
     with st.expander("2️⃣ Economy Explorers"):
-        st.markdown("### **Profile Summary**")
-        st.markdown(
-            "**Active value travellers who engage regularly and explore more destinations while "
-            "remaining budget-conscious.**"
-        )
-
-        st.markdown("### **Who They Are**")
         st.markdown(
             """
-- Predominantly **male**  
-- Fewer students and retirees  
-- Strong representation of **professionals**  
-            """
+<h2>Economy Explorers</h2>
+
+<h3>Profile Summary</h3>
+<p>
+Active value travellers who explore more destinations and maintain higher engagement
+while staying budget-conscious.
+</p>
+
+<h4>Who They Are</h4>
+<p>
+• Predominantly male<br>
+• Fewer students and retirees<br>
+• Strong representation of professionals  
+</p>
+
+<h4>How They Book & Behave</h4>
+<p>
+• Heavy reliance on <b>travel agents</b><br>
+• More <b>frequent</b> and <b>exploratory</b> behaviour<br>
+• Lower levels of long-term dormancy  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>Engaged value-seekers who rely on agents and exhibit broad destination interest.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Heavy **travel agent** usage  
-- More frequent and more **exploratory**  
-- Lower dormancy than other economy segments  
-            """
-        )
-
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **Engaged, value-driven travellers who explore widely and rely on agent channels.**"
-        )
-
+    # -------------------------
     # 3️⃣ Economy One-Timers
+    # -------------------------
     with st.expander("3️⃣ Economy One-Timers"):
-        st.markdown("### **Profile Summary**")
-        st.markdown(
-            "**Customers who made a single low-cost booking and did not return.**"
-        )
-
-        st.markdown("### **Who They Are**")
         st.markdown(
             """
-- Strong **female** skew  
-- Over-represented among **retirees** and **low-income** groups  
-            """
+<h2>Economy One-Timers</h2>
+
+<h3>Profile Summary</h3>
+<p>
+Customers who made one low-value booking and did not return.
+</p>
+
+<h4>Who They Are</h4>
+<p>
+• Strong female skew<br>
+• High presence of retirees and low-income households  
+</p>
+
+<h4>How They Book & Behave</h4>
+<p>
+• Minimal use of agents or Expedia<br>
+• Bookings tend to be <b>very old</b>  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>Low-income, one-off travellers with very limited re-engagement potential.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Minimal use of **agents** or **Expedia**  
-- Bookings are typically **very old**  
-            """
-        )
-
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **Low-income, one-off travellers with limited likelihood of re-engagement.**"
-        )
-
+    # -------------------------
     # 4️⃣ Premium Casuals
+    # -------------------------
     with st.expander("4️⃣ Premium Casuals"):
-        st.markdown("### **Profile Summary**")
-        st.markdown(
-            "**Higher-spending but infrequent travellers who prefer premium-style experiences "
-            "despite limited engagement.**"
-        )
-
-        st.markdown("### **Who They Are**")
         st.markdown(
             """
-- Slightly higher incomes  
-- Fewer unemployed customers  
-            """
+<h2>Premium Casuals</h2>
+
+<h3>Profile Summary</h3>
+<p>
+Higher-spending but infrequent travellers who prefer personalised booking channels.
+</p>
+
+<h4>Who They Are</h4>
+<p>
+• Slightly higher incomes<br>
+• Lower unemployment representation  
+</p>
+
+<h4>How They Book & Behave</h4>
+<p>
+• Very strong <b>telephone-first</b> behaviour<br>
+• Almost no digital usage<br>
+• Mostly occasional travellers<br>
+• Many last booked <b>2–3 years ago</b>  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>Premium-leaning, low-frequency travellers who favour personal service but lapse easily.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Very strong **telephone-first** behaviour  
-- Almost zero **digital usage**  
-- Mostly **occasional** travellers  
-- Many last booked **2–3 years ago**  
-            """
-        )
-
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **Premium-leaning but irregular travellers who favour personal channels and lapse easily.**"
-        )
-
+    # -------------------------
     # 5️⃣ Premium Explorers
+    # -------------------------
     with st.expander("5️⃣ Premium Explorers"):
-        st.markdown("### **Profile Summary**")
-        st.markdown(
-            "**High-value, active travellers who explore widely and prefer structured, agent-led booking channels.**"
-        )
-
-        st.markdown("### **Who They Are**")
         st.markdown(
             """
-- Heavily **male**  
-- Strong **middle-income** presence  
-- Many **managers** and **professionals**  
-            """
+<h2>Premium Explorers</h2>
+
+<h3>Profile Summary</h3>
+<p>
+High-value, highly active travellers who use structured channels and explore extensively.
+</p>
+
+<h4>Who They Are</h4>
+<p>
+• Heavily male<br>
+• Strong middle-income representation<br>
+• Many managers and professionals  
+</p>
+
+<h4>How They Book & Behave</h4>
+<p>
+• Heavy use of <b>travel agents</b> and <b>Expedia</b><br>
+• Broad destination exploration<br>
+• Low dormancy  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>Reliable, high-value explorers who stay active and prefer professional booking channels.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Heavy reliance on **travel agents** and **Expedia**  
-- Broad destination exploration  
-- Lower dormancy than other premium segments  
-            """
-        )
-
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **High-value explorers who consistently engage via trusted, professional channels.**"
-        )
-
+    # -------------------------
     # 6️⃣ Premium One-Timers
+    # -------------------------
     with st.expander("6️⃣ Premium One-Timers"):
-        st.markdown("### **Profile Summary**")
-        st.markdown(
-            "**Travellers who made a one-off premium purchase but did not continue travelling with you.**"
-        )
-
-        st.markdown("### **Who They Are**")
         st.markdown(
             """
-- Strong **female** representation  
-- Mix of **lower-income** households  
-            """
+<h2>Premium One-Timers</h2>
+
+<h3>Profile Summary</h3>
+<p>
+Customers who made one premium purchase but did not continue travelling with you.
+</p>
+
+<h4>Who They Are</h4>
+<p>
+• Strong female representation<br>
+• Mix of lower-income households  
+</p>
+
+<h4>How They Book & Behave</h4>
+<p>
+• Low use of agents or Expedia<br>
+• Often lapsed shortly after their first premium purchase  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>One-time premium buyers with weak follow-up engagement.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Low use of **agents** or **Expedia**  
-- Mostly older bookings leading to fast **dormancy**  
-            """
-        )
-
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **One-time premium purchasers with weak retention behaviour.**"
-        )
-
+    # -------------------------
     # 7️⃣ Saver Casuals
+    # -------------------------
     with st.expander("7️⃣ Saver Casuals"):
-        st.markdown("### **Profile Summary**")
-        st.markdown(
-            "**Very infrequent, price-sensitive customers who show long-term disengagement.**"
-        )
-
-        st.markdown("### **Who They Are**")
         st.markdown(
             """
-- Under-represented among high-income households  
-- More common among **middle-aged and older** customers  
-            """
+<h2>Saver Casuals</h2>
+
+<h3>Profile Summary</h3>
+<p>
+Very infrequent, price-sensitive customers who show long-term inactivity.
+</p>
+
+<h4>Who They Are</h4>
+<p>
+• Under-represented among high-income groups<br>
+• More commonly middle-aged or older  
+</p>
+
+<h4>How They Book & Behave</h4>
+<p>
+• Almost exclusively occasional travellers<br>
+• Almost no digital behaviour<br>
+• High share dormant <b>4–5 years</b>  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>Low-engagement, price-sensitive travellers with minimal repeat likelihood.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Nearly all are **occasional** travellers  
-- Almost no digital behaviour  
-- High share dormant **4–5 years**  
-            """
-        )
-
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **Price-driven customers with minimal engagement and very low repeat potential.**"
-        )
-
+    # -------------------------
     # 8️⃣ Saver Explorers
+    # -------------------------
     with st.expander("8️⃣ Saver Explorers"):
-        st.markdown("### **Profile Summary**")
-        st.markdown(
-            "**Highly active budget travellers who rely on agents and maintain strong engagement.**"
-        )
-
-        st.markdown("### **Who They Are**")
         st.markdown(
             """
-- Very **male-dominated**  
-- Over-represented among **managers** and **retail workers**  
-            """
+<h2>Saver Explorers</h2>
+
+<h3>Profile Summary</h3>
+<p>
+Highly active budget travellers who rely on travel agents and remain engaged.
+</p>
+
+<h4>Who They Are</h4>
+<p>
+• Strong male dominance<br>
+• Over-represented among managers and retail workers  
+</p>
+
+<h4>How They Book & Behave</h4>
+<p>
+• Heavy travel agent usage<br>
+• More frequent and exploratory than other saver segments  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>Engaged budget travellers who show strong repeat and exploratory behaviour.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Heavy **travel agent** reliance  
-- More **frequent** and more **exploratory** than other saver groups  
-            """
-        )
-
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **Engaged budget travellers who explore frequently through traditional channels.**"
-        )
-
+    # -------------------------
     # 9️⃣ Saver One-Timers
+    # -------------------------
     with st.expander("9️⃣ Saver One-Timers"):
-        st.markdown("### **Profile Summary**")
         st.markdown(
-            "**Low-income, predominantly female customers whose engagement ended after a single booking.**"
-        )
+            """
+<h2>Saver One-Timers</h2>
 
-        st.markdown("### **Who They Are**")
-        st.markdown(
-            """
-- Strong **female** skew  
-- Over-represented among **manual workers** and **retirees**  
-            """
-        )
+<h3>Profile Summary</h3>
+<p>
+Low-income, predominantly female customers whose engagement ended after a single booking.
+</p>
 
-        st.markdown("### **How They Book & Behave**")
-        st.markdown(
-            """
-- Very little recent activity  
-- Typically dormant for **multiple years**  
-            """
-        )
+<h4>Who They Are</h4>
+<p>
+• Strong female skew<br>
+• Over-represented among manual workers and retirees  
+</p>
 
-        st.markdown("### **Professional Interpretation**")
-        st.markdown(
-            "➡️ **One-off low-income travellers with minimal re-engagement probability.**"
+<h4>How They Book & Behave</h4>
+<p>
+• Very little recent activity<br>
+• Often dormant for multiple years  
+</p>
+
+<h4>Professional Interpretation</h4>
+<p><b>One-off, low-income travellers with minimal likelihood of returning.</b></p>
+            """,
+            unsafe_allow_html=True
         )
 
 
