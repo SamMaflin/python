@@ -113,23 +113,27 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     else:
         df["FrequencyScore"] = 0
 
-    # ---- Recency (bucketed holiday cycles; no-booking customers treated as very old)
+    # ---- Recency (using dataset max date instead of real-world today)
     rec = df["RecencyDays"].copy()
-    # Customers with no bookings should look "old", not 0 days ago
-    rec[(df["BookingFrequency"] == 0) | (rec <= 0) | rec.isna()] = 9999
 
+    # No-booking customers treated as slightly older than the oldest real customer
+    max_real = rec[rec > 0].max()
+    rec[(df["BookingFrequency"] == 0) | rec.isna() | (rec <= 0)] = max_real + 1
+
+    # KEEP YOUR ORIGINAL TIME BUCKETS
     df["RecencyScore"] = np.select(
         [
-            rec <= 365,
-            rec <= 730,
-            rec <= 1095,
-            rec <= 1460,
-            rec <= 1825,
-            rec > 1825,
+            rec <= 365,     # 0–1 year
+            rec <= 730,     # 1–2 years
+            rec <= 1095,    # 2–3 years
+            rec <= 1460,    # 3–4 years
+            rec <= 1825,    # 4–5 years
+            rec > 1825      # 5+ years
         ],
         [100, 80, 60, 40, 20, 0],
         default=0
     )
+
 
     # ---- BLENDED DIVERSITY SCORE
     # Step 1: Normalise components
