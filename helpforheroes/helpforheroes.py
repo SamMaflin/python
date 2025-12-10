@@ -430,9 +430,9 @@ df = calculate_customer_value_metrics(
 )
 
 # ------------------------------------------------------------
-# COMBINED SEGMENT CHART: CUSTOMER SHARE vs REVENUE SHARE
+# CUSTOMER & REVENUE STACKED BAR CHART (Revenue in £m)
 # ------------------------------------------------------------
-st.markdown("<h2>Customer vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
+st.markdown("<h2>Customer Base vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
 
 # --- CUSTOMER SHARE ---
 segment_counts = (
@@ -445,7 +445,7 @@ segment_counts = (
 total_customers = df["Person URN"].nunique()
 segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
 
-# --- REVENUE SHARE ---
+# --- REVENUE ---
 customer_revenue = (
     data["Bookings_Data"]
     .groupby("Person URN")["Cost"]
@@ -462,48 +462,53 @@ rev_segment = (
     .reset_index()
 )
 
-total_revenue = rev_segment["Revenue"].sum()
-rev_segment["ShareOfRevenue"] = (rev_segment["Revenue"] / total_revenue * 100).round(1)
+# Convert revenue to £ millions
+rev_segment["Revenue_M"] = rev_segment["Revenue"] / 1_000_000
 
-# --- MERGE METRICS ---
+# --- Merge and sort ---
 combined = segment_counts.merge(rev_segment, on="Segment")
-combined = combined.sort_values("ShareOfRevenue", ascending=False)
-
-# ------------------------------------------------------------
-# STACKED BAR CHART
-# ------------------------------------------------------------
-fig, ax = plt.subplots(figsize=(12, 7))
+combined = combined.sort_values("Revenue_M", ascending=False)
 
 segments = combined["Segment"]
 customer_share = combined["ShareOfBase"]
-revenue_share = combined["ShareOfRevenue"]
+revenue_m = combined["Revenue_M"]
 
-# Bottom bar = customer share
-ax.bar(segments, customer_share, label="Customer Share (%)", color="#4CAF50")
+# ------------------------------------------------------------
+# STACKED BAR CHART (Customer %, Revenue £m)
+# ------------------------------------------------------------
+fig, ax1 = plt.subplots(figsize=(12, 7))
 
-# Top bar = revenue share
-ax.bar(segments, revenue_share, bottom=customer_share, label="Revenue Share (%)", color="#0095FF")
+# ---- Plot customer share (%)
+ax1.bar(
+    segments, customer_share,
+    label="Customer Share (%)",
+    color="#4CAF50"
+)
+ax1.set_ylabel("Customer Share (%)", color="#4CAF50")
+ax1.tick_params(axis='y', labelcolor="#4CAF50")
 
-# Add labels on top of the stacked bars
-for i, seg in enumerate(segments):
-    total_height = customer_share.iloc[i] + revenue_share.iloc[i]
-    ax.text(i, total_height + 1, 
-            f"{total_height:.1f}%", 
-            ha="center", fontsize=11, fontweight="bold")
+# ---- Revenue axis (secondary)
+ax2 = ax1.twinx()
 
-# Label each contribution inside the bars
-for i in range(len(segments)):
-    ax.text(i, customer_share.iloc[i] / 2, 
-            f"{customer_share.iloc[i]}%", 
-            ha="center", va="center", color="white", fontsize=10)
-    ax.text(i, customer_share.iloc[i] + revenue_share.iloc[i] / 2, 
-            f"{revenue_share.iloc[i]}%", 
-            ha="center", va="center", color="white", fontsize=10)
+ax2.bar(
+    segments, revenue_m,
+    bottom=customer_share,
+    label="Revenue (£m)",
+    color="#0095FF",
+    alpha=0.85
+)
 
-ax.set_ylabel("Percentage (%)")
-ax.set_title("Customer Base vs Revenue Contribution by Segment")
-ax.set_xticklabels(segments, rotation=45, ha="right")
-ax.legend()
+ax2.set_ylabel("Revenue (£ million)", color="#0095FF")
+ax2.tick_params(axis='y', labelcolor="#0095FF")
+
+# ---- Titles and labels
+ax1.set_title("Customer Base vs Revenue Contribution by Segment", fontsize=18)
+ax1.set_xticklabels(segments, rotation=45, ha="right")
+
+# ---- Legend
+handles1, labels1 = ax1.get_legend_handles_labels()
+handles2, labels2 = ax2.get_legend_handles_labels()
+ax1.legend(handles1 + handles2, labels1 + labels2, loc="upper right")
 
 st.pyplot(fig)
 
