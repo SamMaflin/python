@@ -173,6 +173,7 @@ def full_segmentation_breakdown(seg_df, bookings_df, people_df):
         "Source",
         "FrequencyBand",
         "RecencyBand"
+        
     ]
 
     results = {
