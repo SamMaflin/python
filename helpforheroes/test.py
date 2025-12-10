@@ -67,9 +67,19 @@ ax.tick_params(axis="y", pad=9)
 
 plt.gca().invert_yaxis()
 
-ax.set_xlabel("Activity Score (Percentile Rank)", labelpad=20, fontsize=10, fontweight="bold")
-ax.set_ylabel("Spend Score (Percentile Rank)", labelpad=30, fontsize=10, fontweight="bold")
+# Axis labels
+ax.set_xlabel("Activity Score", labelpad=20, fontsize=11, fontweight="bold")
+ax.set_ylabel("Spend Score", labelpad=30, fontsize=11, fontweight="bold")
 
+# ⭐ ADD TITLE ⭐
+plt.title(
+    "Score Thresholds: Low = 1st–33rd Percentile | Mid = 33rd–66th | High = 66th+",
+    fontsize=11,
+    fontweight="bold",
+    pad=20
+)
+
+# Frame
 ax.set_xlim(0, 3)
 ax.set_ylim(0, 3)
 ax.set_aspect("equal")

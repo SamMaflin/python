@@ -387,7 +387,7 @@ st.markdown(
 # ----------------------
 # SEGMENTATION ANALYSIS
 # ----------------------
-st.markdown("<h2>Segmentation Matrix</h2>", unsafe_allow_html=True)
+st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
 
 # show matrix
 st.image("helpforheroes/matrix_plot.png", use_column_width=True)
