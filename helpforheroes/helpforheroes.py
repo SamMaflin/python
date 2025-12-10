@@ -533,48 +533,20 @@ st.pyplot(fig)
 # ------------------------------------------------------------
 # SEGMENT PERFORMANCE SUMMARY
 # ------------------------------------------------------------
-st.markdown("<h2>Which Segments Drive Value?</h2>", unsafe_allow_html=True)
 
-# --- Revenue per customer (from raw bookings) ---
-customer_revenue = (
-    data["Bookings_Data"]
-    .groupby("Person URN")["Cost"]  # or "BookingAmount" if you standardised it in the file
-    .sum()
-    .rename("TotalRevenue")
+# h4 markdown "Segment Insights"
+st.markdown("<h3>Early Segment Insights</h3>", unsafe_allow_html=True)
+
+st.markdown( 
+    """
+<ul>
+    <li><b>Premium Loyalists</b> and <b>Premium Regulars</b> drive the majority of financial value, but for different behavioural reasons (frequency vs ticket size).</li>
+    <li><b>Loyal Value</b> & <b>Developing Value</b> are your best “growth” pools.</li>
+    <li><b>One-Off Premiums</b> represent the largest revenue unlock if reactivated.</li>
+    <li><b>At-Risk Decliners</b> represent the largest revenue loss risk.</li>
+    <li><b>Engaged Low-Spend</b> are a monetisation opportunity.</li>
+    <li><b>Dormant Base</b> should not receive heavy marketing investment.</li>
+</ul>
+    """,
+    unsafe_allow_html=True
 )
-
-# Merge revenue into metric df
-df_with_rev = df.merge(customer_revenue, on="Person URN", how="left").fillna({"TotalRevenue": 0})
-
-total_customers = df_with_rev["Person URN"].nunique()
-total_revenue = df_with_rev["TotalRevenue"].sum()
-
-# --- Build segment summary table ---
-segment_summary = (
-    df_with_rev.groupby("Segment")
-    .agg(
-        CustomerCount=("Person URN", "nunique"),
-        Revenue=("TotalRevenue", "sum"),
-        AvgSpendScore=("SpendScore", "mean"),
-        AvgEngagementScore=("EngagementScore", "mean"),
-        AvgStrategicScore=("StrategicScore", "mean"),
-    )
-    .reset_index()
-)
-
-segment_summary["ShareOfBase"] = (
-    segment_summary["CustomerCount"] / total_customers * 100
-).round(1)
-
-segment_summary["ShareOfRevenue"] = (
-    segment_summary["Revenue"] / total_revenue * 100
-).round(1)
-
-segment_summary["RevenuePerCustomer"] = (
-    segment_summary["Revenue"] / segment_summary["CustomerCount"]
-).round(0)
-
-# Order by revenue contribution
-segment_summary = segment_summary.sort_values("ShareOfRevenue", ascending=False)
-
-st.dataframe(segment_summary, use_container_width=True)
