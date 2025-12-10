@@ -506,11 +506,7 @@ def main():
     df   = calculate_customer_value_metrics(data["People_Data"], data["Bookings_Data"])
 
     render_segment_barchart(df, data["Bookings_Data"])
-
-    # ✅ PASS THE REQUIRED ARGUMENTS HERE
     render_customer_profiles(df, data["Bookings_Data"], data["People_Data"])
-
-    render_segment_insights()
 
 
 # ============================================================
