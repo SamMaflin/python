@@ -1,6 +1,4 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+
 import streamlit as st
 
 from data_loader import load_helpforheroes_data
