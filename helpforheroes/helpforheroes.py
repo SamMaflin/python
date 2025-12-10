@@ -384,9 +384,12 @@ st.markdown(
 )
 
 
-st.markdown("## Segmentation Matrix — Spend × Activity (Colour-Coded)")
+# ----------------------
+# SEGMENTATION ANALYSIS
+# ----------------------
+st.markdown("## Segmentation Matrix — Spend × Activity")
 
-matrix = pd.DataFrame(
+segment_matrix = pd.DataFrame(
     {
         "Low Activity": [
             "Dormant Base",
@@ -407,36 +410,4 @@ matrix = pd.DataFrame(
     index=["Low Spend", "Mid Spend", "High Spend"]
 )
 
-# --- Colour rules ---
-colour_map = {
-    ("Low Spend", "Low Activity"): "#D32F2F",   # strong red
-    ("Mid Spend", "Low Activity"): "#FFA726",   # orange
-    ("High Spend", "Low Activity"): "#C8F7C5",  # pale green
-
-    ("Low Spend", "Mid Activity"): "#FFA726",   # orange
-    ("Mid Spend", "Mid Activity"): "#FFEB3B",   # yellow
-    ("High Spend", "Mid Activity"): "#4CAF50",  # green
-
-    ("Low Spend", "High Activity"): "#FFEB3B",  # yellow
-    ("Mid Spend", "High Activity"): "#4CAF50",  # green
-    ("High Spend", "High Activity"): "#1B5E20"  # strong green
-}
-
-def colour_cells(val, row, col):
-    return f"background-color: {colour_map[(row, col)]}; color: black; font-weight: 700;"
-
-def style_matrix(df):
-    styled = df.style.apply(
-        lambda _: [
-            [
-                f"background-color: {colour_map[(df.index[i], df.columns[j])]}; "
-                "color: black; font-weight: 700;"
-                for j in range(df.shape[1])
-            ]
-            for i in range(df.shape[0])
-        ],
-        axis=None
-    )
-    return styled
-
-st.dataframe(style_matrix(matrix), height=350)
+st.table(segment_matrix)
