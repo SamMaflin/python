@@ -389,61 +389,12 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Segmentation Insights</h2>", unsafe_allow_html=True)
 
-st.markdown("### Customer Value Matrix (Spend × Activity)", unsafe_allow_html=True)
+st.markdown("### Customer Segmentation Table (Spend × Activity)", unsafe_allow_html=True)
 
-# Matrix order: rows = Activity (Low→Mid→High), columns = Spend (Low→Mid→High)
-matrix = [
-    ["Dormant Base", "At-Risk Decliners", "One-Off Premiums"],
-    ["Steady Low-Spend", "Developing Value", "Premium Regulars"],
-    ["Engaged Low-Spend", "Loyal Value", "Premium Loyalists"]
-]
+seg_table = pd.DataFrame({
+    "Low Spend": ["Dormant Base", "Steady Low-Spend", "Engaged Low-Spend"],
+    "Mid Spend": ["At-Risk Decliners", "Developing Value", "Loyal Value"],
+    "High Spend": ["One-Off Premiums", "Premium Regulars", "Premium Loyalists"]
+}, index=["Low Activity", "Mid Activity", "High Activity"])
 
-# Define colours for each segment
-segment_colors = {
-    "Premium Loyalists": "#005BBB",
-    "Loyal Value": "#1E90FF",
-    "Engaged Low-Spend": "#87CEFA",
-
-    "Premium Regulars": "#6A0DAD",
-    "Developing Value": "#BA55D3",
-    "Steady Low-Spend": "#D8BFD8",
-
-    "One-Off Premiums": "#FF8C00",
-    "At-Risk Decliners": "#FF6347",
-    "Dormant Base": "#A9A9A9",
-}
-
-# Axis labels
-st.markdown("""
-<div style='text-align:center; font-size:20px; margin-bottom:10px;'>
-<b>High Activity ↑</b>
-</div>
-""", unsafe_allow_html=True)
-
-for row in matrix[::-1]:  # reverse so High Activity is on top
-    cols = st.columns(3)
-    for i, seg in enumerate(row):
-        with cols[i]:
-            st.markdown(
-                f"""
-                <div style="
-                    background-color:{segment_colors[seg]};
-                    padding:25px;
-                    border-radius:12px;
-                    text-align:center;
-                    color:white;
-                    font-weight:bold;
-                    font-size:18px;
-                    ">
-                    {seg}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-# Spend axis label
-st.markdown("""
-<div style='text-align:center; font-size:20px; margin-top:10px;'>
-<b>Low Spend → Mid Spend → High Spend</b>
-</div>
-""", unsafe_allow_html=True)
+st.table(seg_table)
