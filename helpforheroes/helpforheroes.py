@@ -397,7 +397,7 @@ st.image("helpforheroes/matrix_plot.png", use_column_width=True)
 # ------------------------------------------------------------
 st.markdown("<h2>Insights</h2>", unsafe_allow_html=True)
 
-data = load_helpforheroes_data("helpforheroes/helpforheroes.xlsx")
+data = load_helpforheroes_data("helpforheroes/helpforheroes.xls")
 
 df = calculate_customer_value_metrics(
     data["People_Data"],
