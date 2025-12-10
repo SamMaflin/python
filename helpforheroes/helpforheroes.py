@@ -450,3 +450,43 @@ st.bar_chart(
     segment_counts.set_index("Segment")["CustomerCount"],
     use_container_width=True
 )
+
+
+# ------------------------------------------------------------
+# REVENUE DISTRIBUTION BY SEGMENT
+# ------------------------------------------------------------
+st.markdown("<h2>Proportion of Revenue by Segment</h2>", unsafe_allow_html=True)
+
+# Compute revenue per customer (sum of BookingAmount)
+customer_revenue = (
+    data["Bookings_Data"]
+    .groupby("Person URN")["Cost"]  # or "BookingAmount" depending on file
+    .sum()
+    .rename("TotalRevenue")
+)
+
+# Merge revenue into final df
+df_with_rev = df.merge(customer_revenue, on="Person URN", how="left").fillna({"TotalRevenue": 0})
+
+# Revenue by segment
+rev_segment = (
+    df_with_rev.groupby("Segment")["TotalRevenue"]
+    .sum()
+    .rename("Revenue")
+    .reset_index()
+)
+
+total_revenue = rev_segment["Revenue"].sum()
+rev_segment["ShareOfRevenue"] = (rev_segment["Revenue"] / total_revenue * 100).round(1)
+
+# Sort high → low
+rev_segment = rev_segment.sort_values("Revenue", ascending=False)
+
+# Show full table
+st.dataframe(rev_segment, use_container_width=True)
+
+# Revenue bar chart
+st.bar_chart(
+    rev_segment.set_index("Segment")["Revenue"],
+    use_container_width=True
+)
