@@ -27,10 +27,13 @@ def load_helpforheroes_data(file_obj):
 # ============================================================
 # FULL METRIC ENGINE + SEGMENTATION
 # ============================================================
+# ============================================================
+# FULL METRIC ENGINE + SEGMENTATION  ★ AVERAGE SPEND VERSION ★
+# ============================================================
 def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
     """
     Full metric engine for Spend, Activity, Strategic scores + 3×3 segmentation.
-    Returns a customer-level DataFrame with all calculated metrics and segments.
+    Uses AVERAGE spend (not total spend) as the primary value metric.
     """
 
     # ---------------------- MERGE ----------------------
@@ -108,15 +111,20 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         .merge(strategic.set_index("Person URN"), left_index=True, right_index=True)
     )
 
-    # ---------------------- SPEND SCORE ----------------------
-    df["SpendScore"] = (df["TotalBookingAmount"].rank(pct=True) * 100).round(2)
+    # ============================================================
+    # SPEND SCORE (AVERAGE BOOKING AMOUNT ONLY)
+    # ============================================================
+    df["SpendScore"] = (
+        df["AverageBookingAmount"].rank(pct=True) * 100
+    ).round(2)
 
     # ---------------------- ACTIVITY SCORE ----------------------
     freq = df["BookingFrequency"]
-    if freq.max() != freq.min():
-        df["FrequencyScore"] = ((freq - freq.min()) / (freq.max() - freq.min()) * 100).round(2)
-    else:
-        df["FrequencyScore"] = 0
+    df["FrequencyScore"] = (
+        ((freq - freq.min()) / (freq.max() - freq.min()) * 100)
+        if freq.max() != freq.min()
+        else 0
+    )
 
     rec = df["RecencyDays"]
     df["RecencyScore"] = np.select(
@@ -163,23 +171,17 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     act33, act66 = df["ActivityScore"].quantile([0.33, 0.66])
 
     df["SpendTier"] = np.select(
-        [
-            df["SpendScore"] <= spend33,
-            df["SpendScore"] <= spend66,
-            df["SpendScore"] > spend66
-        ],
-        ["Low Spend", "Mid Spend", "High Spend"],
-        default="Unknown"
+        [df["SpendScore"] <= spend33,
+         df["SpendScore"] <= spend66,
+         df["SpendScore"] > spend66],
+        ["Low Spend", "Mid Spend", "High Spend"]
     )
 
     df["ActivityTier"] = np.select(
-        [
-            df["ActivityScore"] <= act33,
-            df["ActivityScore"] <= act66,
-            df["ActivityScore"] > act66
-        ],
-        ["Low Activity", "Mid Activity", "High Activity"],
-        default="Unknown"
+        [df["ActivityScore"] <= act33,
+         df["ActivityScore"] <= act66,
+         df["ActivityScore"] > act66],
+        ["Low Activity", "Mid Activity", "High Activity"]
     )
 
     # ---------------------- ASSIGN 9 SEGMENTS ----------------------
@@ -211,7 +213,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         "Premium Regulars": "High spend but moderate frequency — stable value.",
         "Developing Value": "Mid-spend & mid-activity — customers with growth potential.",
         "Steady Low-Spend": "Consistent low-value users.",
-        "One-Off Premiums": "High spend but very inactive — big reactivation upside.",
+        "One-Off Premiums": "High average spend but very inactive — big reactivation upside.",
         "At-Risk Decliners": "Mid-spend users showing reduced activity — churn risk.",
         "Dormant Base": "Low spend & low activity — lowest commercial priority.",
         "Unclassified": "Does not fit segmentation rules."
@@ -219,10 +221,8 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
 
     df["SegmentDescription"] = df["Segment"].map(descriptions)
 
-    # Reset index to have 'Person URN' as a column
-    df = df.reset_index()
+    return df.reset_index()
 
-    return df
 
 
 
