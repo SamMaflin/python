@@ -389,12 +389,78 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Segmentation Insights</h2>", unsafe_allow_html=True)
 
-st.markdown("### Customer Segmentation Table (Spend × Activity)", unsafe_allow_html=True)
+st.markdown("""
+<style>
 
-seg_table = pd.DataFrame({
-    "Low Spend": ["Dormant Base", "Steady Low-Spend", "Engaged Low-Spend"],
-    "Mid Spend": ["At-Risk Decliners", "Developing Value", "Loyal Value"],
-    "High Spend": ["One-Off Premiums", "Premium Regulars", "Premium Loyalists"]
-}, index=["Low Activity", "Mid Activity", "High Activity"])
+.segment-matrix {
+    border-collapse: separate;
+    border-spacing: 14px 22px;
+    width: 100%;
+    text-align: center;
+    font-size: 20px;
+    table-layout: fixed;
+}
 
-st.table(seg_table)
+/* Headers */
+.segment-matrix th {
+    padding: 16px;
+    background-color: #f3f3f3;
+    font-size: 22px;
+    font-weight: 800;
+    border-radius: 10px;
+    color: black;
+}
+
+/* Cell styling */
+.segment-matrix td {
+    padding: 30px 20px;
+    border-radius: 14px;
+    font-weight: 700;
+    color: black !important;   /* <<< FORCE BLACK TEXT */
+}
+
+/* Colours (Updated palette) */
+.red-strong       { background-color: #D32F2F; }
+.orange           { background-color: #FFA726; }
+.yellow           { background-color: #FFEB3B; }
+.green-pale       { background-color: #C8F7C5; }
+.green            { background-color: #4CAF50; }
+.green-strong     { background-color: #1B5E20; }
+
+</style>
+
+<h3>Customer Value Matrix — Spend × Activity (Final Colour System)</h3>
+
+<table class="segment-matrix">
+
+    <tr>
+        <th></th>
+        <th>Low Activity</th>
+        <th>Mid Activity</th>
+        <th>High Activity</th>
+    </tr>
+
+    <tr>
+        <th>Low Spend</th>
+        <td class="red-strong">Dormant Base</td>
+        <td class="orange">At-Risk Decliners</td>
+        <td class="yellow">Engaged Low-Spend</td>
+    </tr>
+
+    <tr>
+        <th>Mid Spend</th>
+        <td class="orange">Steady Low-Spend</td>
+        <td class="yellow">Developing Value</td>
+        <td class="green">Loyal Value</td>
+    </tr>
+
+    <tr>
+        <th>High Spend</th>
+        <td class="green-pale">One-Off Premiums</td>
+        <td class="green">Premium Regulars</td>
+        <td class="green-strong">Premium Loyalists</td>
+    </tr>
+
+</table>
+""", unsafe_allow_html=True)
+
