@@ -387,7 +387,8 @@ st.markdown(
 # ----------------------
 # SEGMENTATION ANALYSIS
 # ----------------------
-st.markdown("Segmentation Matrix", unsafe_allow_html=True)
+st.markdown("<h2>Segmentation Insights</h2>", unsafe_allow_html=True)
+
 
 segment_matrix = pd.DataFrame(
     {
