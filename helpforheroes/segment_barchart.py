@@ -7,20 +7,17 @@ import streamlit as st
 
 
 # ============================================================
-# SEGMENT BAR CHART FUNCTION
+# SEGMENT BAR CHART FUNCTION (Updated for new segmentation)
 # ============================================================
 def segment_barchart_plot(df, bookings_df):
     """
-    Streamlit-ready horizontal grouped bar chart showing:
-      • Customer Share (%) per segment
-      • Revenue Share (%) per segment
+    Creates a Streamlit horizontal grouped bar chart comparing:
+        • Customer Share (%) per new segment
+        • Revenue Share (%) per new segment
 
-    Inputs:
-        df (DataFrame)           — Output of metrics_engine (contains Segment + Person URN)
-        bookings_df (DataFrame)  — Original bookings file (contains Cost + Person URN)
-
-    Output:
-        A Streamlit-rendered figure
+    Works with the updated segmentation model:
+        Spend  → Saver, Economy, Premium
+        Engage → One-Timers, Casuals, Explorers
     """
 
     # ------------------------------------------------------------
@@ -65,11 +62,12 @@ def segment_barchart_plot(df, bookings_df):
 
 
     # ------------------------------------------------------------
-    # MERGE + ORDER SEGMENTS BY REVENUE SHARE ASCENDING
+    # MERGE + ORDER SEGMENTS (ascending by revenue share)
     # ------------------------------------------------------------
     merged = segment_counts.merge(
         rev_segment[["Segment", "ShareOfRevenue"]],
-        on="Segment"
+        on="Segment",
+        how="left"
     ).sort_values("ShareOfRevenue", ascending=True)
 
     segments      = merged["Segment"].tolist()
@@ -83,12 +81,12 @@ def segment_barchart_plot(df, bookings_df):
     fig, ax = plt.subplots(figsize=(14, 10))
 
     bar_height = 0.50
-    y_positions = np.arange(len(segments)) * 1.4  # extra spacing
+    y_positions = np.arange(len(segments)) * 1.4  # spacing between segment rows
 
 
-    # Colors
-    COLOR_CUST = "#0095FF"     # Blue
-    COLOR_REV  = "#FF476C"     # Red
+    # Colors (kept consistent with dashboard)
+    COLOR_CUST = "#0095FF"   # Blue
+    COLOR_REV  = "#FF476C"   # Red
 
 
     bars_cust = ax.barh(
@@ -109,7 +107,7 @@ def segment_barchart_plot(df, bookings_df):
 
 
     # ------------------------------------------------------------
-    # LABELS INSIDE BARS (WHITE)
+    # INSIDE LABELS (white text inside bars)
     # ------------------------------------------------------------
     def add_inside_labels(bars):
         for bar in bars:
@@ -140,7 +138,7 @@ def segment_barchart_plot(df, bookings_df):
     # TITLE & LEGEND
     # ------------------------------------------------------------
     ax.set_title(
-        "Customer Base vs Revenue Contribution by Segment",
+        "Customer vs Revenue Contribution by Segment",
         fontsize=22,
         fontweight="bold",
         pad=25
@@ -150,7 +148,7 @@ def segment_barchart_plot(df, bookings_df):
 
 
     # ------------------------------------------------------------
-    # CLEAN VISUAL — REMOVE X-AXIS & SPINES
+    # CLEAN VISUAL — no x-axis, no spines
     # ------------------------------------------------------------
     ax.xaxis.set_visible(False)
 
