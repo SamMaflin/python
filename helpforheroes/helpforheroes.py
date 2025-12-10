@@ -43,7 +43,7 @@ def inject_css():
         }
 
         .stMarkdown h2 { 
-            font-size: 50px !important; 
+            font-size: 45px !important; 
             font-weight: 700 !important; 
             margin: 150px 0 20px 0; 
         }
