@@ -7,7 +7,7 @@ import streamlit as st
 # COLOUR PALETTE (Scalable + Accessible)
 # ============================================================
 SPEND_COLOR = "#0095FF"        # deep blue
-Engagement_COLOR = "#00FF80"     # green-teal
+ACTIVITY_COLOR = "#00FF80"     # green-teal
 STRATEGIC_COLOR = "#FF476C"    # crimson red
 
 
@@ -33,15 +33,15 @@ def load_helpforheroes_data(file_obj):
 # ============================================================
 def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=None):
     """
-    Calculates Spend, Engagement, Strategic scores and assigns customers to a 
+    Calculates Spend, Activity, Strategic scores and assigns customers to a 
     3×3 segmentation matrix.
 
     Key design choices:
       - SpendScore: composite of Avg + Max booking amount (70% / 30%), normalised 0–100.
-      - EngagementScore: combines Frequency, Recency and a blended Diversity metric:
+      - ActivityScore: combines Frequency, Recency and a blended Diversity metric:
             Diversity = 80% UniqueDestinations + 20% ExplorationRatio.
       - StrategicScore: binary signals (Long-haul, Package, ChannelFit) mapped to 0/100.
-      - Segmentation: tertiles on SpendScore and EngagementScore → 3×3 grid.
+      - Segmentation: tertiles on SpendScore and ActivityScore → 3×3 grid.
     """
 
     # ---------------------- MERGE ----------------------
@@ -59,7 +59,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         TotalBookings=("BookingAmount", "count")
     )
 
-    # ---------------------- Engagement ----------------------
+    # ---------------------- ACTIVITY ----------------------
     bookings_df = bookings_df.copy()
     bookings_df["Booking Date"] = pd.to_datetime(bookings_df["Booking Date"], errors="coerce")
     reference_date = bookings_df["Booking Date"].max()
@@ -131,7 +131,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     ).round(2)
 
     # ============================================================
-    # Engagement SCORE
+    # ACTIVITY SCORE
     # ============================================================
 
     # ---- Frequency (percentile, not raw scaling)
@@ -175,8 +175,8 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         0.2 * df["ExploreNorm"]
     ).round(2)
 
-    # ---- Final Engagement Score
-    df["EngagementScore"] = (
+    # ---- Final Activity Score
+    df["ActivityScore"] = (
         0.5 * df["FrequencyScore"] +
         0.3 * df["RecencyScore"] +
         0.2 * df["DiversityScore"]
@@ -200,7 +200,7 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
     # ============================================================
 
     spend33, spend66 = df["SpendScore"].quantile([0.33, 0.66])
-    act33, act66 = df["EngagementScore"].quantile([0.33, 0.66])
+    act33, act66 = df["ActivityScore"].quantile([0.33, 0.66])
 
     df["SpendTier"] = np.select(
         [df["SpendScore"] <= spend33, df["SpendScore"] <= spend66, df["SpendScore"] > spend66],
@@ -208,43 +208,43 @@ def calculate_customer_value_metrics(people_df, bookings_df, priority_sources=No
         default="Unknown"
     ).astype(object)
 
-    df["EngagementTier"] = np.select(
-        [df["EngagementScore"] <= act33, df["EngagementScore"] <= act66, df["EngagementScore"] > act66],
-        ["Low Engagement", "Mid Engagement", "High Engagement"],
+    df["ActivityTier"] = np.select(
+        [df["ActivityScore"] <= act33, df["ActivityScore"] <= act66, df["ActivityScore"] > act66],
+        ["Low Activity", "Mid Activity", "High Activity"],
         default="Unknown"
     ).astype(object)
 
     # ---- Segment Lookup
     segment_map = {
-        ("Low Spend", "Low Engagement"): "Dormant Base",
-        ("Low Spend", "Mid Engagement"): "Steady Low-Spend",
-        ("Low Spend", "High Engagement"): "Engaged Low-Spend",
+        ("Low Spend", "Low Activity"): "Dormant Base",
+        ("Low Spend", "Mid Activity"): "Steady Low-Spend",
+        ("Low Spend", "High Activity"): "Engaged Low-Spend",
 
-        ("Mid Spend", "Low Engagement"): "At-Risk Decliners",
-        ("Mid Spend", "Mid Engagement"): "Developing Value",
-        ("Mid Spend", "High Engagement"): "Loyal Value",
+        ("Mid Spend", "Low Activity"): "At-Risk Decliners",
+        ("Mid Spend", "Mid Activity"): "Developing Value",
+        ("Mid Spend", "High Activity"): "Loyal Value",
 
-        ("High Spend", "Low Engagement"): "One-Off Premiums",
-        ("High Spend", "Mid Engagement"): "Premium Regulars",
-        ("High Spend", "High Engagement"): "Premium Loyalists",
+        ("High Spend", "Low Activity"): "One-Off Premiums",
+        ("High Spend", "Mid Activity"): "Premium Regulars",
+        ("High Spend", "High Activity"): "Premium Loyalists",
     }
 
     df["Segment"] = df.apply(
-        lambda r: segment_map.get((r["SpendTier"], r["EngagementTier"]), "Unclassified"),
+        lambda r: segment_map.get((r["SpendTier"], r["ActivityTier"]), "Unclassified"),
         axis=1
     )
 
     # ---- Descriptions
     descriptions = {
-        "Premium Loyalists": "High spend + high Engagement — highest value.",
-        "Loyal Value": "Mid spend + high Engagement — strong loyalty.",
-        "Engaged Low-Spend": "Low spend + high Engagement — engaged but low value.",
-        "Premium Regulars": "High spend + mid Engagement — stable premium group.",
-        "Developing Value": "Mid spend + mid Engagement — growth segment.",
-        "Steady Low-Spend": "Low spend + mid Engagement — active but low value.",
-        "One-Off Premiums": "High spend + low Engagement — reactivation opportunity.",
-        "At-Risk Decliners": "Mid spend + low Engagement — declining engagement.",
-        "Dormant Base": "Low spend + low Engagement — lowest priority."
+        "Premium Loyalists": "High spend + high activity — highest value.",
+        "Loyal Value": "Mid spend + high activity — strong loyalty.",
+        "Engaged Low-Spend": "Low spend + high activity — engaged but low value.",
+        "Premium Regulars": "High spend + mid activity — stable premium group.",
+        "Developing Value": "Mid spend + mid activity — growth segment.",
+        "Steady Low-Spend": "Low spend + mid activity — active but low value.",
+        "One-Off Premiums": "High spend + low activity — reactivation opportunity.",
+        "At-Risk Decliners": "Mid spend + low activity — declining engagement.",
+        "Dormant Base": "Low spend + low activity — lowest priority."
     }
 
     df["SegmentDescription"] = df["Segment"].map(descriptions).fillna("Unclassified group")
@@ -290,7 +290,7 @@ h3.big-h3 {
     margin: 80px 0 20px 0 !important;
 }
 
-/* Small H3 (for Spend / Engagement / Strategic) */
+/* Small H3 (for Spend / Activity / Strategic) */
 h3.small-h3 {
     font-size: 34px !important;
     font-weight: 700 !important;
@@ -345,7 +345,7 @@ st.markdown(
 <h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend Score</span> — Financial contribution</h4>
 <p>Metrics: Average Booking Value, Maximum Booking Value (composited into a 0–100 SpendScore).</p>
 
-<h4><span style="color:{Engagement_COLOR}; font-weight:bold;">● Engagement Score</span> — Engagement & behaviour</h4>
+<h4><span style="color:{ACTIVITY_COLOR}; font-weight:bold;">● Activity Score</span> — Engagement & behaviour</h4>
 <p>Metrics: Booking Frequency, Destination Diversity, Booking Recency.</p>
 
 <h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — Alignment with business goals</h4>
@@ -378,11 +378,11 @@ st.markdown(
 
 
 # ============================================================
-# Engagement SECTION
+# ACTIVITY SECTION
 # ============================================================
 st.markdown(
     f"""
-    <h3 class='small-h3'><span style='color:{Engagement_COLOR}; font-weight:bold;'>Engagement Score (0–100)</span></h3>
+    <h3 class='small-h3'><span style='color:{ACTIVITY_COLOR}; font-weight:bold;'>Activity Score (0–100)</span></h3>
 
     <ul>
         <li>Blends <b>Frequency</b> (percentile of total trips), <b>Recency</b> (bucketed into realistic holiday cycles: 1–5+ years) and a <b>Diversity</b> metric.</li>
@@ -415,6 +415,7 @@ st.markdown(
 # ----------------------
 st.markdown("<h2>Customer Segmentation Matrix</h2>", unsafe_allow_html=True)
 
+# Show pre-generated matrix plot image
 st.image("helpforheroes/matrix_plot.png", use_column_width=True)
 
 
@@ -428,13 +429,11 @@ df = calculate_customer_value_metrics(
     data["Bookings_Data"]
 )
 
-
 # ------------------------------------------------------------
-# CUSTOMER & REVENUE DISTRIBUTIONS
+# CUSTOMER DISTRIBUTION BY SEGMENT
 # ------------------------------------------------------------
-st.markdown("<h2>Customer vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
+st.markdown("<h2>How Are Customers Distributed by Segment?</h2>", unsafe_allow_html=True)
 
-# ------------------ Customer distribution ------------------
 segment_counts = (
     df["Segment"]
     .value_counts()
@@ -445,109 +444,11 @@ segment_counts = (
 total_customers = df["Person URN"].nunique()
 segment_counts["ShareOfBase"] = (segment_counts["CustomerCount"] / total_customers * 100).round(1)
 
-# ------------------ Revenue distribution ------------------
-customer_revenue = (
-    data["Bookings_Data"]
-    .groupby("Person URN")["Cost"]
-    .sum()
-    .rename("TotalRevenue")
+st.dataframe(segment_counts, use_container_width=True)
+
+st.bar_chart(
+    segment_counts.set_index("Segment")["CustomerCount"],
+    use_container_width=True
 )
 
-df_with_rev = df.merge(customer_revenue, on="Person URN", how="left").fillna({"TotalRevenue": 0})
 
-rev_segment = (
-    df_with_rev.groupby("Segment")["TotalRevenue"]
-    .sum()
-    .rename("Revenue")
-    .reset_index()
-)
-
-total_revenue = rev_segment["Revenue"].sum()
-rev_segment["ShareOfRevenue"] = (rev_segment["Revenue"] / total_revenue * 100).round(1)
-
-# ------------------ Merge for butterfly chart ------------------
-butterfly = segment_counts.merge(
-    rev_segment[["Segment", "ShareOfRevenue"]],
-    on="Segment",
-    how="left"
-)
-
-segments = butterfly["Segment"]
-customer_vals = butterfly["ShareOfBase"]
-revenue_vals = butterfly["ShareOfRevenue"]
-
-
-# ------------------------------------------------------------
-# BUTTERFLY CHART (Mirrored, no negatives, coloured)
-# ------------------------------------------------------------
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import numpy as np
-
-# Colour scaling red → yellow → green
-norm = mcolors.Normalize(
-    vmin=0,
-    vmax=max(customer_vals.max(), revenue_vals.max())
-)
-cmap = plt.cm.get_cmap("RdYlGn")
-
-customer_colors = [cmap(norm(v)) for v in customer_vals]
-revenue_colors = [cmap(norm(v)) for v in revenue_vals]
-
-fig, ax = plt.subplots(figsize=(14, 10))
-
-y_positions = np.arange(len(segments))
-
-# LEFT BAR (Customer Share) — mirrored by flipping x-axis
-ax.barh(
-    y_positions,
-    customer_vals,
-    color=customer_colors,
-    alpha=0.9,
-    label="Customer Share (%)"
-)
-
-# RIGHT BAR (Revenue Share)
-ax2 = ax.twiny()
-ax2.barh(
-    y_positions,
-    revenue_vals,
-    color=revenue_colors,
-    alpha=0.9,
-    label="Revenue Share (%)"
-)
-
-# Y labels
-ax.set_yticks(y_positions)
-ax.set_yticklabels(segments, fontsize=13, fontweight="bold")
-
-# Invert left x-axis for mirror effect
-ax.invert_xaxis()
-
-# Axis labels with extra spacing
-ax.set_xlabel("Customer Share (%)", fontsize=14, fontweight="bold", labelpad=20)
-ax2.set_xlabel("Revenue Share (%)", fontsize=14, fontweight="bold", labelpad=20)
-
-# Dotted guide lines
-for y, c_val, r_val in zip(y_positions, customer_vals, revenue_vals):
-    ax.plot([0, c_val], [y, y], linestyle=":", color="grey", alpha=0.6)
-    ax2.plot([0, r_val], [y, y], linestyle=":", color="grey", alpha=0.6)
-
-# Center line
-ax.axvline(0, color="black", linewidth=1.5)
-
-# Remove clutter spines
-for spine in ["top", "right", "left"]:
-    ax.spines[spine].set_visible(False)
-    ax2.spines[spine].set_visible(False)
-
-plt.title(
-    "Customer Base vs Revenue Contribution by Segment",
-    fontsize=18,
-    fontweight="bold",
-    pad=25
-)
-
-plt.tight_layout()
-
-st.pyplot(fig)
