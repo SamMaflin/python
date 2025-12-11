@@ -215,14 +215,14 @@ def render_customer_profiles(df, bookings_df, people_df):
 <h4>1️⃣ Proportional Representation</h4>
 <p>
 For each characteristic (age, income, gender, occupation, channel, frequency, recency, destination, continent, product),
-we measured the % share in the overall population and the % share within each segment.
-This reveals whether a segment contains <b>more</b> or <b>fewer</b> customers of a certain type than expected.
+we compared each segment’s share to the overall customer base. This highlights where segments
+<b>over-index</b> on key traits.
 </p>
 
-<h4>2️⃣ Statistical Reliability</h4>
+<h4>2️⃣ Statistical Reliability + Effect Sizing</h4>
 <p>
-We then apply a <b>proportions Z-test</b> to confirm that differences are statistically meaningful,
-and use percentage-point differences to communicate the size of the effect clearly.
+We apply a <b>proportions Z-test</b> to confirm differences are statistically meaningful,
+and use percentage-point differences to quantify the size of each effect clearly.
 </p>
 
 <br><br>
@@ -234,14 +234,14 @@ and use percentage-point differences to communicate the size of the effect clear
 <!-- ========================================================= -->
 <h3>1️⃣ Saver Casuals — Interpretation</h3>
 <p>
-Saver Casuals are low-engagement, price-sensitive travellers who book rarely and often drift into long-term dormancy.
-They are overwhelmingly occasional travellers, sitting more than <b>+44 percentage points</b> above the base.
-Digital adoption is minimal, with website usage almost <b>10 points lower</b>, and many haven’t travelled for 4–5 years
-(<b>+21 ppts</b>).
-Their destination choices lean away from Europe and the Americas—especially the United States (<b>−14 ppts</b>)—
-while Australia (<b>+14 ppts</b>) and Greece (<b>+6 ppts</b>) feature more prominently.
-This group skews slightly older and lower-income, with fewer retired or unemployed customers than expected.
-Overall, Saver Casuals represent low-frequency, low-value customers who rarely re-engage once inactive.
+Saver Casuals are value-focused travellers with clear, predictable patterns.  
+<br><br>
+✅ Very strong representation among occasional travellers (<b>+44 ppts</b>)<br>
+✅ A notable group with 4–5 year recency (<b>+21 ppts</b>)<br>
+✅ Higher preference for Australia (<b>+14</b>) and Greece (<b>+6</b>)<br>
+✅ Slightly older, modest-income profile<br>
+<br>
+Overall, a segment defined by <b>infrequent but consistent value-driven travel habits</b>.
 </p>
 <br>
 
@@ -250,14 +250,14 @@ Overall, Saver Casuals represent low-frequency, low-value customers who rarely r
 <!-- ========================================================= -->
 <h3>2️⃣ Premium One-Timers — Interpretation</h3>
 <p>
-Premium One-Timers are typically female, with the female share sitting <b>+44 ppts</b> above the base,
-and many belong to lower-income households (<b>+12 ppts</b>).
-Despite making a premium purchase, they show extremely low retention: more than half fall into the
-5+ year very-old booking category (<b>+38 ppts</b>).
-They heavily favour digital and phone-led booking routes, especially the website (<b>+32 ppts</b>),
-and use travel agents far less (<b>−22 ppts</b>).
-Their holidays concentrate in France (<b>+32 ppts</b>) and Germany (<b>+12 ppts</b>), with far less travel to the US or Australasia.
-Overall, they are high-spend, predominantly female one-off customers who do not return after their initial premium booking.
+Premium One-Timers make high-value purchases and show distinctive digital and demographic patterns.  
+<br><br>
+✅ Strong female representation (<b>+44 ppts</b>)<br>
+✅ Higher presence of lower-income households (<b>+12 ppts</b>)<br>
+✅ High usage of digital & phone channels (<b>+32 ppts website</b>)<br>
+✅ Strong interest in France (<b>+32</b>) and Germany (<b>+12</b>)<br>
+<br>
+Overall, a <b>premium but one-off segment</b> with clear digital-first behaviours.
 </p>
 <br>
 
@@ -266,14 +266,14 @@ Overall, they are high-spend, predominantly female one-off customers who do not 
 <!-- ========================================================= -->
 <h3>3️⃣ Economy Explorers — Interpretation</h3>
 <p>
-Economy Explorers are active, curious travellers who show far more engagement than typical economy segments.
-They lean strongly male, with the female share <b>−21 ppts</b> below average,
-and are more likely to fall into the middle-income bracket (<b>+18 ppts</b>) and professional occupations.
-Their travel frequency stands out: regular travel sits <b>+23 ppts</b> above the base, and frequent travel rises <b>+7 ppts</b>.
-Their destination portfolio is internationally oriented—particularly toward the United States (<b>+19 ppts</b>)—
-with selective interest in Italy, Kuwait, and Portugal.
-They show slightly more recent travel (<b>+3 ppts</b>) and lower dormancy.
-Overall, they are value-driven explorers who travel often and lean toward agent-supported international trips.
+Economy Explorers are active, internationally minded travellers with strong engagement levels.  
+<br><br>
+✅ Strong male skew (female <b>−21 ppts</b>)<br>
+✅ Higher middle-income share (<b>+18 ppts</b>)<br>
+✅ Very strong travel frequency — regular (<b>+23</b>), frequent (<b>+7</b>)<br>
+✅ Over-index on US travel (<b>+19</b>) and selective global destinations<br>
+<br>
+Overall, <b>curious, frequent travellers</b> who prefer agent-supported international trips.
 </p>
 <br>
 
@@ -282,12 +282,13 @@ Overall, they are value-driven explorers who travel often and lean toward agent-
 <!-- ========================================================= -->
 <h3>4️⃣ Premium Casuals — Interpretation</h3>
 <p>
-Premium Casuals are higher-income travellers who display premium preferences despite booking infrequently.
-They rely heavily on telephone enquiries (<b>+17 ppts</b>) and almost never use the website (<b>−9 ppts</b>).
-Their recency pattern is mixed: fewer very recent trips but also fewer long-dormant customers.
-Destination choices favour Germany (<b>+17 ppts</b>) and avoid France (<b>−9 ppts</b>).
-They show fewer unemployed or retail workers, aligning with a more financially stable profile.
-Overall, Premium Casuals value personalised service and premium products but maintain modest travel frequency.
+Premium Casuals show premium preferences with modest, steady engagement.  
+<br><br>
+✅ High use of telephone enquiries (<b>+17 ppts</b>)<br>
+✅ Distinct preference for Germany (<b>+17</b>)<br>
+✅ More financially stable occupational profile<br>
+<br>
+Overall, a <b>service-first premium segment</b> that values personalised support.
 </p>
 <br>
 
@@ -296,12 +297,14 @@ Overall, Premium Casuals value personalised service and premium products but mai
 <!-- ========================================================= -->
 <h3>5️⃣ Economy One-Timers — Interpretation</h3>
 <p>
-Economy One-Timers are heavily female (<b>+45 ppts</b>) and lean toward lower-income households (<b>+13 ppts</b>).
-As expected, one-time behaviour is highly dominant (<b>+35 ppts</b> above the base).
-They strongly favour digital channels, especially the website (<b>+34 ppts</b>), and rarely use agents (<b>−26 ppts</b>).
-Their recency indicates deep disengagement, with many having booked more than five years ago (<b>+36 ppts</b>).
-Their holidays concentrate in France (<b>+34 ppts</b>) and Germany (<b>+12 ppts</b>), and they show reduced interest in the United States (<b>−27 ppts</b>).
-Overall, they are budget-conscious, digitally driven one-off customers with minimal long-term value.
+Economy One-Timers are digital-first travellers who engage once with clear destination preferences.  
+<br><br>
+✅ Strong female skew (<b>+45 ppts</b>)<br>
+✅ Higher representation of lower-income households (<b>+13</b>)<br>
+✅ Very high website usage (<b>+34 ppts</b>)<br>
+✅ Strong focus on France (<b>+34</b>) and Germany (<b>+12</b>)<br>
+<br>
+Overall, a <b>digital, destination-focused segment</b> with simple one-off travel behaviour.
 </p>
 <br>
 
@@ -310,11 +313,14 @@ Overall, they are budget-conscious, digitally driven one-off customers with mini
 <!-- ========================================================= -->
 <h3>6️⃣ Saver One-Timers — Interpretation</h3>
 <p>
-Saver One-Timers are almost entirely female (<b>+58 ppts</b>) and strongly represented in low-income households (<b>+17 ppts</b>).
-They show extremely strong one-time behaviour (<b>+41 ppts</b>) and long-term disengagement, with a large spike in 4–5 year dormancy (<b>+31 ppts</b>).
-Website usage is exceptionally high (<b>+38 ppts</b>), and travel agent usage is very low (<b>−31 ppts</b>).
-Their destination patterns cluster around France (<b>+39 ppts</b>) and Germany (<b>+20 ppts</b>), with very little travel to the US or Australasia.
-Overall, Saver One-Timers are low-income, low-return travellers with minimal reactivation potential.
+Saver One-Timers represent a clear, consistent profile of low-spend digital users.  
+<br><br>
+✅ Very strong female representation (<b>+58 ppts</b>)<br>
+✅ Higher share of low-income households (<b>+17</b>)<br>
+✅ Very high website usage (<b>+38 ppts</b>)<br>
+✅ Clear focus on France (<b>+39</b>) and Germany (<b>+20</b>)<br>
+<br>
+Overall, a <b>digital-heavy, low-frequency segment</b> with well-defined patterns.
 </p>
 <br>
 
@@ -323,13 +329,14 @@ Overall, Saver One-Timers are low-income, low-return travellers with minimal rea
 <!-- ========================================================= -->
 <h3>7️⃣ Economy Casuals — Interpretation</h3>
 <p>
-Economy Casuals are light, low-commitment travellers who prefer simple booking channels.
-They strongly favour telephone enquiries (<b>+16 ppts</b>) and rarely use the website (<b>−9 ppts</b>).
-Almost all are occasional travellers (<b>+43 ppts</b> above the base).
-Many last travelled 3–4 years ago (<b>+12 ppts</b>), with fewer in the longest-dormant bucket (<b>−11 ppts</b>).
-They show a preference for Germany (<b>+16 ppts</b>) and reduced travel to France (<b>−9 ppts</b>) and the United States (<b>−15 ppts</b>).
-Demographically, they include fewer unemployed or retired customers and a smaller middle-income share.
-Overall, they represent low-effort, phone-first customers with limited repeat behaviour.
+Economy Casuals prefer simple, phone-led booking experiences and travel occasionally.  
+<br><br>
+✅ Strong phone usage (<b>+16 ppts</b>)<br>
+✅ High concentration of occasional travellers (<b>+43 ppts</b>)<br>
+✅ Recency peak at 3–4 years (<b>+12</b>)<br>
+✅ Preference for Germany (<b>+16</b>)<br>
+<br>
+Overall, a <b>low-effort, phone-first</b> segment with predictable behaviours.
 </p>
 <br>
 
@@ -338,15 +345,14 @@ Overall, they represent low-effort, phone-first customers with limited repeat be
 <!-- ========================================================= -->
 <h3>8️⃣ Premium Explorers — Interpretation</h3>
 <p>
-Premium Explorers are highly engaged, high-value travellers with strong, consistent activity.
-They lean strongly male (female share <b>−24 ppts</b>) and sit slightly higher in income brackets (<b>+3 ppts</b> High Income).
-Their travel frequency is exceptional: regular travel is <b>+20 ppts</b> above the base and frequent travel is <b>+19 ppts</b>,
-with far fewer occasional travellers (<b>−28 ppts</b>).
-They show more recent activity (<b>+2 ppts</b>) and far less long-term dormancy (<b>−16 ppts</b>).
-Their destination preferences are strongly international, led by the United States (<b>+24 ppts</b>),
-alongside Italy, Kuwait, and Africa.
-They avoid France (<b>−9 ppts</b>) and Europe more broadly (<b>−23 ppts</b>).
-Overall, Premium Explorers are high-value, internationally oriented travellers who rely on agent-led booking styles.
+Premium Explorers are the highest-value and most engaged customers across the base.  
+<br><br>
+✅ Strong male skew (female <b>−24</b>)<br>
+✅ Slightly higher income (<b>+3 ppts</b>)<br>
+✅ Exceptional travel frequency — regular (<b>+20</b>), frequent (<b>+19</b>)<br>
+✅ Very strong international focus — US (<b>+24</b>), Italy, Kuwait, Africa<br>
+<br>
+Overall, a <b>top-tier, internationally active</b> segment ideal for loyalty and premium strategy.
 </p>
 <br>
 
@@ -355,19 +361,21 @@ Overall, Premium Explorers are high-value, internationally oriented travellers w
 <!-- ========================================================= -->
 <h3>9️⃣ Saver Explorers — Interpretation</h3>
 <p>
-Saver Explorers are budget-conscious but highly active travellers with strong repeat habits.
-They favour regular travel (<b>+29 ppts</b>) and are far less likely to travel only occasionally (<b>−18 ppts</b>).
-They skew more male (female share <b>−23 ppts</b>) and more often fall into the middle-income bracket (<b>+19 ppts</b>).
-Occupationally, they over-index among managers and retail workers and under-index among retired or manual workers.
-Their travel choices include off-beat destinations such as Portugal (<b>+1 ppt</b>), Namibia, and Africa (<b>+1 ppt</b>),
-while Europe is significantly less common (<b>−19 ppts</b>).
-They rely more on travel agents and less on phone enquiries (<b>−14 ppts</b>).
-Overall, Saver Explorers are active, curious travellers who explore widely while staying budget-conscious.
+Saver Explorers are budget-conscious but highly active and adventurous travellers.  
+<br><br>
+✅ Very strong regular travel behaviour (<b>+29 ppts</b>)<br>
+✅ Lower likelihood of occasional travel (<b>−18</b>)<br>
+✅ Male-skewed (female <b>−23</b>)<br>
+✅ Higher middle-income representation (<b>+19</b>)<br>
+✅ Interest in Portugal, Namibia, and Africa<br>
+<br>
+Overall, a <b>budget-savvy, high-engagement explorer segment</b> with broad destination variety.
 </p>
 <br>
 """,
         unsafe_allow_html=True
     )
+
 
 
 
