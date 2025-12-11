@@ -262,78 +262,128 @@ def summarise_traits(overs, unders):
 
 def render_customer_profiles(df, bookings_df, people_df):
     """
-    Render SHORT intuitive segment persona summaries.
+    Render intuitive persona-style segment summaries AND
+    detailed statistically significant dominance insights.
     """
 
+    # Run profiling engine
     prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
 
+    # -----------------------------------------
+    # HEADER
+    # -----------------------------------------
+    st.markdown("<h2>🔍 Customer Segment Profiles</h2>", unsafe_allow_html=True)
+    st.markdown("""
+        <p>This section summarises who each customer segment really is —
+        based on <b>statistically significant</b> differences from the overall population.</p>
+        <p>✔️ = traits they are more likely to have<br>
+        ✖️ = traits they are less likely to have</p>
+    """, unsafe_allow_html=True)
+
+    # ------------------------------------------------------
+    # 1. Parse insights → structured per segment & per field
+    # ------------------------------------------------------
+    parsed = []
+    for txt in insights:
+        # Example format:
+        # "[AgeBracket] High Value: HIGHLY dominant for '60+' — ..."
+        try:
+            field = txt.split("]")[0].replace("[", "")
+            remainder = txt.split("] ")[1]
+            segment = remainder.split(":")[0]
+            category = txt.split("'")[1]
+            dom = "Under" if "Under-represented" in txt else "Over"
+            parsed.append((segment, field, category, dom, txt))
+        except:
+            continue
+
+    # Group insights by segment
+    by_segment = {}
+    for segment, field, category, dom, full in parsed:
+        by_segment.setdefault(segment, []).append((field, category, dom, full))
+
+    # ------------------------------------------------------
+    # 2. Persona-style summaries per segment
+    # ------------------------------------------------------
     st.markdown("<h2>🧭 Segment Persona Summaries</h2>", unsafe_allow_html=True)
 
-    if not insights or len(insights) == 0:
-        st.warning("No statistically significant traits were detected.")
+    if not by_segment:
+        st.info("No statistically significant differences found.")
         return
 
-    # -------------------------------------------------------------
-    # 1. Robust parsing – handles ANY insight format your engine emits
-    # -------------------------------------------------------------
-    parsed = []
+    for segment, items in by_segment.items():
 
-    for txt in insights:
-        try:
-            # Extract field between [ ... ]
-            field = txt.split("]")[0].replace("[", "")
-            
-            # Extract segment name (between ']' and ':')
-            after_bracket = txt.split("]")[1].strip()
-            segment = after_bracket.split(":")[0].strip()
+        st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
 
-            # Extract category inside single quotes
-            category = txt.split("'")[1]
+        overs = []
+        unders = []
 
-            # Over or under
-            dom = "Under" if "Under-represented" in txt else "Over"
+        for field, category, dom, full in items:
+            positive = (dom == "Over")
+            phrase = intuitive_phrase(field, category, positive=positive)
 
-            readable = intuitive_phrase(field, category, positive=(dom=="Over"))
-            parsed.append((segment, dom, readable))
+            if positive:
+                overs.append(f"✔️ {phrase}")
+            else:
+                unders.append(f"✖️ {phrase}")
 
-        except Exception as e:
-            print("Insight parsing failed:", txt, e)
+        # Present segment profile
+        if overs:
+            st.markdown("<h4 style='color:green;'>What typically defines them ✔️</h4>", unsafe_allow_html=True)
+            for line in overs:
+                st.markdown(f"- {line}", unsafe_allow_html=True)
 
-    if len(parsed) == 0:
-        st.warning("Insights found but could not be parsed — please check formatting.")
-        return
-
-    # -------------------------------------------------------------
-    # 2. Group traits by segment
-    # -------------------------------------------------------------
-    by_segment = {}
-    for segment, dom, phrase in parsed:
-        by_segment.setdefault(segment, {"over": [], "under": []})
-        if dom == "Over":
-            by_segment[segment]["over"].append(phrase)
-        else:
-            by_segment[segment]["under"].append(phrase)
-
-    # -------------------------------------------------------------
-    # 3. Generate compact persona summaries
-    # -------------------------------------------------------------
-    for segment, groups in by_segment.items():
-
-        overs = groups["over"]
-        unders = groups["under"]
-
-        st.markdown(f"<h3 style='margin-top:30px;'>{segment}</h3>", unsafe_allow_html=True)
-
-        # Generate compressed summary
-        persona_text = summarise_traits(overs, unders)
-
-        st.markdown(
-            f"<p style='font-size:22px; line-height:1.5;'>{persona_text}</p>",
-            unsafe_allow_html=True
-        )
+        if unders:
+            st.markdown("<h4 style='color:red;'>Traits they are less associated with ✖️</h4>", unsafe_allow_html=True)
+            for line in unders:
+                st.markdown(f"- {line}", unsafe_allow_html=True)
 
         st.markdown("<hr>", unsafe_allow_html=True)
 
+    # ------------------------------------------------------
+    # 3. Detailed breakdown by attribute
+    # ------------------------------------------------------
+    st.markdown("<h2 style='margin-top:60px;'>📊 Detailed Statistically Significant Insights</h2>",
+                unsafe_allow_html=True)
+
+    # Group insights by profiling dimension
+    grouped = {}
+    for text in insights:
+        try:
+            field = text.split("]")[0].replace("[", "")
+            grouped.setdefault(field, []).append(text)
+        except:
+            continue
+
+    # Display each dimension
+    for field, entries in grouped.items():
+
+        st.markdown(f"<h3 style='margin-top:40px;'>{field}</h3>", unsafe_allow_html=True)
+
+        over = [i for i in entries if ("dominant" in i)]
+        under = [i for i in entries if ("Under-represented" in i)]
+
+        if not over and not under:
+            st.info("No significant differences for this attribute.")
+            continue
+
+        if over:
+            st.markdown("<h4 style='color:green;'>Over-represented</h4>", unsafe_allow_html=True)
+            for line in over:
+                st.markdown(f"• {line}")
+
+        if under:
+            st.markdown("<h4 style='color:red;'>Under-represented</h4>", unsafe_allow_html=True)
+            for line in under:
+                st.markdown(f"• {line}")
+
+    # ------------------------------------------------------
+    # 4. Raw dominance tables (optional)
+    # ------------------------------------------------------
+    with st.expander("View full dominance tables (all attributes)"):
+        for field, table in results.items():
+            st.markdown(f"### {field}")
+            st.dataframe(table)
 
 
 
