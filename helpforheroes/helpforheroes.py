@@ -203,268 +203,112 @@ def render_customer_profiles(df, bookings_df, people_df):
 
 
 
-def intuitive_phrase(field, category, positive=True):
+def summarise_traits(overs, unders):
     """
-    Convert raw statistical dominance attributes into natural,
-    intuitive, persona-style descriptions.
+    Turn long lists of intuitive traits into a short persona-style
+    summary with ✔️ and ✖️ emojis.
     """
 
-    # -------------------------
-    # AGE
-    # -------------------------
-    if field == "AgeBracket":
-        mapping = {
-            "18–29": "younger adults",
-            "30–39": "people in their thirties",
-            "40–59": "mature travellers in mid-life",
-            "60+": "older, more seasoned travellers"
-        }
-        phrase = mapping.get(category, category)
-        return (
-            f"Tend to skew toward {phrase}"
-            if positive else
-            f"Less likely to include {phrase}"
-        )
+    def cluster(traits, keywords):
+        return [t for t in traits if any(k in t.lower() for k in keywords)]
 
-    # -------------------------
-    # INCOME
-    # -------------------------
-    if field == "IncomeBand":
-        mapping = {
-            "Low Income": "lower-income households",
-            "Low–Middle Income": "budget-conscious earners",
-            "Middle Income": "middle-income families",
-            "High Income": "higher-income customers",
-            "Executive Income": "affluent, premium customers"
-        }
-        phrase = mapping.get(category, category)
-        return (
-            f"Often come from {phrase}"
-            if positive else
-            f"Rarely come from {phrase}"
-        )
+    # --- Cluster themes for overs (positive traits)
+    income_pos = cluster(overs, ["income"])
+    age_pos = cluster(overs, ["young", "older", "mature"])
+    behaviour_pos = cluster(overs, ["traveller", "booker", "engaged", "frequent", "recent"])
+    destination_pos = cluster(overs, ["travel", "drawn", "preference", "holidays"])
+    channel_pos = cluster(overs, ["website", "telephone", "agent"])
+    occupation_pos = cluster(overs, ["working as"])
 
-    # -------------------------
-    # GENDER
-    # -------------------------
-    if field == "Gender":
-        return (
-            f"More commonly {category.lower()}"
-            if positive else
-            f"Less commonly {category.lower()}"
-        )
+    # --- Cluster themes for unders (negative traits)
+    income_neg = cluster(unders, ["income"])
+    behaviour_neg = cluster(unders, ["seldom", "less likely", "inactive", "dormant"])
+    destination_neg = cluster(unders, ["travel", "drawn", "holidays"])
+    occupation_neg = cluster(unders, ["working as"])
+    
+    summary = []
 
-    # -------------------------
-    # OCCUPATION
-    # -------------------------
-    if field == "Occupation":
-        return (
-            f"More typically working as {category.lower()}"
-            if positive else
-            f"Less typically working as {category.lower()}"
-        )
+    # ✔️ POSITIVE SUMMARY
+    if income_pos or age_pos or behaviour_pos or destination_pos:
+        pos_sentence = "✔️ "
+        if income_pos:
+            pos_sentence += "Often defined by their income profile; "
+        if age_pos:
+            pos_sentence += "skewing towards a specific age group; "
+        if behaviour_pos:
+            pos_sentence += "with recognisable booking behaviour; "
+        if destination_pos:
+            pos_sentence += "and clear destination preferences."
+        summary.append(pos_sentence)
 
-    # -------------------------
-    # BOOKING FREQUENCY
-    # -------------------------
-    if field == "FrequencyBand":
-        mapping = {
-            "One-Time": "one-off holiday makers",
-            "Occasional": "light or occasional travellers",
-            "Regular": "consistent repeat travellers",
-            "Frequent": "highly engaged, frequent travellers"
-        }
-        phrase = mapping.get(category, category)
-        return (
-            f"Often behave like {phrase}"
-            if positive else
-            f"Seldom behave like {phrase}"
-        )
+    # ✖️ NEGATIVE SUMMARY
+    if income_neg or behaviour_neg or destination_neg:
+        neg_sentence = "✖️ "
+        if income_neg:
+            neg_sentence += "Less represented in certain income groups; "
+        if behaviour_neg:
+            neg_sentence += "not typically showing other behavioural patterns; "
+        if destination_neg:
+            neg_sentence += "and not strongly associated with some destinations."
+        summary.append(neg_sentence)
 
-    # -------------------------
-    # RECENCY
-    # -------------------------
-    if field == "RecencyBand":
-        mapping = {
-            "0–1 yr (Very Recent)": "very recent bookers",
-            "1–2 yr (Recent)": "fairly recent bookers",
-            "2–3 yr (Lapsed)": "customers beginning to lapse",
-            "3–4 yr (Dormant)": "dormant customers",
-            "4–5 yr (Dormant+)": "long-term dormant customers",
-            "5+ yr (Very Old)": "very old or inactive customers"
-        }
-        phrase = mapping.get(category, category)
-        return (
-            f"More likely to be {phrase}"
-            if positive else
-            f"Less likely to be {phrase}"
-        )
+    # Fallback when list too small
+    if not summary:
+        summary.append("✔️ Distinct behavioural and demographic traits compared to the wider base.")
 
-    # -------------------------
-    # DESTINATION
-    # -------------------------
-    if field == "Destination":
-        return (
-            f"Show a stronger preference for travelling to <b>{category}</b>"
-            if positive else
-            f"Less commonly travel to <b>{category}</b>"
-        )
-
-    # -------------------------
-    # CONTINENT
-    # -------------------------
-    if field == "Continent":
-        return (
-            f"More drawn to <b>{category}</b> holidays"
-            if positive else
-            f"Less drawn to <b>{category}</b> holidays"
-        )
-
-    # -------------------------
-    # PRODUCT TYPE
-    # -------------------------
-    if field == "Product":
-        return (
-            f"Often choose <b>{category}</b>-type trips"
-            if positive else
-            f"Less likely to book <b>{category}</b>-type trips"
-        )
-
-    # -------------------------
-    # FALLBACK
-    # -------------------------
-    return (
-        f"Tend to include more <b>{category}</b>"
-        if positive else
-        f"Less likely to include <b>{category}</b>"
-    )
+    return " ".join(summary)
 
 
 
 def render_customer_profiles(df, bookings_df, people_df):
     """
-    Render intuitive persona-style segment summaries AND
-    detailed statistically significant dominance insights.
+    Render SHORT, intuitive segment persona summaries.
+    No long lists, no statistical breakdowns.
     """
 
-    # Run profiling engine
     prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
 
-    # -----------------------------------------
-    # HEADER
-    # -----------------------------------------
-    st.markdown("<h2>🔍 Customer Segment Profiles</h2>", unsafe_allow_html=True)
+    st.markdown("<h2>🧭 Segment Persona Summaries</h2>", unsafe_allow_html=True)
     st.markdown("""
-        <p>This section summarises who each customer segment really is —
-        based on <b>statistically significant</b> differences from the overall population.</p>
-        <p>✔️ = traits they are more likely to have<br>
-        ✖️ = traits they are less likely to have</p>
+        <p>These personas summarise the most meaningful, statistically significant traits 
+        of each customer segment, expressed intuitively.</p>
     """, unsafe_allow_html=True)
 
-    # ------------------------------------------------------
-    # 1. Parse insights → structured per segment & per field
-    # ------------------------------------------------------
+    # --- Parse structure from insights ---
     parsed = []
     for txt in insights:
-        # Example format:
-        # "[AgeBracket] High Value: HIGHLY dominant for '60+' — ..."
         try:
             field = txt.split("]")[0].replace("[", "")
-            remainder = txt.split("] ")[1]
-            segment = remainder.split(":")[0]
+            segment = txt.split("] ")[1].split(":")[0]
             category = txt.split("'")[1]
             dom = "Under" if "Under-represented" in txt else "Over"
-            parsed.append((segment, field, category, dom, txt))
+            readable = intuitive_phrase(field, category, positive=(dom=="Over"))
+            parsed.append((segment, dom, readable))
         except:
             continue
 
-    # Group insights by segment
+    # --- Group traits by segment ---
     by_segment = {}
-    for segment, field, category, dom, full in parsed:
-        by_segment.setdefault(segment, []).append((field, category, dom, full))
+    for segment, dom, phrase in parsed:
+        by_segment.setdefault(segment, {"over": [], "under": []})
+        if dom == "Over":
+            by_segment[segment]["over"].append(phrase)
+        else:
+            by_segment[segment]["under"].append(phrase)
 
-    # ------------------------------------------------------
-    # 2. Persona-style summaries per segment
-    # ------------------------------------------------------
-    st.markdown("<h2>🧭 Segment Persona Summaries</h2>", unsafe_allow_html=True)
+    # --- Generate summarised personas ---
+    for segment, groups in by_segment.items():
 
-    if not by_segment:
-        st.info("No statistically significant differences found.")
-        return
+        st.markdown(f"<h3 style='margin-top:30px;'>{segment}</h3>", unsafe_allow_html=True)
 
-    for segment, items in by_segment.items():
+        summary_text = summarise_traits(groups["over"], groups["under"])
 
-        st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
-
-        overs = []
-        unders = []
-
-        for field, category, dom, full in items:
-            positive = (dom == "Over")
-            phrase = intuitive_phrase(field, category, positive=positive)
-
-            if positive:
-                overs.append(f"✔️ {phrase}")
-            else:
-                unders.append(f"✖️ {phrase}")
-
-        # Present segment profile
-        if overs:
-            st.markdown("<h4 style='color:green;'>What typically defines them ✔️</h4>", unsafe_allow_html=True)
-            for line in overs:
-                st.markdown(f"- {line}", unsafe_allow_html=True)
-
-        if unders:
-            st.markdown("<h4 style='color:red;'>Traits they are less associated with ✖️</h4>", unsafe_allow_html=True)
-            for line in unders:
-                st.markdown(f"- {line}", unsafe_allow_html=True)
+        st.markdown(f"""
+            <p style='font-size:22px; line-height:1.5;'>{summary_text}</p>
+        """, unsafe_allow_html=True)
 
         st.markdown("<hr>", unsafe_allow_html=True)
 
-    # ------------------------------------------------------
-    # 3. Detailed breakdown by attribute
-    # ------------------------------------------------------
-    st.markdown("<h2 style='margin-top:60px;'>📊 Detailed Statistically Significant Insights</h2>",
-                unsafe_allow_html=True)
-
-    # Group insights by profiling dimension
-    grouped = {}
-    for text in insights:
-        try:
-            field = text.split("]")[0].replace("[", "")
-            grouped.setdefault(field, []).append(text)
-        except:
-            continue
-
-    # Display each dimension
-    for field, entries in grouped.items():
-
-        st.markdown(f"<h3 style='margin-top:40px;'>{field}</h3>", unsafe_allow_html=True)
-
-        over = [i for i in entries if ("dominant" in i)]
-        under = [i for i in entries if ("Under-represented" in i)]
-
-        if not over and not under:
-            st.info("No significant differences for this attribute.")
-            continue
-
-        if over:
-            st.markdown("<h4 style='color:green;'>Over-represented</h4>", unsafe_allow_html=True)
-            for line in over:
-                st.markdown(f"• {line}")
-
-        if under:
-            st.markdown("<h4 style='color:red;'>Under-represented</h4>", unsafe_allow_html=True)
-            for line in under:
-                st.markdown(f"• {line}")
-
-    # ------------------------------------------------------
-    # 4. Raw dominance tables (optional)
-    # ------------------------------------------------------
-    with st.expander("View full dominance tables (all attributes)"):
-        for field, table in results.items():
-            st.markdown(f"### {field}")
-            st.dataframe(table)
 
 
 
