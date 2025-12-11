@@ -466,37 +466,32 @@ def render_customer_profiles(df, bookings_df, people_df):
         }
     }
 
-    # -----------------------------------------
-    # RENDER PERSONA TEXT
-    # -----------------------------------------
+    # -------- PERSONAS --------
     for segment, info in personas.items():
 
         st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
 
-        # Render each persona trait as a normal paragraph (no bullets added)
+        # PERSONA TRAITS — keep ✔️ and ✖️, remove default bullet point
+        st.markdown("<ul style='list-style:none; padding-left:0; margin-left:0;'>", unsafe_allow_html=True)
+
         for line in info['summary']:
             st.markdown(
-                f"<p style='font-size:20px; line-height:1.6; margin:4px 0;'>{line}</p>",
+                f"<li style='font-size:20px; line-height:1.6; margin:6px 0;'>{line}</li>",
                 unsafe_allow_html=True
             )
 
+        st.markdown("</ul>", unsafe_allow_html=True)
+
+        # STRATEGY — keep normal bullet points
         st.markdown("<b>Recommended Strategy:</b>", unsafe_allow_html=True)
 
-        # Render each strategy with one bullet
+        st.markdown("<ul style='font-size:20px; line-height:1.6;'>", unsafe_allow_html=True)
         for line in info['strategy']:
-            st.markdown(
-                f"<p style='font-size:20px; line-height:1.6; margin:4px 0;'>• {line}</p>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<li>{line}</li>", unsafe_allow_html=True)
+        st.markdown("</ul>", unsafe_allow_html=True)
 
         st.markdown("<hr style='margin-top:30px; margin-bottom:30px;'>", unsafe_allow_html=True)
 
-    # -----------------------------------------
-    # OPTIONAL: Expandable detailed statistical insights
-    # -----------------------------------------
-    with st.expander("📊 View detailed statistically significant traits"):
-        for i in insights:
-            st.markdown(f"- {i}")
 
  
 
