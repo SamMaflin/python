@@ -343,8 +343,8 @@ def intuitive_phrase(field, category, positive=True):
 
 def render_customer_profiles(df, bookings_df, people_df):
     """
-    Render intuitive persona-style segment summaries AND
-    simple recommendations for how to maximise value from each segment.
+    Render intuitive persona-style segment summaries with simple recommendations.
+    Clean formatting: no code boxes, no duplicated bullets.
     """
 
     # Run profiling engine
@@ -356,138 +356,147 @@ def render_customer_profiles(df, bookings_df, people_df):
     st.markdown("<h2>🔍 Customer Segment Profiles</h2>", unsafe_allow_html=True)
     st.markdown("""
         <p>This section summarises who each customer segment really is —
-        based on <b>statistically significant</b> differences from the overall population.</p>
-        <p>✔️ = traits they are more likely to have<br>
-        ✖️ = traits they are less likely to have</p>
+        based on <b>statistically significant</b> differences from the overall population.</p> 
     """, unsafe_allow_html=True)
 
     # -----------------------------------------
-    # PERSONA SUMMARIES — EFFECT-SCALED LANGUAGE
+    # PERSONA SUMMARIES (clean text, no code blocks)
     # -----------------------------------------
 
     personas = {
         "Economy One-Timers": {
-            "summary": """
-                ✔️ Much more likely to come from lower-income backgrounds, make simple one-off bookings, 
-                and favour familiar European destinations like France and Germany.<br>
-                ✔️ More likely to be older and long inactive.<br><br>
-                ✖️ Much less likely to travel long-haul or return regularly.<br>
-                ✖️ Less likely to use digital channels or travel agents.
-            """,
-            "strategy": """
-                • Keep offers simple and cost-conscious.<br>
-                • Promote easy European getaways.<br>
-                • Use phone-friendly or low-friction booking prompts.
-            """
+            "summary": [
+                "✔️ Much more likely to come from lower-income backgrounds and make simple one-off bookings.",
+                "✔️ More likely to favour familiar European destinations like France and Germany.",
+                "✔️ More likely to be older and long inactive.",
+                "✖️ Much less likely to travel long-haul or return regularly.",
+                "✖️ Less likely to use digital channels or travel agents."
+            ],
+            "strategy": [
+                "Keep offers simple and cost-conscious.",
+                "Promote easy European getaways.",
+                "Use phone-friendly or low-friction booking prompts."
+            ]
         },
 
         "Economy Casuals": {
-            "summary": """
-                ✔️ More likely to be light, occasional travellers who prefer phoning to enquire and stick to familiar European destinations.<br>
-                ✔️ More likely to be dormant for long stretches.<br><br>
-                ✖️ Far less likely to book online or behave like frequent travellers.
-            """,
-            "strategy": """
-                • Use reactivation campaigns with clear, simple pricing.<br>
-                • Keep communication personal and phone-led.<br>
-                • Encourage small steps toward repeat-booking habits.
-            """
+            "summary": [
+                "✔️ More likely to be light, occasional travellers who prefer calling by phone.",
+                "✔️ More likely to stick to familiar European destinations.",
+                "✖️ Much less likely to book online.",
+                "✖️ Less likely to behave like active or repeat travellers."
+            ],
+            "strategy": [
+                "Use reactivation campaigns with simple, clear offers.",
+                "Make content phone-led and personal.",
+                "Encourage small steps towards repeat behaviour."
+            ]
         },
 
         "Economy Explorers": {
-            "summary": """
-                ✔️ Much more likely to be higher-income, active travellers exploring destinations across Europe, the Americas and Asia.<br>
-                ✔️ More likely to book frequently and very recently.<br><br>
-                ✖️ Much less likely to be low-income or Europe-only travellers.
-            """,
-            "strategy": """
-                • Promote diverse itineraries and multi-destination offers.<br>
-                • Use loyalty-style incentives to maintain high engagement.<br>
-                • Showcase long-haul and premium upgrade opportunities.
-            """
+            "summary": [
+                "✔️ Much more likely to be higher-income, active travellers.",
+                "✔️ Prefer a wide mix of destinations including the Americas and Asia.",
+                "✔️ More likely to book regularly and recently.",
+                "✖️ Much less likely to be low-income.",
+                "✖️ Less likely to remain Europe-only."
+            ],
+            "strategy": [
+                "Promote multi-destination and long-haul options.",
+                "Offer loyalty-style incentives to maintain engagement.",
+                "Showcase premium upgrades and diverse itineraries."
+            ]
         },
 
         "Premium Explorers": {
-            "summary": """
-                ✔️ Far more likely to be affluent, globally oriented travellers choosing long-haul destinations like Africa, the Americas and Asia.<br>
-                ✔️ Book frequently and prefer specialist accommodation offerings.<br><br>
-                ✖️ Much less likely to be Europe-focused or digital-channel users.
-            """,
-            "strategy": """
-                • Offer personalised, concierge-style travel support.<br>
-                • Highlight long-haul inspirational content.<br>
-                • Use outbound phone/email rather than digital-led acquisition.
-            """
+            "summary": [
+                "✔️ Far more likely to be affluent, globally oriented travellers.",
+                "✔️ Strong preference for Africa, the Americas and Asia.",
+                "✔️ Book frequently and choose specialist accommodation.",
+                "✖️ Much less likely to use online booking channels.",
+                "✖️ Less likely to be Europe-focused."
+            ],
+            "strategy": [
+                "Offer personalised, concierge-style support.",
+                "Highlight inspirational long-haul journeys.",
+                "Use outbound channels rather than digital-only messaging."
+            ]
         },
 
         "Premium One-Timers": {
-            "summary": """
-                ✔️ More likely to be lower-income, older customers booking one-off European trips.<br>
-                ✔️ Prefer simple channels like telephone or website.<br><br>
-                ✖️ Less likely to be professionals or long-haul travellers.
-            """,
-            "strategy": """
-                • Promote straightforward European packages.<br>
-                • Use simple value framing and reassurance messages.<br>
-                • Encourage trial of a second “follow-up” trip.
-            """
+            "summary": [
+                "✔️ More likely to be lower-income, older customers booking one-off European trips.",
+                "✔️ Prefer simple channels such as telephone or website.",
+                "✖️ Much less likely to choose long-haul destinations.",
+                "✖️ Less likely to work in professional or managerial roles."
+            ],
+            "strategy": [
+                "Promote straightforward European packages.",
+                "Use simple, reassurance-based messaging.",
+                "Encourage a follow-up booking shortly after their first purchase."
+            ]
         },
 
         "Saver Casuals": {
-            "summary": """
-                ✔️ More likely to be occasional travellers drawn to long-haul destinations like Australia and Greece.<br>
-                ✔️ More likely to be long-term dormant.<br><br>
-                ✖️ Far less likely to use online channels or travel recently.
-            """,
-            "strategy": """
-                • Use offline, phone-friendly engagement methods.<br>
-                • Offer inspirational long-haul content with easy payment options.<br>
-                • Use dormant-winback campaigns.
-            """
+            "summary": [
+                "✔️ More likely to be occasional travellers drawn to Australia and Greece.",
+                "✔️ More likely to be dormant for long periods.",
+                "✖️ Far less likely to use website channels.",
+                "✖️ Less likely to be higher-income or recently active."
+            ],
+            "strategy": [
+                "Use offline and phone-friendly engagement.",
+                "Promote long-haul inspiration with flexible payment options.",
+                "Run dormant-winback campaigns."
+            ]
         },
 
         "Saver Explorers": {
-            "summary": """
-                ✔️ Much more likely to be higher-income repeat travellers with strong interest in Africa and Portugal.<br>
-                ✔️ Prefer long-haul or niche destinations over mainstream Europe.<br><br>
-                ✖️ Much less likely to be low-income or infrequent travellers.
-            """,
-            "strategy": """
-                • Promote niche and specialist itineraries.<br>
-                • Encourage loyalty with multi-trip or exploration-themed bundles.<br>
-                • Provide tailored content about unusual global destinations.
-            """
+            "summary": [
+                "✔️ Much more likely to be higher-income repeat travellers.",
+                "✔️ Strong preference for destinations like Africa and Portugal.",
+                "✖️ Less likely to be low-income or infrequent travellers.",
+                "✖️ Less likely to favour Europe-heavy holidays."
+            ],
+            "strategy": [
+                "Promote niche and specialist itineraries.",
+                "Use exploration-themed bundles or multi-trip offers.",
+                "Tailor marketing around unusual, high-interest global destinations."
+            ]
         }
     }
 
     # -----------------------------------------
-    # RENDER PERSONAS (clean, no code boxes)
+    # RENDER PERSONA TEXT
     # -----------------------------------------
-
     for segment, info in personas.items():
 
         st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
 
-        # Parse summary lines into bullet points
-        summary_lines = [line.strip() for line in info['summary'].split("\n") if line.strip()]
+        # Render each persona trait as a normal paragraph (no bullets added)
+        for line in info['summary']:
+            st.markdown(
+                f"<p style='font-size:20px; line-height:1.6; margin:4px 0;'>{line}</p>",
+                unsafe_allow_html=True
+            )
 
-        st.markdown("<ul style='font-size:20px; line-height:1.6;'>", unsafe_allow_html=True)
-        for line in summary_lines:
-            st.markdown(f"<li>{line}</li>", unsafe_allow_html=True)
-        st.markdown("</ul>", unsafe_allow_html=True)
-
-        # Strategy
         st.markdown("<b>Recommended Strategy:</b>", unsafe_allow_html=True)
 
-        strategy_lines = [line.strip() for line in info['strategy'].split("<br>") if line.strip()]
-
-        st.markdown("<ul style='font-size:20px; line-height:1.6;'>", unsafe_allow_html=True)
-        for line in strategy_lines:
-            st.markdown(f"<li>{line}</li>", unsafe_allow_html=True)
-        st.markdown("</ul>", unsafe_allow_html=True)
+        # Render each strategy with one bullet
+        for line in info['strategy']:
+            st.markdown(
+                f"<p style='font-size:20px; line-height:1.6; margin:4px 0;'>• {line}</p>",
+                unsafe_allow_html=True
+            )
 
         st.markdown("<hr style='margin-top:30px; margin-bottom:30px;'>", unsafe_allow_html=True)
 
+    # -----------------------------------------
+    # OPTIONAL: Expandable detailed statistical insights
+    # -----------------------------------------
+    with st.expander("📊 View detailed statistically significant traits"):
+        for i in insights:
+            st.markdown(f"- {i}")
 
  
 
