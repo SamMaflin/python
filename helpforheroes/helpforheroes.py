@@ -203,26 +203,32 @@ def render_customer_profiles(df, bookings_df, people_df):
 
 
 
-
-
 def intuitive_phrase(field, category, positive=True):
     """
-    Convert raw (field, category) pairs into intuitive,
-    natural-language traits for persona-style summaries.
+    Convert raw statistical dominance attributes into natural,
+    intuitive, persona-style descriptions.
     """
 
+    # -------------------------
     # AGE
+    # -------------------------
     if field == "AgeBracket":
         mapping = {
-            "18–29": "a younger traveller base",
-            "30–39": "customers in their thirties",
-            "40–59": "mature travellers",
-            "60+": "older customers"
+            "18–29": "younger adults",
+            "30–39": "people in their thirties",
+            "40–59": "mature travellers in mid-life",
+            "60+": "older, more seasoned travellers"
         }
-        return f"Tend to skew toward {mapping.get(category, category)}" if positive else \
-               f"Less likely to include {mapping.get(category, category)}"
+        phrase = mapping.get(category, category)
+        return (
+            f"Tend to skew toward {phrase}"
+            if positive else
+            f"Less likely to include {phrase}"
+        )
 
+    # -------------------------
     # INCOME
+    # -------------------------
     if field == "IncomeBand":
         mapping = {
             "Low Income": "lower-income households",
@@ -231,92 +237,235 @@ def intuitive_phrase(field, category, positive=True):
             "High Income": "higher-income customers",
             "Executive Income": "affluent, premium customers"
         }
-        return f"More likely to be {mapping.get(category, category)}" if positive else \
-               f"Rarely {mapping.get(category, category)}"
+        phrase = mapping.get(category, category)
+        return (
+            f"Often come from {phrase}"
+            if positive else
+            f"Rarely come from {phrase}"
+        )
 
-    # FREQUENCY
+    # -------------------------
+    # GENDER
+    # -------------------------
+    if field == "Gender":
+        return (
+            f"More commonly {category.lower()}"
+            if positive else
+            f"Less commonly {category.lower()}"
+        )
+
+    # -------------------------
+    # OCCUPATION
+    # -------------------------
+    if field == "Occupation":
+        return (
+            f"More typically working as {category.lower()}"
+            if positive else
+            f"Less typically working as {category.lower()}"
+        )
+
+    # -------------------------
+    # BOOKING FREQUENCY
+    # -------------------------
     if field == "FrequencyBand":
         mapping = {
-            "One-Time": "one-off bookers",
-            "Occasional": "occasional travellers",
-            "Regular": "steady, repeat travellers",
+            "One-Time": "one-off holiday makers",
+            "Occasional": "light or occasional travellers",
+            "Regular": "consistent repeat travellers",
             "Frequent": "highly engaged, frequent travellers"
         }
-        return f"Often {mapping.get(category, category)}" if positive else \
-               f"Seldom {mapping.get(category, category)}"
+        phrase = mapping.get(category, category)
+        return (
+            f"Often behave like {phrase}"
+            if positive else
+            f"Seldom behave like {phrase}"
+        )
 
+    # -------------------------
     # RECENCY
+    # -------------------------
     if field == "RecencyBand":
         mapping = {
-            "0–1 yr (Very Recent)": "recently active",
-            "1–2 yr (Recent)": "fairly active",
-            "2–3 yr (Lapsed)": "lapsing",
-            "3–4 yr (Dormant)": "dormant",
-            "4–5 yr (Dormant+)": "long-dormant",
-            "5+ yr (Very Old)": "inactive for many years"
+            "0–1 yr (Very Recent)": "very recent bookers",
+            "1–2 yr (Recent)": "fairly recent bookers",
+            "2–3 yr (Lapsed)": "customers beginning to lapse",
+            "3–4 yr (Dormant)": "dormant customers",
+            "4–5 yr (Dormant+)": "long-term dormant customers",
+            "5+ yr (Very Old)": "very old or inactive customers"
         }
-        return f"More likely to be {mapping.get(category, category)}" if positive else \
-               f"Less likely to be {mapping.get(category, category)}"
+        phrase = mapping.get(category, category)
+        return (
+            f"More likely to be {phrase}"
+            if positive else
+            f"Less likely to be {phrase}"
+        )
 
+    # -------------------------
     # DESTINATION
+    # -------------------------
     if field == "Destination":
-        return f"Show a preference for travelling to <b>{category}</b>" if positive else \
-               f"Less commonly choose <b>{category}</b>"
+        return (
+            f"Show a stronger preference for travelling to <b>{category}</b>"
+            if positive else
+            f"Less commonly travel to <b>{category}</b>"
+        )
 
+    # -------------------------
     # CONTINENT
+    # -------------------------
     if field == "Continent":
-        return f"Drawn toward <b>{category}</b> trips" if positive else \
-               f"Less drawn to <b>{category}</b>"
+        return (
+            f"More drawn to <b>{category}</b> holidays"
+            if positive else
+            f"Less drawn to <b>{category}</b> holidays"
+        )
 
-    # PRODUCT
+    # -------------------------
+    # PRODUCT TYPE
+    # -------------------------
     if field == "Product":
-        return f"More inclined toward <b>{category}</b> products" if positive else \
-               f"Less likely to choose <b>{category}</b> products"
+        return (
+            f"Often choose <b>{category}</b>-type trips"
+            if positive else
+            f"Less likely to book <b>{category}</b>-type trips"
+        )
 
-    # GENDER / OCCUPATION / SOURCE (default fallback)
-    if positive:
-        return f"Tend to include more <b>{category}</b>"
-    else:
-        return f"Less likely to include <b>{category}</b>"
+    # -------------------------
+    # FALLBACK
+    # -------------------------
+    return (
+        f"Tend to include more <b>{category}</b>"
+        if positive else
+        f"Less likely to include <b>{category}</b>"
+    )
 
 
 
+def render_customer_profiles(df, bookings_df, people_df):
+    """
+    Render intuitive persona-style segment summaries AND
+    detailed statistically significant dominance insights.
+    """
+
+    # Run profiling engine
+    prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
+
+    # -----------------------------------------
+    # HEADER
+    # -----------------------------------------
+    st.markdown("<h2>🔍 Customer Segment Profiles</h2>", unsafe_allow_html=True)
+    st.markdown("""
+        <p>This section summarises who each customer segment really is —
+        based on <b>statistically significant</b> differences from the overall population.</p>
+        <p>✔️ = traits they are more likely to have<br>
+        ✖️ = traits they are less likely to have</p>
+    """, unsafe_allow_html=True)
 
     # ------------------------------------------------------
-    # 2. Intuitive persona-style summaries per segment
+    # 1. Parse insights → structured per segment & per field
     # ------------------------------------------------------
-    st.markdown("<h2>🧭 Segment Summary Profiles</h2>", unsafe_allow_html=True)
+    parsed = []
+    for txt in insights:
+        # Example format:
+        # "[AgeBracket] High Value: HIGHLY dominant for '60+' — ..."
+        try:
+            field = txt.split("]")[0].replace("[", "")
+            remainder = txt.split("] ")[1]
+            segment = remainder.split(":")[0]
+            category = txt.split("'")[1]
+            dom = "Under" if "Under-represented" in txt else "Over"
+            parsed.append((segment, field, category, dom, txt))
+        except:
+            continue
+
+    # Group insights by segment
+    by_segment = {}
+    for segment, field, category, dom, full in parsed:
+        by_segment.setdefault(segment, []).append((field, category, dom, full))
+
+    # ------------------------------------------------------
+    # 2. Persona-style summaries per segment
+    # ------------------------------------------------------
+    st.markdown("<h2>🧭 Segment Persona Summaries</h2>", unsafe_allow_html=True)
 
     if not by_segment:
-        st.info("No statistically significant differences available.")
+        st.info("No statistically significant differences found.")
         return
 
     for segment, items in by_segment.items():
+
         st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
 
         overs = []
         unders = []
 
         for field, category, dom, full in items:
-            # Build intuitive phrases
-            if dom == "Over":
-                phrase = intuitive_phrase(field, category, positive=True)
+            positive = (dom == "Over")
+            phrase = intuitive_phrase(field, category, positive=positive)
+
+            if positive:
                 overs.append(f"✔️ {phrase}")
             else:
-                phrase = intuitive_phrase(field, category, positive=False)
                 unders.append(f"✖️ {phrase}")
 
+        # Present segment profile
         if overs:
-            st.markdown("<h4 style='color:green;'>What defines this group ✔️</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:green;'>What typically defines them ✔️</h4>", unsafe_allow_html=True)
             for line in overs:
                 st.markdown(f"- {line}", unsafe_allow_html=True)
 
         if unders:
-            st.markdown("<h4 style='color:red;'>Less typical traits ✖️</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:red;'>Traits they are less associated with ✖️</h4>", unsafe_allow_html=True)
             for line in unders:
                 st.markdown(f"- {line}", unsafe_allow_html=True)
 
         st.markdown("<hr>", unsafe_allow_html=True)
+
+    # ------------------------------------------------------
+    # 3. Detailed breakdown by attribute
+    # ------------------------------------------------------
+    st.markdown("<h2 style='margin-top:60px;'>📊 Detailed Statistically Significant Insights</h2>",
+                unsafe_allow_html=True)
+
+    # Group insights by profiling dimension
+    grouped = {}
+    for text in insights:
+        try:
+            field = text.split("]")[0].replace("[", "")
+            grouped.setdefault(field, []).append(text)
+        except:
+            continue
+
+    # Display each dimension
+    for field, entries in grouped.items():
+
+        st.markdown(f"<h3 style='margin-top:40px;'>{field}</h3>", unsafe_allow_html=True)
+
+        over = [i for i in entries if ("dominant" in i)]
+        under = [i for i in entries if ("Under-represented" in i)]
+
+        if not over and not under:
+            st.info("No significant differences for this attribute.")
+            continue
+
+        if over:
+            st.markdown("<h4 style='color:green;'>Over-represented</h4>", unsafe_allow_html=True)
+            for line in over:
+                st.markdown(f"• {line}")
+
+        if under:
+            st.markdown("<h4 style='color:red;'>Under-represented</h4>", unsafe_allow_html=True)
+            for line in under:
+                st.markdown(f"• {line}")
+
+    # ------------------------------------------------------
+    # 4. Raw dominance tables (optional)
+    # ------------------------------------------------------
+    with st.expander("View full dominance tables (all attributes)"):
+        for field, table in results.items():
+            st.markdown(f"### {field}")
+            st.dataframe(table)
+
 
 
 
