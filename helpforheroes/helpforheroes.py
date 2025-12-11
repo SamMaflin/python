@@ -214,167 +214,177 @@ def render_customer_profiles(df, bookings_df, people_df):
 
 <h4>1️⃣ Proportional Representation</h4>
 <p>
-For each characteristic (age, income, gender, occupation, channel, frequency, recency, destination, continent, product),
-we compared each segment’s share to the overall customer base. This highlights where segments
-<b>over-index</b> on key traits.
+We compare each segment’s share of key characteristics (age, income, gender, occupation, channel, frequency, recency, destination, product)
+against the full customer base to highlight where groups <b>over-index</b>.
 </p>
 
 <h4>2️⃣ Statistical Reliability + Effect Sizing</h4>
 <p>
-We apply a <b>proportions Z-test</b> to confirm differences are statistically meaningful,
-and use percentage-point differences to quantify the size of each effect clearly.
+A <b>proportions Z-test</b> confirms differences are statistically meaningful,
+and percentage-point deltas clearly show the magnitude of each effect.
 </p>
 
 <br><br>
 <h2>Final Segment Interpretations</h2>
-<br>
-
-<!-- ========================================================= -->
-<!-- 1️⃣ Saver Casuals -->
-<!-- ========================================================= -->
-<h3>1️⃣ Saver Casuals — Interpretation</h3>
-<p>
-Saver Casuals are value-focused travellers with clear, predictable patterns.  
-<br><br>
-✅ Very strong representation among occasional travellers (<b>+44 ppts</b>)<br>
-✅ A notable group with 4–5 year recency (<b>+21 ppts</b>)<br>
-✅ Higher preference for Australia (<b>+14</b>) and Greece (<b>+6</b>)<br>
-✅ Slightly older, modest-income profile<br>
-<br>
-Overall, a segment defined by <b>infrequent but consistent value-driven travel habits</b>.
-</p>
-<br>
-
-<!-- ========================================================= -->
-<!-- 2️⃣ Premium One-Timers -->
-<!-- ========================================================= -->
-<h3>2️⃣ Premium One-Timers — Interpretation</h3>
-<p>
-Premium One-Timers make high-value purchases and show distinctive digital and demographic patterns.  
-<br><br>
-✅ Strong female representation (<b>+44 ppts</b>)<br>
-✅ Higher presence of lower-income households (<b>+12 ppts</b>)<br>
-✅ High usage of digital & phone channels (<b>+32 ppts website</b>)<br>
-✅ Strong interest in France (<b>+32</b>) and Germany (<b>+12</b>)<br>
-<br>
-Overall, a <b>premium but one-off segment</b> with clear digital-first behaviours.
-</p>
-<br>
-
-<!-- ========================================================= -->
-<!-- 3️⃣ Economy Explorers -->
-<!-- ========================================================= -->
-<h3>3️⃣ Economy Explorers — Interpretation</h3>
-<p>
-Economy Explorers are active, internationally minded travellers with strong engagement levels.  
-<br><br>
-✅ Strong male skew (female <b>−21 ppts</b>)<br>
-✅ Higher middle-income share (<b>+18 ppts</b>)<br>
-✅ Very strong travel frequency — regular (<b>+23</b>), frequent (<b>+7</b>)<br>
-✅ Over-index on US travel (<b>+19</b>) and selective global destinations<br>
-<br>
-Overall, <b>curious, frequent travellers</b> who prefer agent-supported international trips.
-</p>
-<br>
-
-<!-- ========================================================= -->
-<!-- 4️⃣ Premium Casuals -->
-<!-- ========================================================= -->
-<h3>4️⃣ Premium Casuals — Interpretation</h3>
-<p>
-Premium Casuals show premium preferences with modest, steady engagement.  
-<br><br>
-✅ High use of telephone enquiries (<b>+17 ppts</b>)<br>
-✅ Distinct preference for Germany (<b>+17</b>)<br>
-✅ More financially stable occupational profile<br>
-<br>
-Overall, a <b>service-first premium segment</b> that values personalised support.
-</p>
-<br>
-
-<!-- ========================================================= -->
-<!-- 5️⃣ Economy One-Timers -->
-<!-- ========================================================= -->
-<h3>5️⃣ Economy One-Timers — Interpretation</h3>
-<p>
-Economy One-Timers are digital-first travellers who engage once with clear destination preferences.  
-<br><br>
-✅ Strong female skew (<b>+45 ppts</b>)<br>
-✅ Higher representation of lower-income households (<b>+13</b>)<br>
-✅ Very high website usage (<b>+34 ppts</b>)<br>
-✅ Strong focus on France (<b>+34</b>) and Germany (<b>+12</b>)<br>
-<br>
-Overall, a <b>digital, destination-focused segment</b> with simple one-off travel behaviour.
-</p>
-<br>
-
-<!-- ========================================================= -->
-<!-- 6️⃣ Saver One-Timers -->
-<!-- ========================================================= -->
-<h3>6️⃣ Saver One-Timers — Interpretation</h3>
-<p>
-Saver One-Timers represent a clear, consistent profile of low-spend digital users.  
-<br><br>
-✅ Very strong female representation (<b>+58 ppts</b>)<br>
-✅ Higher share of low-income households (<b>+17</b>)<br>
-✅ Very high website usage (<b>+38 ppts</b>)<br>
-✅ Clear focus on France (<b>+39</b>) and Germany (<b>+20</b>)<br>
-<br>
-Overall, a <b>digital-heavy, low-frequency segment</b> with well-defined patterns.
-</p>
-<br>
-
-<!-- ========================================================= -->
-<!-- 7️⃣ Economy Casuals -->
-<!-- ========================================================= -->
-<h3>7️⃣ Economy Casuals — Interpretation</h3>
-<p>
-Economy Casuals prefer simple, phone-led booking experiences and travel occasionally.  
-<br><br>
-✅ Strong phone usage (<b>+16 ppts</b>)<br>
-✅ High concentration of occasional travellers (<b>+43 ppts</b>)<br>
-✅ Recency peak at 3–4 years (<b>+12</b>)<br>
-✅ Preference for Germany (<b>+16</b>)<br>
-<br>
-Overall, a <b>low-effort, phone-first</b> segment with predictable behaviours.
-</p>
-<br>
-
-<!-- ========================================================= -->
-<!-- 8️⃣ Premium Explorers -->
-<!-- ========================================================= -->
-<h3>8️⃣ Premium Explorers — Interpretation</h3>
-<p>
-Premium Explorers are the highest-value and most engaged customers across the base.  
-<br><br>
-✅ Strong male skew (female <b>−24</b>)<br>
-✅ Slightly higher income (<b>+3 ppts</b>)<br>
-✅ Exceptional travel frequency — regular (<b>+20</b>), frequent (<b>+19</b>)<br>
-✅ Very strong international focus — US (<b>+24</b>), Italy, Kuwait, Africa<br>
-<br>
-Overall, a <b>top-tier, internationally active</b> segment ideal for loyalty and premium strategy.
-</p>
-<br>
-
-<!-- ========================================================= -->
-<!-- 9️⃣ Saver Explorers -->
-<!-- ========================================================= -->
-<h3>9️⃣ Saver Explorers — Interpretation</h3>
-<p>
-Saver Explorers are budget-conscious but highly active and adventurous travellers.  
-<br><br>
-✅ Very strong regular travel behaviour (<b>+29 ppts</b>)<br>
-✅ Lower likelihood of occasional travel (<b>−18</b>)<br>
-✅ Male-skewed (female <b>−23</b>)<br>
-✅ Higher middle-income representation (<b>+19</b>)<br>
-✅ Interest in Portugal, Namibia, and Africa<br>
-<br>
-Overall, a <b>budget-savvy, high-engagement explorer segment</b> with broad destination variety.
-</p>
-<br>
 """,
         unsafe_allow_html=True
     )
+
+    # ============================================================
+    # CLICKABLE DROPDOWN SECTIONS
+    # ============================================================
+
+    with st.expander("1️⃣ Saver Casuals — Interpretation"):
+        st.markdown(
+            """
+Saver Casuals are value-focused travellers with clear, predictable patterns.
+
+<br><br>
+✅ Very strong representation among occasional travellers (<b>+44 ppts</b>)  
+✅ Significant 4–5 year recency group (<b>+21 ppts</b>)  
+✅ Higher preference for Australia (<b>+14</b>) and Greece (<b>+6</b>)  
+✅ Slightly older, modest-income profile  
+
+<br>
+<b>Overall:</b> A segment defined by <b>infrequent but consistent value-driven travel habits</b>.
+""",
+            unsafe_allow_html=True
+        )
+
+    with st.expander("2️⃣ Premium One-Timers — Interpretation"):
+        st.markdown(
+            """
+Premium One-Timers make high-value purchases with clear digital and destination preferences.
+
+<br><br>
+✅ Strong female representation (<b>+44 ppts</b>)  
+✅ Higher proportion of lower-income households (<b>+12 ppts</b>)  
+✅ High website and phone usage (<b>+32 ppts website</b>)  
+✅ Preference for France (<b>+32</b>) and Germany (<b>+12</b>)  
+
+<br>
+<b>Overall:</b> A <b>premium but one-off</b> segment with strong digital-first behaviours.
+""",
+            unsafe_allow_html=True
+        )
+
+    with st.expander("3️⃣ Economy Explorers — Interpretation"):
+        st.markdown(
+            """
+Economy Explorers are active, internationally minded travellers with strong engagement.
+
+<br><br>
+✅ Male-skewed segment (female <b>−21</b>)  
+✅ Higher middle-income representation (<b>+18 ppts</b>)  
+✅ Strong travel frequency — regular (<b>+23</b>), frequent (<b>+7</b>)  
+✅ Over-index on US trips (<b>+19</b>) and global destinations  
+
+<br>
+<b>Overall:</b> <b>Curious, frequent travellers</b> who favour agent-supported international trips.
+""",
+            unsafe_allow_html=True
+        )
+
+    with st.expander("4️⃣ Premium Casuals — Interpretation"):
+        st.markdown(
+            """
+Premium Casuals prefer personalised, service-led booking experiences.
+
+<br><br>
+✅ Strong use of telephone enquiries (<b>+17 ppts</b>)  
+✅ Clear preference for Germany (<b>+17</b>)  
+✅ More financially stable occupational profile  
+
+<br>
+<b>Overall:</b> A <b>premium-leaning, service-first</b> segment with modest booking frequency.
+""",
+            unsafe_allow_html=True
+        )
+
+    with st.expander("5️⃣ Economy One-Timers — Interpretation"):
+        st.markdown(
+            """
+Economy One-Timers are digital-first travellers with simple one-off behaviour.
+
+<br><br>
+✅ Strong female skew (<b>+45 ppts</b>)  
+✅ Higher lower-income representation (<b>+13</b>)  
+✅ Very high website use (<b>+34</b>)  
+✅ Focus on France (<b>+34</b>) and Germany (<b>+12</b>)  
+
+<br>
+<b>Overall:</b> A <b>digital, destination-focused</b> segment with clear one-time engagement.
+""",
+            unsafe_allow_html=True
+        )
+
+    with st.expander("6️⃣ Saver One-Timers — Interpretation"):
+        st.markdown(
+            """
+Saver One-Timers are a clearly defined digital-heavy segment.
+
+<br><br>
+✅ Very strong female presence (<b>+58 ppts</b>)  
+✅ Higher low-income share (<b>+17</b>)  
+✅ Very high website usage (<b>+38</b>)  
+✅ Destination focus on France (<b>+39</b>) and Germany (<b>+20</b>)  
+
+<br>
+<b>Overall:</b> A <b>low-frequency, digital-first</b> group with consistent behavioural patterns.
+""",
+            unsafe_allow_html=True
+        )
+
+    with st.expander("7️⃣ Economy Casuals — Interpretation"):
+        st.markdown(
+            """
+Economy Casuals prefer simple phone-led journeys and travel occasionally.
+
+<br><br>
+✅ Strong phone usage (<b>+16</b>)  
+✅ High share of occasional travellers (<b>+43</b>)  
+✅ Recency peak at 3–4 years (<b>+12</b>)  
+✅ Preference for Germany (<b>+16</b>)  
+
+<br>
+<b>Overall:</b> A <b>low-effort, phone-first</b> segment with predictable rhythms.
+""",
+            unsafe_allow_html=True
+        )
+
+    with st.expander("8️⃣ Premium Explorers — Interpretation"):
+        st.markdown(
+            """
+Premium Explorers are the highest-value, most engaged customers.
+
+<br><br>
+✅ Strong male skew (female <b>−24</b>)  
+✅ Slightly higher income (<b>+3</b>)  
+✅ Exceptional frequency — regular (<b>+20</b>), frequent (<b>+19</b>)  
+✅ International destination focus: US (<b>+24</b>), Italy, Kuwait, Africa  
+
+<br>
+<b>Overall:</b> A <b>top-tier, internationally active</b> loyalty priority.
+""",
+            unsafe_allow_html=True
+        )
+
+    with st.expander("9️⃣ Saver Explorers — Interpretation"):
+        st.markdown(
+            """
+Saver Explorers are budget-savvy but highly active and adventurous.
+
+<br><br>
+✅ Very strong regular travel behaviour (<b>+29</b>)  
+✅ Male-skewed (female <b>−23</b>)  
+✅ Higher middle-income share (<b>+19</b>)  
+✅ Interest in Portugal, Namibia, and Africa  
+
+<br>
+<b>Overall:</b> A <b>budget-conscious, high-engagement explorer</b> group.
+""",
+            unsafe_allow_html=True
+        )
 
 
 
