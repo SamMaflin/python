@@ -203,60 +203,141 @@ def render_customer_profiles(df, bookings_df, people_df):
 
 
 
-def summarise_traits(overs, unders):
+def intuitive_phrase(field, category, positive=True):
     """
-    Turn long lists of intuitive traits into a short persona-style
-    summary with ✔️ and ✖️ emojis.
+    Convert raw statistical dominance attributes into natural,
+    intuitive, persona-style descriptions.
     """
 
-    def cluster(traits, keywords):
-        return [t for t in traits if any(k in t.lower() for k in keywords)]
+    # -------------------------
+    # AGE
+    # -------------------------
+    if field == "AgeBracket":
+        mapping = {
+            "18–29": "younger adults",
+            "30–39": "people in their thirties",
+            "40–59": "mature travellers in mid-life",
+            "60+": "older, more seasoned travellers"
+        }
+        phrase = mapping.get(category, category)
+        return (
+            f"Tend to skew toward {phrase}"
+            if positive else
+            f"Less likely to include {phrase}"
+        )
 
-    # --- Cluster themes for overs (positive traits)
-    income_pos = cluster(overs, ["income"])
-    age_pos = cluster(overs, ["young", "older", "mature"])
-    behaviour_pos = cluster(overs, ["traveller", "booker", "engaged", "frequent", "recent"])
-    destination_pos = cluster(overs, ["travel", "drawn", "preference", "holidays"])
-    channel_pos = cluster(overs, ["website", "telephone", "agent"])
-    occupation_pos = cluster(overs, ["working as"])
+    # -------------------------
+    # INCOME
+    # -------------------------
+    if field == "IncomeBand":
+        mapping = {
+            "Low Income": "lower-income households",
+            "Low–Middle Income": "budget-conscious earners",
+            "Middle Income": "middle-income families",
+            "High Income": "higher-income customers",
+            "Executive Income": "affluent, premium customers"
+        }
+        phrase = mapping.get(category, category)
+        return (
+            f"Often come from {phrase}"
+            if positive else
+            f"Rarely come from {phrase}"
+        )
 
-    # --- Cluster themes for unders (negative traits)
-    income_neg = cluster(unders, ["income"])
-    behaviour_neg = cluster(unders, ["seldom", "less likely", "inactive", "dormant"])
-    destination_neg = cluster(unders, ["travel", "drawn", "holidays"])
-    occupation_neg = cluster(unders, ["working as"])
-    
-    summary = []
+    # -------------------------
+    # GENDER
+    # -------------------------
+    if field == "Gender":
+        return (
+            f"More commonly {category.lower()}"
+            if positive else
+            f"Less commonly {category.lower()}"
+        )
 
-    # ✔️ POSITIVE SUMMARY
-    if income_pos or age_pos or behaviour_pos or destination_pos:
-        pos_sentence = "✔️ "
-        if income_pos:
-            pos_sentence += "Often defined by their income profile; "
-        if age_pos:
-            pos_sentence += "skewing towards a specific age group; "
-        if behaviour_pos:
-            pos_sentence += "with recognisable booking behaviour; "
-        if destination_pos:
-            pos_sentence += "and clear destination preferences."
-        summary.append(pos_sentence)
+    # -------------------------
+    # OCCUPATION
+    # -------------------------
+    if field == "Occupation":
+        return (
+            f"More typically working as {category.lower()}"
+            if positive else
+            f"Less typically working as {category.lower()}"
+        )
 
-    # ✖️ NEGATIVE SUMMARY
-    if income_neg or behaviour_neg or destination_neg:
-        neg_sentence = "✖️ "
-        if income_neg:
-            neg_sentence += "Less represented in certain income groups; "
-        if behaviour_neg:
-            neg_sentence += "not typically showing other behavioural patterns; "
-        if destination_neg:
-            neg_sentence += "and not strongly associated with some destinations."
-        summary.append(neg_sentence)
+    # -------------------------
+    # BOOKING FREQUENCY
+    # -------------------------
+    if field == "FrequencyBand":
+        mapping = {
+            "One-Time": "one-off holiday makers",
+            "Occasional": "light or occasional travellers",
+            "Regular": "consistent repeat travellers",
+            "Frequent": "highly engaged, frequent travellers"
+        }
+        phrase = mapping.get(category, category)
+        return (
+            f"Often behave like {phrase}"
+            if positive else
+            f"Seldom behave like {phrase}"
+        )
 
-    # Fallback when list too small
-    if not summary:
-        summary.append("✔️ Distinct behavioural and demographic traits compared to the wider base.")
+    # -------------------------
+    # RECENCY
+    # -------------------------
+    if field == "RecencyBand":
+        mapping = {
+            "0–1 yr (Very Recent)": "very recent bookers",
+            "1–2 yr (Recent)": "fairly recent bookers",
+            "2–3 yr (Lapsed)": "customers beginning to lapse",
+            "3–4 yr (Dormant)": "dormant customers",
+            "4–5 yr (Dormant+)": "long-term dormant customers",
+            "5+ yr (Very Old)": "very old or inactive customers"
+        }
+        phrase = mapping.get(category, category)
+        return (
+            f"More likely to be {phrase}"
+            if positive else
+            f"Less likely to be {phrase}"
+        )
 
-    return " ".join(summary)
+    # -------------------------
+    # DESTINATION
+    # -------------------------
+    if field == "Destination":
+        return (
+            f"Show a stronger preference for travelling to <b>{category}</b>"
+            if positive else
+            f"Less commonly travel to <b>{category}</b>"
+        )
+
+    # -------------------------
+    # CONTINENT
+    # -------------------------
+    if field == "Continent":
+        return (
+            f"More drawn to <b>{category}</b> holidays"
+            if positive else
+            f"Less drawn to <b>{category}</b> holidays"
+        )
+
+    # -------------------------
+    # PRODUCT TYPE
+    # -------------------------
+    if field == "Product":
+        return (
+            f"Often choose <b>{category}</b>-type trips"
+            if positive else
+            f"Less likely to book <b>{category}</b>-type trips"
+        )
+
+    # -------------------------
+    # FALLBACK
+    # -------------------------
+    return (
+        f"Tend to include more <b>{category}</b>"
+        if positive else
+        f"Less likely to include <b>{category}</b>"
+    )
 
 
 
@@ -384,7 +465,6 @@ def render_customer_profiles(df, bookings_df, people_df):
         for field, table in results.items():
             st.markdown(f"### {field}")
             st.dataframe(table)
-
 
 
 
