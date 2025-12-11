@@ -357,39 +357,53 @@ def render_customer_profiles(df, bookings_df, people_df):
     st.markdown("""
         <p>This section summarises who each customer segment really is —
         based on <b>statistically significant</b> differences from the overall population.</p> 
+        <p>✔️ = more likely traits<br>✖️ = less likely traits</p>
     """, unsafe_allow_html=True)
 
     # -----------------------------------------
-    # PERSONA SUMMARIES (clean text, no code blocks)
+    # PERSONA DEFINITIONS (REORDERED + NUMBERED)
     # -----------------------------------------
-
     personas = {
-        "Economy One-Timers": {
+        "Premium Explorers": {
             "summary": [
-                "✔️ Much more likely to come from lower-income backgrounds and make simple one-off bookings.",
-                "✔️ More likely to favour familiar European destinations like France and Germany.",
-                "✔️ More likely to be older and long inactive.",
-                "✖️ Much less likely to travel long-haul or return regularly.",
-                "✖️ Less likely to use digital channels or travel agents."
+                "✔️ Far more likely to be affluent, globally oriented travellers.",
+                "✔️ Strong preference for Africa, the Americas and Asia.",
+                "✔️ Book frequently and choose specialist accommodation.",
+                "✖️ Much less likely to use online booking channels.",
+                "✖️ Less likely to be Europe-focused."
             ],
             "strategy": [
-                "Keep offers simple and cost-conscious.",
-                "Promote easy European getaways.",
-                "Use phone-friendly or low-friction booking prompts."
+                "Offer personalised, concierge-style support.",
+                "Highlight inspirational long-haul journeys.",
+                "Use outbound channels rather than digital-only messaging."
             ]
         },
 
-        "Economy Casuals": {
+        "Premium Casuals": {
             "summary": [
-                "✔️ More likely to be light, occasional travellers who prefer calling by phone.",
-                "✔️ More likely to stick to familiar European destinations.",
-                "✖️ Much less likely to book online.",
-                "✖️ Less likely to behave like active or repeat travellers."
+                "✔️ More likely to be light, occasional travellers with a preference for Germany and Sweden.",
+                "✔️ Tend to enquire by phone more than online.",
+                "✖️ Much less likely to behave like frequent or repeat bookers.",
+                "✖️ Less likely to use websites or digital booking paths."
             ],
             "strategy": [
-                "Use reactivation campaigns with simple, clear offers.",
-                "Make content phone-led and personal.",
-                "Encourage small steps towards repeat behaviour."
+                "Use simple, non-digital-first messaging.",
+                "Encourage small repeat behaviours with low-commitment offers.",
+                "Use personalised phone-based engagement."
+            ]
+        },
+
+        "Premium One-Timers": {
+            "summary": [
+                "✔️ More likely to be lower-income, older customers booking one-off European trips.",
+                "✔️ Prefer simple channels such as telephone or website.",
+                "✖️ Much less likely to choose long-haul destinations.",
+                "✖️ Less likely to work in professional or managerial roles."
+            ],
+            "strategy": [
+                "Promote straightforward European packages.",
+                "Use simple, reassurance-based messaging.",
+                "Encourage a follow-up trip shortly after their first purchase."
             ]
         },
 
@@ -408,46 +422,32 @@ def render_customer_profiles(df, bookings_df, people_df):
             ]
         },
 
-        "Premium Explorers": {
+        "Economy Casuals": {
             "summary": [
-                "✔️ Far more likely to be affluent, globally oriented travellers.",
-                "✔️ Strong preference for Africa, the Americas and Asia.",
-                "✔️ Book frequently and choose specialist accommodation.",
-                "✖️ Much less likely to use online booking channels.",
-                "✖️ Less likely to be Europe-focused."
+                "✔️ More likely to be light, occasional travellers who prefer calling by phone.",
+                "✔️ More likely to stick to familiar European destinations.",
+                "✖️ Much less likely to book online.",
+                "✖️ Less likely to behave like active or repeat travellers."
             ],
             "strategy": [
-                "Offer personalised, concierge-style support.",
-                "Highlight inspirational long-haul journeys.",
-                "Use outbound channels rather than digital-only messaging."
+                "Use reactivation campaigns with simple, clear offers.",
+                "Make content phone-led and personal.",
+                "Encourage small steps toward repeat behaviour."
             ]
         },
 
-        "Premium One-Timers": {
+        "Economy One-Timers": {
             "summary": [
-                "✔️ More likely to be lower-income, older customers booking one-off European trips.",
-                "✔️ Prefer simple channels such as telephone or website.",
-                "✖️ Much less likely to choose long-haul destinations.",
-                "✖️ Less likely to work in professional or managerial roles."
+                "✔️ Much more likely to come from lower-income backgrounds and make simple one-off bookings.",
+                "✔️ More likely to favour familiar European destinations like France and Germany.",
+                "✔️ More likely to be older and long inactive.",
+                "✖️ Much less likely to travel long-haul or return regularly.",
+                "✖️ Less likely to use digital channels or travel agents."
             ],
             "strategy": [
-                "Promote straightforward European packages.",
-                "Use simple, reassurance-based messaging.",
-                "Encourage a follow-up booking shortly after their first purchase."
-            ]
-        },
-
-        "Saver Casuals": {
-            "summary": [
-                "✔️ More likely to be occasional travellers drawn to Australia and Greece.",
-                "✔️ More likely to be dormant for long periods.",
-                "✖️ Far less likely to use website channels.",
-                "✖️ Less likely to be higher-income or recently active."
-            ],
-            "strategy": [
-                "Use offline and phone-friendly engagement.",
-                "Promote long-haul inspiration with flexible payment options.",
-                "Run dormant-winback campaigns."
+                "Keep offers simple and cost-conscious.",
+                "Promote easy European getaways.",
+                "Use phone-friendly or low-friction booking prompts."
             ]
         },
 
@@ -463,16 +463,36 @@ def render_customer_profiles(df, bookings_df, people_df):
                 "Use exploration-themed bundles or multi-trip offers.",
                 "Tailor marketing around unusual, high-interest global destinations."
             ]
+        },
+
+        "Saver Casuals": {
+            "summary": [
+                "✔️ More likely to be occasional travellers drawn to Australia and Greece.",
+                "✔️ More likely to be dormant for long periods.",
+                "✖️ Far less likely to use website channels.",
+                "✖️ Less likely to be higher-income or recently active."
+            ],
+            "strategy": [
+                "Use offline and phone-friendly engagement.",
+                "Promote long-haul inspiration with flexible payment options.",
+                "Run dormant-winback campaigns."
+            ]
         }
     }
 
-    # -------- PERSONAS --------
-    for segment, info in personas.items():
+    # -----------------------------------------
+    # RENDER PERSONAS (numbered + star strategies)
+    # -----------------------------------------
+    for idx, (segment, info) in enumerate(personas.items(), start=1):
 
-        st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
+        st.markdown(
+            f"<h3 style='margin-top:35px;'>{idx}. {segment}</h3>",
+            unsafe_allow_html=True
+        )
 
-        # PERSONA TRAITS — keep ✔️ and ✖️, remove default bullet point
-        st.markdown("<ul style='list-style:none; padding-left:0; margin-left:0;'>", unsafe_allow_html=True)
+        # Persona traits (no extra bullets)
+        st.markdown("<ul style='list-style:none; padding-left:0; margin-left:0;'>",
+                    unsafe_allow_html=True)
 
         for line in info['summary']:
             st.markdown(
@@ -482,18 +502,17 @@ def render_customer_profiles(df, bookings_df, people_df):
 
         st.markdown("</ul>", unsafe_allow_html=True)
 
-        # STRATEGY — keep normal bullet points
-        st.markdown("<b>Recommended Strategy:</b>", unsafe_allow_html=True)
+        # ⭐ Recommended Strategy
+        st.markdown("<b>⭐ Recommended Strategy:</b>", unsafe_allow_html=True)
 
         st.markdown("<ul style='font-size:20px; line-height:1.6;'>", unsafe_allow_html=True)
         for line in info['strategy']:
             st.markdown(f"<li>{line}</li>", unsafe_allow_html=True)
         st.markdown("</ul>", unsafe_allow_html=True)
 
-        st.markdown("<hr style='margin-top:30px; margin-bottom:30px;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin-top:30px; margin-bottom:30px;'>",
+                    unsafe_allow_html=True)
 
-
- 
 
 
 
