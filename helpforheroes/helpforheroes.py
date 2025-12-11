@@ -214,29 +214,20 @@ def render_customer_profiles(df, bookings_df, people_df):
 
 <h4>1️⃣ Proportional Representation</h4>
 <p>
-For each characteristic (age, income, gender, occupation, channel, frequency, recency,
-destination, continent, product) we measured:<br><br>
-• The % of the <b>overall population</b> in each category<br>
-• The % of the <b>segment</b> in each category<br><br>
-This reveals whether a segment contains <b>more</b> or <b>fewer</b> of a group than expected.
+For each characteristic (age, income, gender, occupation, channel, frequency, recency , destination, continent, product),
+we measured:<br></br>
+<br>• The % of the <b>overall population</b> in each category  
+<br>• The % of the <b>segment</b> in each category  
+</p>
+<p>This shows whether a segment has <b>more</b> or <b>fewer</b> of a group than expected.<br></br>
 </p>
 
-<h4>2️⃣ Statistical Reliability</h4>
+<h4>2️⃣ Z-Test for Statistical Reliability + Index for Effect Size</h4>
 <p>
-A <b>two-proportion Z-test</b> confirms if differences are statistically meaningful  
-(p &lt; 0.05). This filters out random noise.
-</p>
-
-<h4>3️⃣ Effect Size Index</h4>
-<p>
-We compute a simple, intuitive index:<br>
-• <b>1.0</b> = as expected<br>
-• <b>2.0</b> = twice as common<br>
-• <b>0.5</b> = half as common<br><br>
-Only statistically significant and materially meaningful differences are shown.
-</p>
-
-<br>
+We apply a <b>proportions Z-test</b> to confirm whether those differences are
+statistically meaningful and not random noise. Then compute an intuitive index to assess the effect size.<br></br>
+</p> 
+<br></br>
 <h2>Customer Profiling by Segment</h2>
 """,
         unsafe_allow_html=True
