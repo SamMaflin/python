@@ -344,7 +344,7 @@ def intuitive_phrase(field, category, positive=True):
 def render_customer_profiles(df, bookings_df, people_df):
     """
     Render intuitive persona-style segment summaries AND
-    detailed statistically significant dominance insights.
+    simple recommendations for how to maximise value from each segment.
     """
 
     # Run profiling engine
@@ -361,111 +361,135 @@ def render_customer_profiles(df, bookings_df, people_df):
         ✖️ = traits they are less likely to have</p>
     """, unsafe_allow_html=True)
 
-    # ------------------------------------------------------
-    # 1. Parse insights → structured per segment & per field
-    # ------------------------------------------------------
-    parsed = []
-    for txt in insights:
-        # Example format:
-        # "[AgeBracket] High Value: HIGHLY dominant for '60+' — ..."
-        try:
-            field = txt.split("]")[0].replace("[", "")
-            remainder = txt.split("] ")[1]
-            segment = remainder.split(":")[0]
-            category = txt.split("'")[1]
-            dom = "Under" if "Under-represented" in txt else "Over"
-            parsed.append((segment, field, category, dom, txt))
-        except:
-            continue
+    # -----------------------------------------
+    # PERSONA SUMMARIES — EFFECT-SCALED LANGUAGE
+    # -----------------------------------------
 
-    # Group insights by segment
-    by_segment = {}
-    for segment, field, category, dom, full in parsed:
-        by_segment.setdefault(segment, []).append((field, category, dom, full))
+    personas = {
+        "Economy One-Timers": {
+            "summary": """
+                ✔️ Much more likely to come from lower-income backgrounds, make simple one-off bookings, 
+                and favour familiar European destinations like France and Germany.<br>
+                ✔️ More likely to be older and long inactive.<br><br>
+                ✖️ Much less likely to travel long-haul or return regularly.<br>
+                ✖️ Less likely to use digital channels or travel agents.
+            """,
+            "strategy": """
+                • Keep offers simple and cost-conscious.<br>
+                • Promote easy European getaways.<br>
+                • Use phone-friendly or low-friction booking prompts.
+            """
+        },
 
-    # ------------------------------------------------------
-    # 2. Persona-style summaries per segment
-    # ------------------------------------------------------
-    st.markdown("<h2>🧭 Segment Persona Summaries</h2>", unsafe_allow_html=True)
+        "Economy Casuals": {
+            "summary": """
+                ✔️ More likely to be light, occasional travellers who prefer phoning to enquire and stick to familiar European destinations.<br>
+                ✔️ More likely to be dormant for long stretches.<br><br>
+                ✖️ Far less likely to book online or behave like frequent travellers.
+            """,
+            "strategy": """
+                • Use reactivation campaigns with clear, simple pricing.<br>
+                • Keep communication personal and phone-led.<br>
+                • Encourage small steps toward repeat-booking habits.
+            """
+        },
 
-    if not by_segment:
-        st.info("No statistically significant differences found.")
-        return
+        "Economy Explorers": {
+            "summary": """
+                ✔️ Much more likely to be higher-income, active travellers exploring destinations across Europe, the Americas and Asia.<br>
+                ✔️ More likely to book frequently and very recently.<br><br>
+                ✖️ Much less likely to be low-income or Europe-only travellers.
+            """,
+            "strategy": """
+                • Promote diverse itineraries and multi-destination offers.<br>
+                • Use loyalty-style incentives to maintain high engagement.<br>
+                • Showcase long-haul and premium upgrade opportunities.
+            """
+        },
 
-    for segment, items in by_segment.items():
+        "Premium Explorers": {
+            "summary": """
+                ✔️ Far more likely to be affluent, globally oriented travellers choosing long-haul destinations like Africa, the Americas and Asia.<br>
+                ✔️ Book frequently and prefer specialist accommodation offerings.<br><br>
+                ✖️ Much less likely to be Europe-focused or digital-channel users.
+            """,
+            "strategy": """
+                • Offer personalised, concierge-style travel support.<br>
+                • Highlight long-haul inspirational content.<br>
+                • Use outbound phone/email rather than digital-led acquisition.
+            """
+        },
 
-        st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
+        "Premium One-Timers": {
+            "summary": """
+                ✔️ More likely to be lower-income, older customers booking one-off European trips.<br>
+                ✔️ Prefer simple channels like telephone or website.<br><br>
+                ✖️ Less likely to be professionals or long-haul travellers.
+            """,
+            "strategy": """
+                • Promote straightforward European packages.<br>
+                • Use simple value framing and reassurance messages.<br>
+                • Encourage trial of a second “follow-up” trip.
+            """
+        },
 
-        overs = []
-        unders = []
+        "Saver Casuals": {
+            "summary": """
+                ✔️ More likely to be occasional travellers drawn to long-haul destinations like Australia and Greece.<br>
+                ✔️ More likely to be long-term dormant.<br><br>
+                ✖️ Far less likely to use online channels or travel recently.
+            """,
+            "strategy": """
+                • Use offline, phone-friendly engagement methods.<br>
+                • Offer inspirational long-haul content with easy payment options.<br>
+                • Use dormant-winback campaigns.
+            """
+        },
 
-        for field, category, dom, full in items:
-            positive = (dom == "Over")
-            phrase = intuitive_phrase(field, category, positive=positive)
+        "Saver Explorers": {
+            "summary": """
+                ✔️ Much more likely to be higher-income repeat travellers with strong interest in Africa and Portugal.<br>
+                ✔️ Prefer long-haul or niche destinations over mainstream Europe.<br><br>
+                ✖️ Much less likely to be low-income or infrequent travellers.
+            """,
+            "strategy": """
+                • Promote niche and specialist itineraries.<br>
+                • Encourage loyalty with multi-trip or exploration-themed bundles.<br>
+                • Provide tailored content about unusual global destinations.
+            """
+        }
+    }
 
-            if positive:
-                overs.append(f"✔️ {phrase}")
-            else:
-                unders.append(f"✖️ {phrase}")
+    # -----------------------------------------
+    # RENDER PERSONAS
+    # -----------------------------------------
+    for segment, info in personas.items():
+        st.markdown(f"<h3>{segment}</h3>", unsafe_allow_html=True)
 
-        # Present segment profile
-        if overs:
-            st.markdown("<h4 style='color:green;'>What typically defines them ✔️</h4>", unsafe_allow_html=True)
-            for line in overs:
-                st.markdown(f"- {line}", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style='padding-left:10px; font-size:20px;'>
+                {info['summary']}
+            </div>
+        """, unsafe_allow_html=True)
 
-        if unders:
-            st.markdown("<h4 style='color:red;'>Traits they are less associated with ✖️</h4>", unsafe_allow_html=True)
-            for line in unders:
-                st.markdown(f"- {line}", unsafe_allow_html=True)
+        st.markdown("<b>Recommended Strategy:</b>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style='padding-left:10px; font-size:20px; color:#555;'>
+                {info['strategy']}
+            </div>
+        """, unsafe_allow_html=True)
 
         st.markdown("<hr>", unsafe_allow_html=True)
 
-    # ------------------------------------------------------
-    # 3. Detailed breakdown by attribute
-    # ------------------------------------------------------
-    st.markdown("<h2 style='margin-top:60px;'>📊 Detailed Statistically Significant Insights</h2>",
-                unsafe_allow_html=True)
+    # -----------------------------------------
+    # OPTIONAL: Expandable raw statistical insights
+    # -----------------------------------------
+    with st.expander("📊 View detailed statistically significant traits"):
+        for i in insights:
+            st.markdown(f"- {i}")
 
-    # Group insights by profiling dimension
-    grouped = {}
-    for text in insights:
-        try:
-            field = text.split("]")[0].replace("[", "")
-            grouped.setdefault(field, []).append(text)
-        except:
-            continue
 
-    # Display each dimension
-    for field, entries in grouped.items():
-
-        st.markdown(f"<h3 style='margin-top:40px;'>{field}</h3>", unsafe_allow_html=True)
-
-        over = [i for i in entries if ("dominant" in i)]
-        under = [i for i in entries if ("Under-represented" in i)]
-
-        if not over and not under:
-            st.info("No significant differences for this attribute.")
-            continue
-
-        if over:
-            st.markdown("<h4 style='color:green;'>Over-represented</h4>", unsafe_allow_html=True)
-            for line in over:
-                st.markdown(f"• {line}")
-
-        if under:
-            st.markdown("<h4 style='color:red;'>Under-represented</h4>", unsafe_allow_html=True)
-            for line in under:
-                st.markdown(f"• {line}")
-
-    # ------------------------------------------------------
-    # 4. Raw dominance tables (optional)
-    # ------------------------------------------------------
-    with st.expander("View full dominance tables (all attributes)"):
-        for field, table in results.items():
-            st.markdown(f"### {field}")
-            st.dataframe(table)
-
+ 
 
 
 
