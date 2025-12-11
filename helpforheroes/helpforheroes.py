@@ -461,32 +461,30 @@ def render_customer_profiles(df, bookings_df, people_df):
     }
 
     # -----------------------------------------
-    # RENDER PERSONAS (clean, no code-box artefacts)
+    # RENDER PERSONAS (clean, no code boxes)
     # -----------------------------------------
+
     for segment, info in personas.items():
 
         st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
 
-        # Persona Summary (no div, no grey box, no indentation → no code block)
-        st.markdown(
-            f"""
-            <p style='font-size:20px; line-height:1.6;'>
-            {info['summary']}
-            </p>
-            """,
-            unsafe_allow_html=True
-        )
+        # Parse summary lines into bullet points
+        summary_lines = [line.strip() for line in info['summary'].split("\n") if line.strip()]
 
+        st.markdown("<ul style='font-size:20px; line-height:1.6;'>", unsafe_allow_html=True)
+        for line in summary_lines:
+            st.markdown(f"<li>{line}</li>", unsafe_allow_html=True)
+        st.markdown("</ul>", unsafe_allow_html=True)
+
+        # Strategy
         st.markdown("<b>Recommended Strategy:</b>", unsafe_allow_html=True)
 
-        st.markdown(
-            f"""
-            <ul style='font-size:20px; line-height:1.6; margin-top:8px;'>
-                {''.join([f"<li>{line.strip()}</li>" for line in info['strategy'].split("<br>") if line.strip()])}
-            </ul>
-            """,
-            unsafe_allow_html=True
-        )
+        strategy_lines = [line.strip() for line in info['strategy'].split("<br>") if line.strip()]
+
+        st.markdown("<ul style='font-size:20px; line-height:1.6;'>", unsafe_allow_html=True)
+        for line in strategy_lines:
+            st.markdown(f"<li>{line}</li>", unsafe_allow_html=True)
+        st.markdown("</ul>", unsafe_allow_html=True)
 
         st.markdown("<hr style='margin-top:30px; margin-bottom:30px;'>", unsafe_allow_html=True)
 
