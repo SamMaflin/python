@@ -200,9 +200,37 @@ def render_customer_profiles(df, bookings_df, people_df):
 
 
 
-st.markdown(
-    """
+def render_customer_profiles(df, bookings_df, people_df):
+
+    # Run profiling engine
+    prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
+
+    # ============================================================
+    # INTRODUCTION
+    # ============================================================
+    st.markdown(
+        """
 <h2>Customer Profiling Approach</h2>
+
+<h4>1️⃣ Proportional Representation</h4>
+<p>
+For each characteristic (age, income, gender, occupation, channel, frequency, recency , destination, continent, product),
+we measured:<br></br>
+<br>• The % of the <b>overall population</b> in each category  
+<br>• The % of the <b>segment</b> in each category  
+</p>
+<p>This shows whether a segment has <b>more</b> or <b>fewer</b> of a group than expected.<br></br>
+</p>
+
+<h4>2️⃣ Z-Test for Statistical Reliability + Index for Effect Size</h4>
+<p>
+We apply a <b>proportions Z-test</b> to confirm whether those differences are
+statistically meaningful and not random noise. Then compute an intuitive index to assess the effect size.<br></br>
+</p> 
+<br></br>
+
+<h2>Final Segment Interpretations</h2>
+<br>
 
 <h4>1️⃣ Proportional Representation</h4>
 <p>
@@ -350,7 +378,6 @@ Overall, Saver Explorers are active, curious travellers who explore widely while
 """,
     unsafe_allow_html=True
 )
-
 
 
 
