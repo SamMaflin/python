@@ -262,32 +262,50 @@ def summarise_traits(overs, unders):
 
 def render_customer_profiles(df, bookings_df, people_df):
     """
-    Render SHORT, intuitive segment persona summaries.
-    No long lists, no statistical breakdowns.
+    Render SHORT intuitive segment persona summaries.
     """
 
     prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
 
     st.markdown("<h2>🧭 Segment Persona Summaries</h2>", unsafe_allow_html=True)
-    st.markdown("""
-        <p>These personas summarise the most meaningful, statistically significant traits 
-        of each customer segment, expressed intuitively.</p>
-    """, unsafe_allow_html=True)
 
-    # --- Parse structure from insights ---
+    if not insights or len(insights) == 0:
+        st.warning("No statistically significant traits were detected.")
+        return
+
+    # -------------------------------------------------------------
+    # 1. Robust parsing – handles ANY insight format your engine emits
+    # -------------------------------------------------------------
     parsed = []
+
     for txt in insights:
         try:
+            # Extract field between [ ... ]
             field = txt.split("]")[0].replace("[", "")
-            segment = txt.split("] ")[1].split(":")[0]
+            
+            # Extract segment name (between ']' and ':')
+            after_bracket = txt.split("]")[1].strip()
+            segment = after_bracket.split(":")[0].strip()
+
+            # Extract category inside single quotes
             category = txt.split("'")[1]
+
+            # Over or under
             dom = "Under" if "Under-represented" in txt else "Over"
+
             readable = intuitive_phrase(field, category, positive=(dom=="Over"))
             parsed.append((segment, dom, readable))
-        except:
-            continue
 
-    # --- Group traits by segment ---
+        except Exception as e:
+            print("Insight parsing failed:", txt, e)
+
+    if len(parsed) == 0:
+        st.warning("Insights found but could not be parsed — please check formatting.")
+        return
+
+    # -------------------------------------------------------------
+    # 2. Group traits by segment
+    # -------------------------------------------------------------
     by_segment = {}
     for segment, dom, phrase in parsed:
         by_segment.setdefault(segment, {"over": [], "under": []})
@@ -296,16 +314,23 @@ def render_customer_profiles(df, bookings_df, people_df):
         else:
             by_segment[segment]["under"].append(phrase)
 
-    # --- Generate summarised personas ---
+    # -------------------------------------------------------------
+    # 3. Generate compact persona summaries
+    # -------------------------------------------------------------
     for segment, groups in by_segment.items():
+
+        overs = groups["over"]
+        unders = groups["under"]
 
         st.markdown(f"<h3 style='margin-top:30px;'>{segment}</h3>", unsafe_allow_html=True)
 
-        summary_text = summarise_traits(groups["over"], groups["under"])
+        # Generate compressed summary
+        persona_text = summarise_traits(overs, unders)
 
-        st.markdown(f"""
-            <p style='font-size:22px; line-height:1.5;'>{summary_text}</p>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f"<p style='font-size:22px; line-height:1.5;'>{persona_text}</p>",
+            unsafe_allow_html=True
+        )
 
         st.markdown("<hr>", unsafe_allow_html=True)
 
