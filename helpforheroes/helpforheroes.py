@@ -362,7 +362,7 @@ def render_customer_profiles(df, bookings_df, people_df):
     st.markdown("<h2>🔍 Customer Segment Profiles</h2>", unsafe_allow_html=True)
     st.markdown("""
         <p>This section summarises who each customer segment really is —
-        based on <b>statistically significant</b> differences from the overall population.</p>  
+        based on <b>statistically significant</b> differences from the overall population (customer base) and the effect sizes (percentage points).</p>  
     """, unsafe_allow_html=True)
 
     # -----------------------------------------

@@ -2,47 +2,60 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # ============================================================
 # DATA LOADING
 # ============================================================
 def load_helpforheroes_data(file_obj):
     """
-    Load Excel file and return a dict with People_Data and Bookings_Data
-    as DataFrames (empty if missing).
+    Load Excel file and return a dictionary containing:
+    - People_Data
+    - Bookings_Data
+    
+    If sheets are missing, empty DataFrames are returned.
     """
     xls = pd.ExcelFile(file_obj)
-    data = {sheet: pd.read_excel(xls, sheet) for sheet in xls.sheet_names}
+    sheets = {sheet: pd.read_excel(xls, sheet) for sheet in xls.sheet_names}
 
-    data["People_Data"] = pd.DataFrame(data.get("People_Data", pd.DataFrame()))
-    data["Bookings_Data"] = pd.DataFrame(data.get("Bookings_Data", pd.DataFrame()))
-
-    return data
-
-
-# Print unique booking data destination, continent and product
-def summarize_booking_data(bookings_df):
-    if bookings_df.empty:
-        print("No booking data available.")
-        return
-
-    destinations = bookings_df['Destination'].dropna().unique()
-    continents = bookings_df['Continent'].dropna().unique()
-    products = bookings_df['Product'].dropna().unique()
-
-    print("Unique Destinations:", destinations)
-    print("Unique Continents:", continents)
-    print("Unique Products:", products)
+    return {
+        "People_Data": sheets.get("People_Data", pd.DataFrame()),
+        "Bookings_Data": sheets.get("Bookings_Data", pd.DataFrame())
+    }
 
 
 # ============================================================
-# FIX: Load file and call the function properly
+# MISSING DATA SUMMARY
 # ============================================================
+def missing_summary(df):
+    """
+    Returns a DataFrame summarizing missing values for each column:
+    - Missing Values: count of NaN entries
+    - Percent Missing: % of NaN relative to total rows
+    """
+    if df.empty:
+        return pd.DataFrame(columns=["Missing Values", "Percent Missing"])
 
-# Example: replace 'your_file.xlsx' with your actual file object or path
+    missing_count = df.isna().sum()
+    missing_percent = (missing_count / len(df)) * 100
+
+    summary = pd.DataFrame({
+        "Missing Values": missing_count,
+        "Percent Missing (%)": missing_percent.round(2)
+    })
+
+    return summary
+
+
+# ============================================================
+# LOAD DATA + RUN MISSING SUMMARY
+# ============================================================
 file_obj = "helpforheroes/helpforheroes.xls"
-
 data = load_helpforheroes_data(file_obj)
-bookings_df = data["Bookings_Data"]
 
-summarize_booking_data(bookings_df)
+people_missing = missing_summary(data["People_Data"])
+bookings_missing = missing_summary(data["Bookings_Data"])
+
+print("=== Missing Summary: People_Data ===")
+print(people_missing)
+
+print("\n=== Missing Summary: Bookings_Data ===")
+print(bookings_missing)
