@@ -202,8 +202,8 @@ def render_customer_profiles(df, bookings_df, people_df):
 
 def render_customer_profiles(df, bookings_df, people_df):
     """
-    Render statistically significant dominance insights for each segment.
-    Uses the customer_profiles() engine to produce a clean Streamlit output.
+    Render statistically significant dominance insights AND
+    intuitive segment summaries using ✔️ and ✖️ indicators.
     """
 
     # Run profiling engine
@@ -213,59 +213,109 @@ def render_customer_profiles(df, bookings_df, people_df):
                 unsafe_allow_html=True)
 
     st.markdown("""
-        <p>The tables below show <b>only statistically significant</b> differences 
-        (p < 0.05) between each segment and the overall customer population.</p>
+        <p>Below are intuitive summaries describing <b>who each segment is</b>,
+        based on <b>only statistically significant (p < 0.05)</b> over/under-representations.</p>
     """, unsafe_allow_html=True)
 
-    # -------------------------------
-    # 1. Group insights by dimension
-    # -------------------------------
+    # ------------------------------------------------------
+    # 1. Parse insights → structured per segment & per field
+    # ------------------------------------------------------
+    # Example insight format:
+    # "[AgeBracket] High Value: HIGHLY dominant for '60+' — 2.5× ..."
+    parsed = []
+    for txt in insights:
+        try:
+            field = txt.split("]")[0].replace("[", "")
+            remainder = txt.split("] ")[1]
+            segment = remainder.split(":")[0]
+            dom = ("Under-represented" if "Under-represented" in txt else "Over")
+            category = txt.split("'")[1]
+            parsed.append((segment, field, category, dom, txt))
+        except:
+            continue
+
+    # Group insights by segment
+    by_segment = {}
+    for segment, field, category, dom, full in parsed:
+        by_segment.setdefault(segment, []).append((field, category, dom, full))
+
+    # ------------------------------------------------------
+    # 2. Write natural-language summaries per segment
+    # ------------------------------------------------------
+    st.markdown("<h2>🧭 Segment Summary Profiles</h2>", unsafe_allow_html=True)
+
+    if not by_segment:
+        st.info("No statistically significant differences available.")
+        return
+
+    for segment, items in by_segment.items():
+        st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
+
+        overs = []
+        unders = []
+
+        for field, category, dom, full in items:
+            if dom == "Over":
+                overs.append(f"✔️ More likely to be: <b>{category}</b> <span style='color:green;'>([{field}])</span>")
+            else:
+                unders.append(f"✖️ Less likely to be: <b>{category}</b> <span style='color:red;'>([{field}])</span>")
+
+        if overs:
+            st.markdown("<h4 style='color:green;'>Who they ARE ✔️</h4>", unsafe_allow_html=True)
+            for line in overs:
+                st.markdown(f"- {line}", unsafe_allow_html=True)
+
+        if unders:
+            st.markdown("<h4 style='color:red;'>Who they ARE NOT ✖️</h4>", unsafe_allow_html=True)
+            for line in unders:
+                st.markdown(f"- {line}", unsafe_allow_html=True)
+
+        # Divider
+        st.markdown("<hr>", unsafe_allow_html=True)
+
+    # ------------------------------------------------------
+    # 3. Existing detailed insights grouped by field
+    # ------------------------------------------------------
+    st.markdown("<h2 style='margin-top:60px;'>📊 Detailed Statistically Significant Outputs</h2>",
+                unsafe_allow_html=True)
+
     grouped = {}
     for text in insights:
-        # insights follow the format:
-        # "[AgeBracket] High Value: HIGHLY dominant for '60+' — ..."
         try:
             field = text.split("]")[0].replace("[", "")
             grouped.setdefault(field, []).append(text)
         except:
             continue
 
-    # ----------------------------------
-    # 2. Display insights per dimension
-    # ----------------------------------
     for field, entries in grouped.items():
 
         st.markdown(f"<h3 style='margin-top:40px;'>{field}</h3>", unsafe_allow_html=True)
 
-        # Split by over-rep vs under-rep
         over = [i for i in entries if ("dominant" in i)]
         under = [i for i in entries if ("Under-represented" in i)]
 
-        if len(over) == 0 and len(under) == 0:
+        if not over and not under:
             st.info("No statistically significant differences for this attribute.")
             continue
 
-        # OVER-REPRESENTED
         if over:
             st.markdown("<h4 style='color:green;'>Over-represented</h4>", unsafe_allow_html=True)
             for line in over:
                 st.markdown(f"• {line}")
 
-        # UNDER-REPRESENTED
         if under:
             st.markdown("<h4 style='color:red;'>Under-represented</h4>", unsafe_allow_html=True)
             for line in under:
                 st.markdown(f"• {line}")
 
-    # ----------------------------------
-    # 3. Offer expandable view of raw tables
-    # ----------------------------------
+    # ------------------------------------------------------
+    # 4. Raw tables (optional)
+    # ------------------------------------------------------
     with st.expander("View full dominance tables (all attributes)"):
         for field, table in results.items():
             st.markdown(f"### {field}")
             st.dataframe(table)
 
- 
 
 
 # ============================================================
