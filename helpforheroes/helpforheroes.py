@@ -9,16 +9,15 @@ import streamlit as st
 from data_loader import load_helpforheroes_data
 from metrics_engine import calculate_customer_value_metrics
 from segment_barchart import segment_barchart_plot
-from customer_profiles import customer_profiles
+from customer_profiles import customer_profiles  # returns (prof_df, results, insights)
 
 # ============================================================
-# PAGE CONFIG — NOW MATCHES YOUR ORIGINAL STYLE
+# PAGE CONFIG
 # ============================================================
 st.set_page_config(
     page_title="Help for Heroes — Customer Insights",
-    layout="centered"   # ⬅️ RESTORED ORIGINAL LOOK
+    layout="centered"
 )
-
 
 # ============================================================
 # GLOBAL COLOURS
@@ -29,7 +28,7 @@ STRATEGIC_COLOR  = "#FF476C"
 
 
 # ============================================================
-# CSS — EXACT SAME STYLING YOU USED BEFORE
+# CSS
 # ============================================================
 def inject_css():
     st.markdown(
@@ -97,8 +96,8 @@ def render_introduction():
     st.markdown(
         """
         <p>
-        <span style="color:orange; font-weight:bold;">All customers create value</span> — just not equally.  
-        Some generate high spend, others show great loyalty, and some align closely with strategic goals.
+        <span style="color:orange; font-weight:bold;">All customers create value</span> — just not equally.<br>
+        Some generate high spend, others show strong loyalty, and some align closely with strategic goals.
         Understanding <b>how</b> customers differ enables better targeting, personalisation,  
         and more efficient value growth.
         </p>
@@ -113,13 +112,13 @@ def render_value_dimensions():
     st.markdown(
         f"""
         <h4><span style="color:{SPEND_COLOR}; font-weight:bold;">● Spend Score</span> — Financial Contribution</h4>
-        <p>Based on average booking value and maximum booking value.</p>
+        <p>Based on average booking value and maximum booking value, normalised to 0–100.</p>
 
         <h4><span style="color:{ENGAGEMENT_COLOR}; font-weight:bold;">● Engagement Score</span> — Behaviour & Loyalty</h4>
-        <p>Based on booking frequency, destination diversity, and recency.</p>
+        <p>Combines booking frequency, recency, and diversity of destinations into a 0–100 index.</p>
 
-        <h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — (Optional) Strategic Alignment</h4>
-        <p>Based on long-haul trips, package behaviour, and channel fit.</p>
+        <h4><span style="color:{STRATEGIC_COLOR}; font-weight:bold;">● Strategic Score</span> — Strategic Alignment</h4>
+        <p>Captures long-haul, package holiday and channel-fit behaviour where relevant.</p>
         """,
         unsafe_allow_html=True
     )
@@ -139,7 +138,7 @@ def render_metric_construction():
         <ul>
             <li>Average Booking Amount reflects typical trip value.</li>
             <li>Maximum Booking Amount captures premium behaviour.</li>
-            <li>Scores normalised and blended at 70% / 30%.</li>
+            <li>Scores are ranked and blended 70% / 30% to reduce outlier skew.</li>
         </ul>
         """,
         unsafe_allow_html=True
@@ -150,9 +149,9 @@ def render_metric_construction():
         f"""
         <h3 class='small-h3'><span style='color:{ENGAGEMENT_COLOR}; font-weight:bold;'>Engagement Score (0–100)</span></h3>
         <ul>
-            <li>Includes Frequency, Recency and Diversity.</li>
-            <li>Diversity = unique destinations + exploration ratio.</li>
-            <li>Weights (50/30/20) reflect realistic travel patterns.</li>
+            <li>Includes Frequency, Recency and Destination Diversity.</li>
+            <li>Diversity = unique destinations + exploration ratio (unique / total).</li>
+            <li>Weights: Frequency 50%, Recency 30%, Diversity 20%.</li>
         </ul>
         """,
         unsafe_allow_html=True
@@ -163,8 +162,8 @@ def render_metric_construction():
         f"""
         <h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic Score (0–100)</span></h3>
         <ul>
-            <li>Binary signals: long-haul, package, channel fit.</li>
-            <li>Weighted (50/30/20) based on commercial value.</li>
+            <li>Long-haul destinations, package holidays and priority channels.</li>
+            <li>Mapped to a simple 0/100 style contribution per signal.</li>
         </ul>
         """,
         unsafe_allow_html=True
@@ -186,54 +185,96 @@ def render_segment_barchart(df, bookings_df):
     st.markdown("<h2>📊 Customer Base vs Revenue Contribution by Segment</h2>", unsafe_allow_html=True)
     segment_barchart_plot(df, bookings_df)
 
-  
 
+# ============================================================
+# CUSTOMER PROFILES + SIGNIFICANT INSIGHTS
+# ============================================================
 def render_customer_profiles(df, bookings_df, people_df):
 
-    # Run profiling engine
+    # Run profiling engine (includes statistical tests)
     prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
 
-    # ============================================================
-    # SECTION HEADER
-    # ============================================================
-    st.markdown("<h2>📊 Customer Segment Profiles...</h2>", unsafe_allow_html=True)
-
-
-
-def render_customer_profiles(df, bookings_df, people_df):
-
-    # Run profiling engine
-    prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
-
-    # ============================================================
-    # INTRODUCTION
-    # ============================================================
+    # ------------------------------------------------------------
+    # Intro: how the profiling was built
+    # ------------------------------------------------------------
     st.markdown(
         """
-<h2>Customer Profiling Approach</h2>
+<h2>Customer Profiling & Segment Insights</h2>
 
 <h4>1️⃣ Proportional Representation</h4>
 <p>
-For each characteristic (age, income, gender, occupation, channel, frequency, recency , destination, continent, product),
-we measured:<br></br>
-<br>• The % of the <b>overall population</b> in each category  
-<br>• The % of the <b>segment</b> in each category  
-</p>
-<p>This shows whether a segment has <b>more</b> or <b>fewer</b> of a group than expected.<br></br>
+For each characteristic (age, income, gender, occupation, booking channel, frequency, recency,
+destination, continent, product), we calculated:<br>
+• The % of the <b>overall customer base</b> in each category<br>
+• The % of each <b>segment</b> in the same category<br>
+This shows whether a segment has <b>more</b> or <b>fewer</b> of a given group than expected.
 </p>
 
-<h4>2️⃣ Z-Test for Statistical Reliability + Index for Effect Size</h4>
+<h4>2️⃣ Statistical Testing (Z-Test)</h4>
 <p>
-We apply a <b>proportions Z-test</b> to confirm whether those differences are
-statistically meaningful and not random noise. Then compute an intuitive index to assess the effect size.<br></br>
-</p> 
-<br></br>
+We then used a <b>two-proportion Z-test</b> to check whether the difference between the segment
+and the total base is statistically reliable (p &lt; 0.05), rather than random noise.
+</p>
 
-<h2>Customer Profiling By Segment</h2>""",
-            unsafe_allow_html=True
-        )
+<h4>3️⃣ Index for Effect Size</h4>
+<p>
+For every statistically significant result, we calculate a simple Index:<br>
+• Index = 1.0 → exactly as expected<br>
+• Index = 2.0 → twice as common as expected<br>
+• Index = 0.5 → half as common as expected<br>
+This helps quantify how strong the difference is, not just whether it exists.
+</p>
 
+<p>
+Below, each segment has its own panel, listing only the <b>statistically significant</b> and
+<strong>meaningful</strong> over- or under-representation patterns.
+</p>
+""",
+        unsafe_allow_html=True
+    )
 
+    st.markdown("---")
+
+    # ------------------------------------------------------------
+    # Group INSIGHTS by segment name
+    # ------------------------------------------------------------
+    segment_insights = {}
+
+    for text in insights:
+        # Example insight:
+        # "[IncomeBand] Economy Casuals: HIGHLY dominant for 'Low Income' — 2.26× (Segment 30.0% vs Pop 13.3%) (p=0.0000)"
+        try:
+            after_bracket = text.split("] ", 1)[1]    # "Economy Casuals: ..."
+            segment_name = after_bracket.split(":", 1)[0].strip()
+        except Exception:
+            continue
+
+        segment_insights.setdefault(segment_name, []).append(text)
+
+    # Use the order of segments as they appear in df (and only those with insights)
+    ordered_segments = []
+    for seg in df["Segment"].dropna().unique():
+        if seg in segment_insights and seg not in ordered_segments:
+            ordered_segments.append(seg)
+
+    # ------------------------------------------------------------
+    # Render expander per segment with its significant insights
+    # ------------------------------------------------------------
+    for i, segment in enumerate(ordered_segments, start=1):
+        seg_insights = segment_insights[segment]
+
+        with st.expander(f"{i}. {segment}", expanded=False):
+            st.markdown(f"<h3>{segment}</h3>", unsafe_allow_html=True)
+            st.markdown("<h4>Key Profiling Signals</h4>", unsafe_allow_html=True)
+
+            # Render insights as a clean bullet list
+            items_html = "".join([f"<li>{s}</li>" for s in seg_insights])
+            st.markdown(f"<ul>{items_html}</ul>", unsafe_allow_html=True)
+
+            st.markdown(
+                "<p><i>Only statistically significant and materially over/under-represented patterns are shown.</i></p>",
+                unsafe_allow_html=True
+            )
 
 
 # ============================================================
