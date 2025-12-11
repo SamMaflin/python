@@ -229,22 +229,6 @@ statistically meaningful and not random noise. Then compute an intuitive index t
 </p> 
 <br></br>
 
-<h2>Final Segment Interpretations</h2>
-<br>
-
-<h4>1️⃣ Proportional Representation</h4>
-<p>
-For each characteristic (age, income, gender, occupation, booking channel, frequency, recency, destination, continent, product),
-we compare the percentage within each segment to the percentage in the total customer base.
-This tells us whether a group is over- or under-represented.
-</p>
-
-<h4>2️⃣ Statistical Reliability</h4>
-<p>
-A proportions Z-test ensures each difference is statistically meaningful.  
-We only present insights that are both significant and practically important.
-</p>
-
 <br><br>
 <h2>Final Segment Interpretations</h2>
 <br>
