@@ -350,6 +350,12 @@ def render_customer_profiles(df, bookings_df, people_df):
     # Run profiling engine
     prof_df, results, insights = customer_profiles(df, bookings_df, people_df)
 
+    # Emoji map for numbering
+    num_emoji = {
+        1: "1️⃣", 2: "2️⃣", 3: "3️⃣", 4: "4️⃣", 5: "5️⃣",
+        6: "6️⃣", 7: "7️⃣", 8: "8️⃣", 9: "9️⃣"
+    }
+
     # -----------------------------------------
     # HEADER
     # -----------------------------------------
@@ -361,8 +367,9 @@ def render_customer_profiles(df, bookings_df, people_df):
     """, unsafe_allow_html=True)
 
     # -----------------------------------------
-    # PERSONA DEFINITIONS (REORDERED + NUMBERED)
+    # PERSONA DEFINITIONS (REORDERED)
     # -----------------------------------------
+
     personas = {
         "Premium Explorers": {
             "summary": [
@@ -382,9 +389,9 @@ def render_customer_profiles(df, bookings_df, people_df):
         "Premium Casuals": {
             "summary": [
                 "✔️ More likely to be light, occasional travellers with a preference for Germany and Sweden.",
-                "✔️ Tend to enquire by phone more than online.",
+                "✔️ Tend to enquire by phone rather than online.",
                 "✖️ Much less likely to behave like frequent or repeat bookers.",
-                "✖️ Less likely to use websites or digital booking paths."
+                "✖️ Less likely to use website booking paths."
             ],
             "strategy": [
                 "Use simple, non-digital-first messaging.",
@@ -424,8 +431,8 @@ def render_customer_profiles(df, bookings_df, people_df):
 
         "Economy Casuals": {
             "summary": [
-                "✔️ More likely to be light, occasional travellers who prefer calling by phone.",
-                "✔️ More likely to stick to familiar European destinations.",
+                "✔️ More likely to be light, occasional travellers who prefer phone enquiries.",
+                "✔️ More likely to stay with familiar European destinations.",
                 "✖️ Much less likely to book online.",
                 "✖️ Less likely to behave like active or repeat travellers."
             ],
@@ -438,7 +445,7 @@ def render_customer_profiles(df, bookings_df, people_df):
 
         "Economy One-Timers": {
             "summary": [
-                "✔️ Much more likely to come from lower-income backgrounds and make simple one-off bookings.",
+                "✔️ More likely to come from lower-income backgrounds and make simple one-off bookings.",
                 "✔️ More likely to favour familiar European destinations like France and Germany.",
                 "✔️ More likely to be older and long inactive.",
                 "✖️ Much less likely to travel long-haul or return regularly.",
@@ -481,12 +488,14 @@ def render_customer_profiles(df, bookings_df, people_df):
     }
 
     # -----------------------------------------
-    # RENDER PERSONAS (numbered + star strategies)
+    # RENDER PERSONAS WITH NUMBERED EMOJIS
     # -----------------------------------------
     for idx, (segment, info) in enumerate(personas.items(), start=1):
 
+        emoji = num_emoji.get(idx, f"{idx}.")  # fallback to plain number if >9
+
         st.markdown(
-            f"<h3 style='margin-top:35px;'>{idx}. {segment}</h3>",
+            f"<h3 style='margin-top:35px;'>{emoji} {segment}</h3>",
             unsafe_allow_html=True
         )
 
@@ -512,6 +521,7 @@ def render_customer_profiles(df, bookings_df, people_df):
 
         st.markdown("<hr style='margin-top:30px; margin-bottom:30px;'>",
                     unsafe_allow_html=True)
+
 
 
 
