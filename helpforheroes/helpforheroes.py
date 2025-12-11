@@ -461,32 +461,34 @@ def render_customer_profiles(df, bookings_df, people_df):
     }
 
     # -----------------------------------------
-    # RENDER PERSONAS
+    # RENDER PERSONAS (clean, no code-box artefacts)
     # -----------------------------------------
     for segment, info in personas.items():
-        st.markdown(f"<h3>{segment}</h3>", unsafe_allow_html=True)
 
-        st.markdown(f"""
-            <div style='padding-left:10px; font-size:20px;'>
-                {info['summary']}
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"<h3 style='margin-top:35px;'>{segment}</h3>", unsafe_allow_html=True)
+
+        # Persona Summary (no div, no grey box, no indentation → no code block)
+        st.markdown(
+            f"""
+            <p style='font-size:20px; line-height:1.6;'>
+            {info['summary']}
+            </p>
+            """,
+            unsafe_allow_html=True
+        )
 
         st.markdown("<b>Recommended Strategy:</b>", unsafe_allow_html=True)
-        st.markdown(f"""
-            <div style='padding-left:10px; font-size:20px; color:#555;'>
-                {info['strategy']}
-            </div>
-        """, unsafe_allow_html=True)
 
-        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <ul style='font-size:20px; line-height:1.6; margin-top:8px;'>
+                {''.join([f"<li>{line.strip()}</li>" for line in info['strategy'].split("<br>") if line.strip()])}
+            </ul>
+            """,
+            unsafe_allow_html=True
+        )
 
-    # -----------------------------------------
-    # OPTIONAL: Expandable raw statistical insights
-    # -----------------------------------------
-    with st.expander("📊 View detailed statistically significant traits"):
-        for i in insights:
-            st.markdown(f"- {i}")
+        st.markdown("<hr style='margin-top:30px; margin-bottom:30px;'>", unsafe_allow_html=True)
 
 
  
