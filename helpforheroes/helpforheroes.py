@@ -228,17 +228,11 @@ We apply a <b>proportions Z-test</b> to confirm whether those differences are
 statistically meaningful and not random noise. Then compute an intuitive index to assess the effect size.<br></br>
 </p> 
 <br></br>
-<h2>Customer Profiling by Segment</h2>
-""",
-        unsafe_allow_html=True
-)
 
 # ============================
 # SEGMENT INTERPRETATIONS
 # ============================
 
-st.markdown(
-    """
 <h2>Final Segment Interpretations</h2>
 <br>
 
