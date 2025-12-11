@@ -161,7 +161,7 @@ def render_metric_construction():
     # Strategic
     st.markdown(
         f"""
-        <h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic Score (0–100)</span></h3>
+        <h3 class='small-h3'><span style='color:{STRATEGIC_COLOR}; font-weight:bold;'>Strategic Score (0–100) (Optional)</span></h3>
         <ul>
             <li>Binary signals: long-haul, package, channel fit.</li>
             <li>Weighted (50/30/20) based on commercial value.</li>
